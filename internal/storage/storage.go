@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/c8121/asset-storage/internal/util"
@@ -23,11 +24,11 @@ func BaseDir() string {
 
 // AddFile Add one file to asset-storage
 // Returns file-path, mime-type, error
-func AddFile(path string) (string, string, error) {
+func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		fmt.Printf("'%s' does not exist\n", path)
-		return "", "", os.ErrNotExist
+		return "", "", "", os.ErrNotExist
 	}
 
 	tempDest := TempFile()
@@ -64,28 +65,83 @@ func AddFile(path string) (string, string, error) {
 
 	util.Check(tempDest.Close(), "Failed to close temp file")
 
-	destName := fmt.Sprintf("%x", hash.Sum(nil))
+	hashHex := fmt.Sprintf("%x", hash.Sum(nil))
+	if len(hashHex) < 2 {
+		panic("Invalid hash")
+	}
+	fmt.Println("Hash:", hashHex)
+
+	destPath, err := FindByHash(hashHex)
+	if err == nil {
+		fmt.Printf("File already exists: '%s'\n", destPath)
+		util.Check(os.Remove(tempDest.Name()), "Failed to remove temp file")
+		return hashHex, destPath, mimetypeName, nil
+	}
+
+	destName := hashHex[2:]
 	destDir := fmt.Sprintf("%s/%s/%s",
 		BaseDir(),
 		TimePeriodName(),
-		destName[:2])
+		hashHex[:2])
 
 	util.Check(os.MkdirAll(destDir, os.ModeDir), "Failed to create destination directory")
 
-	destPath := fmt.Sprintf("%s/%s",
+	destPath = fmt.Sprintf("%s/%s",
 		destDir,
-		destName[2:])
+		destName)
 
 	if _, err := os.Stat(destPath); err == nil || os.IsExist(err) {
-		fmt.Printf("'%s' already exists\n", destPath)
 		util.Check(os.Remove(tempDest.Name()), "Failed to remove temp file")
-		return destPath, mimetypeName, nil
+		panic("File already exists") //Panic, because check was done above with FindByHash
 	}
 
 	fmt.Printf("Adding '%s' to %s\n", path, destPath)
 	util.Check(os.Rename(tempDest.Name(), destPath), "Failed to move temp file")
 
-	return destPath, mimetypeName, nil
+	return hashHex, destPath, mimetypeName, nil
+}
+
+// FindByHash Check all time-periods if file exists
+func FindByHash(hashHex string) (assetPath string, err error) {
+
+	if len(hashHex) < 2 {
+		panic("Invalid hash")
+	}
+
+	//Fast check first: Check if file exists in current time-period
+	destName := hashHex[2:]
+	destDir := filepath.Join(
+		BaseDir(),
+		TimePeriodName(),
+		hashHex[:2])
+
+	destPath := filepath.Join(
+		destDir,
+		destName)
+	if _, err := os.Stat(destPath); err == nil || os.IsExist(err) {
+		return destPath, nil
+	}
+
+	//Evaluate all time-period dirs
+	dirs, err := os.ReadDir(BaseDir())
+	if errors.Is(err, os.ErrNotExist) {
+		return destPath, err
+	}
+	util.Check(err, "Failed to read directory")
+	for _, file := range dirs {
+		destDir = filepath.Join(
+			BaseDir(),
+			file.Name(),
+			hashHex[:2])
+		destPath = filepath.Join(
+			destDir,
+			destName)
+		if _, err := os.Stat(destPath); err == nil || os.IsExist(err) {
+			return destPath, nil
+		}
+	}
+
+	return "", os.ErrNotExist
 }
 
 // TimePeriodName Create a name corresponding to period in time (each 4 hours having same name)
