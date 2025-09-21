@@ -17,6 +17,9 @@ func main() {
 	}
 
 	for _, file := range files {
-		storage.AddFile(file)
+		_, _, err := storage.AddFile(file)
+		if err != nil {
+			fmt.Printf("Error adding '%s': %s\n", file, err)
+		}
 	}
 }

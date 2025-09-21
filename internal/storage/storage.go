@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/c8121/asset-storage/internal/util"
+	"github.com/gabriel-vasile/mimetype"
 )
 
 const (
@@ -21,11 +22,12 @@ func BaseDir() string {
 }
 
 // AddFile Add one file to asset-storage
-func AddFile(path string) {
+// Returns file-path, mime-type, error
+func AddFile(path string) (string, string, error) {
 
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		fmt.Printf("%s does not exist\n", path)
-		return
+		fmt.Printf("'%s' does not exist\n", path)
+		return "", "", os.ErrNotExist
 	}
 
 	tempDest := TempFile()
@@ -39,6 +41,7 @@ func AddFile(path string) {
 	}(in)
 
 	hash := sha256.New()
+	mimetypeName := ""
 
 	for {
 		n, err := in.Read(buf)
@@ -49,6 +52,12 @@ func AddFile(path string) {
 
 		n, err = tempDest.Write(buf[:n])
 		util.Check(err, "Failed to write to temp file")
+
+		if len(mimetypeName) == 0 {
+			mime := mimetype.Detect(buf[:n])
+			mimetypeName = mime.String()
+			fmt.Println("MIME type:", mimetypeName)
+		}
 
 		hash.Write(buf[:n])
 	}
@@ -68,12 +77,15 @@ func AddFile(path string) {
 		destName[2:])
 
 	if _, err := os.Stat(destPath); err == nil || os.IsExist(err) {
-		fmt.Printf("%s already exists\n", destPath)
-		return
+		fmt.Printf("'%s' already exists\n", destPath)
+		util.Check(os.Remove(tempDest.Name()), "Failed to remove temp file")
+		return destPath, mimetypeName, nil
 	}
 
-	fmt.Printf("Adding %s to %s\n", path, destPath)
+	fmt.Printf("Adding '%s' to %s\n", path, destPath)
 	util.Check(os.Rename(tempDest.Name(), destPath), "Failed to move temp file")
+
+	return destPath, mimetypeName, nil
 }
 
 // TimePeriodName Create a name corresponding to period in time (each 4 hours having same name)
