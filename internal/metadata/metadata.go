@@ -80,7 +80,7 @@ func (assetMetaData *AssetMetadata) Save(path string) error {
 		return err
 	}
 
-	return os.WriteFile(path, jsonBytes, 0644)
+	return os.WriteFile(path, jsonBytes, FilePermissions)
 }
 
 // LoadIfExists Load JSON-file, if exists.

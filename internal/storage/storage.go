@@ -24,7 +24,7 @@ func BaseDir() string {
 }
 
 // AddFile Add one file to asset-storage
-// Returns file-path, mime-type, error
+// Returns content-hash, file-path, mime-type, error
 func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
@@ -99,6 +99,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
 	fmt.Printf("Adding '%s' to %s\n", path, destPath)
 	util.Check(os.Rename(tempDest.Name(), destPath), "Failed to move temp file")
+	util.Check(os.Chmod(destPath, FilePermissions), "Failed to set permissions")
 
 	return hashHex, destPath, mimetypeName, nil
 }
