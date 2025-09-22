@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"strings"
 
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gabriel-vasile/mimetype"
@@ -145,6 +146,20 @@ func FindByHash(hashHex string) (assetPath string, err error) {
 	}
 
 	return "", os.ErrNotExist
+}
+
+// HashFromPath Extract full hash from path (.../XX/XXX...) 
+func HashFromPath(path string) string {
+	dir, name := filepath.Split(path)
+	_, dir2 := filepath.Split(dir[:len(dir)-1])
+	hash := dir2 + name
+	p := strings.Index(hash, ".")
+	if p > -1 {
+		return hash[:p]
+	} else {
+		return hash
+	}
+	
 }
 
 // TimePeriodName Create a name corresponding to period in time (each 4 hours having same name)
