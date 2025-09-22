@@ -1,15 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
-	"encoding/json"
 
-	"github.com/c8121/asset-storage/internal/util"
-	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata-sqlite"
+	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 func main() {
@@ -33,12 +33,12 @@ func readAllMetaData(path string) error {
 			return statErr
 		}
 		if stat.IsDir() {
-			if err = readAllMetaData(filePath) ; err != nil {
+			if err = readAllMetaData(filePath); err != nil {
 				return err
 			}
 		} else {
-			if hash, meta, err := readMetaData(filePath) ; err == nil {
-				if err = mdsqlite.AddMetaData(hash, &meta) ; err != nil {
+			if hash, meta, err := readMetaData(filePath); err == nil {
+				if err = mdsqlite.AddMetaData(hash, &meta); err != nil {
 					return err
 				}
 			} else {
