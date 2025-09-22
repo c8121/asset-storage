@@ -95,6 +95,6 @@ func addFile(path string) error {
 			stat.ModTime())
 	}
 
-	fmt.Printf("MetaData: %s\n", metaData)
+	//fmt.Printf("MetaData: %s\n", metaData)
 	return metaData.Save(metaDataFile)
 }

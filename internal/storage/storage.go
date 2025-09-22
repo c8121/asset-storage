@@ -30,6 +30,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 		fmt.Printf("'%s' does not exist\n", path)
 		return "", "", "", os.ErrNotExist
 	}
+	fmt.Println("Add file:", path)
 
 	tempDest := TempFile()
 	fmt.Println("Temp file created:", tempDest.Name())
@@ -151,14 +152,14 @@ func TimePeriodName() string {
 	return s
 }
 
-// TempDir Temporary dir
+// TempDir Temporary dir. Should be on same drive as BaseDir()
 func TempDir() string {
 	return "/tmp"
 }
 
 // TempFile Create temp file of panic
 func TempFile() *os.File {
-	file, err := os.CreateTemp(TempDir(), "*.tmp")
+	file, err := os.CreateTemp(TempDir(), "asset-*.tmp")
 	if err != nil {
 		panic(err)
 	}
