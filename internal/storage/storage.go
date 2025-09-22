@@ -15,6 +15,7 @@ import (
 
 const (
 	IoBufferSize = 4096
+	FilePermissions = 0744
 )
 
 // BaseDir Directory for all contents of asset storage.
@@ -85,7 +86,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 		TimePeriodName(),
 		hashHex[:2])
 
-	util.Check(os.MkdirAll(destDir, os.ModeDir), "Failed to create destination directory")
+	util.Check(os.MkdirAll(destDir, FilePermissions), "Failed to create destination directory")
 
 	destPath = fmt.Sprintf("%s/%s",
 		destDir,

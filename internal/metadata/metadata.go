@@ -24,6 +24,10 @@ type (
 	}
 )
 
+const (
+	FilePermissions = 0744
+)
+
 // BaseDir Directory for all meta-data of assets.
 func BaseDir() string {
 	return "/tmp/asset-metadata"
@@ -69,7 +73,7 @@ func (assetMetaData *AssetMetadata) AddOrigin(name string, path string, owner st
 // Save Create dir if not exists and save JSON
 func (assetMetaData *AssetMetadata) Save(path string) error {
 
-	util.Check(os.MkdirAll(filepath.Dir(path), os.ModeDir), "Failed to create destination directory")
+	util.Check(os.MkdirAll(filepath.Dir(path), FilePermissions), "Failed to create destination directory")
 
 	jsonBytes, err := json.Marshal(assetMetaData)
 	if err != nil {
