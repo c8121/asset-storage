@@ -1,40 +1,77 @@
 package mdsqlite
 
 import (
-	"fmt"
 	"database/sql"
+	"fmt"
+	"time"
 
-	_ "github.com/glebarez/go-sqlite"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/util"
+	_ "github.com/glebarez/go-sqlite"
 )
 
-var(
+var (
 	DBFile = "/home/christianh/asset-storage-metadata.sqlite"
-	DB *sql.DB
+	DB     *sql.DB
+)
+
+type (
+	AssetListItem struct {
+		Hash     string
+		FileTime time.Time
+	}
 )
 
 // Open Open SQLite database file + init
 func Open() {
 	fmt.Printf("Open DB %s\n", DBFile)
 	db, err := sql.Open("sqlite", DBFile)
-	util.Check(err, "Failed to open sqlite database: " + DBFile)
+	util.Check(err, "Failed to open sqlite database: "+DBFile)
 
 	DB = db
 
 	initDatabase()
 }
+
 // Close Close Database
 func Close() {
 	fmt.Printf("Close DB %s\n", DBFile)
 	DB.Close()
 }
 
+func ListAssets(offset, count int) ([]AssetListItem, error) {
+
+	stmt, err := DB.Prepare("SELECT hash, filetime FROM origin LIMIT ? OFFSET ?;")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	var items []AssetListItem
+
+	if rows, err := stmt.Query(count, offset); err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			fmt.Println(".")
+			var item AssetListItem
+			if err := rows.Scan(&item.Hash, &item.FileTime); err != nil {
+				return items, err
+			}
+			items = append(items, item)
+		}
+
+	} else {
+		return items, err
+	}
+
+	return items, nil
+}
+
 // AddMetaData Upsert meta-data to database
 func AddMetaData(hash string, meta *metadata.AssetMetadata) error {
 
 	stmt, err := DB.Prepare("INSERT INTO asset(hash, mimetype) VALUES(?, ?) " +
-					"ON CONFLICT DO UPDATE SET mimetype=excluded.mimetype;")
+		"ON CONFLICT DO UPDATE SET mimetype=excluded.mimetype;")
 	if err != nil {
 		return err
 	}
@@ -78,11 +115,11 @@ func addOrigin(hash string, origin *metadata.Origin) error {
 func removeOrigin(hash string, origin *metadata.Origin) error {
 
 	stmt, err := DB.Prepare("DELETE FROM origin WHERE " +
-								"hash = ? " +
-								"AND name = ? " +
-								"AND path = ? " +
-								"AND owner = ? " +
-								"AND filetime = ?;")
+		"hash = ? " +
+		"AND name = ? " +
+		"AND path = ? " +
+		"AND owner = ? " +
+		"AND filetime = ?;")
 	if err != nil {
 		return err
 	}
@@ -96,9 +133,9 @@ func removeOrigin(hash string, origin *metadata.Origin) error {
 func initDatabase() {
 	fmt.Printf("Init DB %s\n", DBFile)
 	dbInitExec("CREATE TABLE IF NOT EXISTS asset(hash TEXT(64) PRIMARY KEY, " +
-			"mimetype TEXT(128));")	
+		"mimetype TEXT(128));")
 	dbInitExec("CREATE TABLE IF NOT EXISTS origin(hash TEXT(64), " +
-			"name TEXT(1000), path TEXT(4000), owner TEXT(100), filetime DATETIME);")
+		"name TEXT(1000), path TEXT(4000), owner TEXT(100), filetime DATETIME);")
 	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_hash on origin(hash);")
 	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_name on origin(name);")
 	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_owner on origin(owner);")
