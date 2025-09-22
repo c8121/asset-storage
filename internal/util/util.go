@@ -8,3 +8,7 @@ func Check(e error, message string) {
 		panic(e)
 	}
 }
+
+func LogError(e error) {
+	fmt.Printf("Error: %s\n", e)
+}

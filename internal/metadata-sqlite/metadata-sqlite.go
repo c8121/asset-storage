@@ -36,7 +36,7 @@ func Open() {
 // Close Close Database
 func Close() {
 	fmt.Printf("Close DB %s\n", DBFile)
-	DB.Close()
+	util.LogError(DB.Close())
 }
 
 func ListAssets(offset, count int) ([]AssetListItem, error) {
@@ -45,12 +45,12 @@ func ListAssets(offset, count int) ([]AssetListItem, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer stmt.Close()
+	defer util.LogError(stmt.Close())
 
 	var items []AssetListItem
 
 	if rows, err := stmt.Query(count, offset); err == nil {
-		defer rows.Close()
+		defer util.LogError(rows.Close())
 		for rows.Next() {
 			fmt.Println(".")
 			var item AssetListItem
@@ -75,7 +75,7 @@ func AddMetaData(hash string, meta *metadata.AssetMetadata) error {
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
+	defer util.LogError(stmt.Close())
 
 	_, err = stmt.Exec(hash, meta.MimeType)
 	if err != nil {
@@ -105,7 +105,7 @@ func addOrigin(hash string, origin *metadata.Origin) error {
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
+	defer util.LogError(stmt.Close())
 
 	_, err = stmt.Exec(hash, origin.Name, origin.Path, origin.Owner, origin.FileTime)
 	return err
@@ -123,7 +123,7 @@ func removeOrigin(hash string, origin *metadata.Origin) error {
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
+	defer util.LogError(stmt.Close())
 
 	_, err = stmt.Exec(hash, origin.Name, origin.Path, origin.Owner, origin.FileTime)
 	return err

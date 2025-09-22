@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 
 	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
@@ -15,13 +16,13 @@ func main() {
 	router := gin.Default()
 	router.GET("/assets/list", listAssets)
 
-	router.Run("localhost:8080")
+	util.Check(router.Run("localhost:8080"), "Failed to start server")
 }
 
 func listAssets(c *gin.Context) {
 	items, err := mdsqlite.ListAssets(0, 10)
 	if err != nil {
-		c.AbortWithError(500, err)
+		util.LogError(c.AbortWithError(500, err))
 		return
 	}
 
