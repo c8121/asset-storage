@@ -14,13 +14,13 @@ func GetPreview(c *gin.Context) {
 
 	hash := c.Param("hash")
 	if len(hash) < 32 {
-		util.LogError(c.AbortWithError(404, fmt.Errorf("invalid hash")))
+		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash")))
 		return
 	}
 
 	meta, err := metadata.LoadByHash(hash)
 	if err != nil {
-		util.LogError(c.AbortWithError(404, fmt.Errorf("invalid hash (not found)")))
+		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash (not found)")))
 		return
 	}
 
@@ -43,6 +43,6 @@ func GetPreview(c *gin.Context) {
 		return
 	} else {
 		util.LogError(err)
-		util.LogError(c.AbortWithError(500, err))
+		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 	}
 }
