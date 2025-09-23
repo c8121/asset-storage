@@ -11,4 +11,9 @@ func Check(e error, message string) {
 
 func LogError(e error) {
 	fmt.Printf("Error: %s\n", e)
+func CloseOrLog(c io.Closer) {
+	err := c.Close()
+	if err != nil {
+		fmt.Printf("Close error: %s\n", err)
+	}
 }

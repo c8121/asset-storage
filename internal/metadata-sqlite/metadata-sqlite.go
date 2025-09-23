@@ -45,12 +45,12 @@ func ListAssets(offset, count int) ([]AssetListItem, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer util.LogError(stmt.Close())
+	defer util.CloseOrLog(stmt)
 
 	var items []AssetListItem
 
 	if rows, err := stmt.Query(count, offset); err == nil {
-		defer util.LogError(rows.Close())
+		defer util.CloseOrLog(rows)
 		for rows.Next() {
 			fmt.Println(".")
 			var item AssetListItem
@@ -105,7 +105,7 @@ func addOrigin(hash string, origin *metadata.Origin) error {
 	if err != nil {
 		return err
 	}
-	defer util.LogError(stmt.Close())
+	defer util.CloseOrLog(stmt)
 
 	_, err = stmt.Exec(hash, origin.Name, origin.Path, origin.Owner, origin.FileTime)
 	return err
@@ -123,7 +123,7 @@ func removeOrigin(hash string, origin *metadata.Origin) error {
 	if err != nil {
 		return err
 	}
-	defer util.LogError(stmt.Close())
+	defer util.CloseOrLog(stmt)
 
 	_, err = stmt.Exec(hash, origin.Name, origin.Path, origin.Owner, origin.FileTime)
 	return err
