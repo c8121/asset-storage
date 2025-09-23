@@ -15,12 +15,17 @@ func main() {
 
 	router := gin.Default()
 	router.GET("/assets/list", listAssets)
+	router.GET("/assets/list/:offset", listAssets)
+	router.GET("/assets/list/:offset/:count", listAssets)
 
 	util.Check(router.Run("localhost:8080"), "Failed to start server")
 }
 
 func listAssets(c *gin.Context) {
-	items, err := mdsqlite.ListAssets(0, 10)
+
+	items, err := mdsqlite.ListAssets(
+		util.Atoi(c.Param("offset"), 0),
+		util.Atoi(c.Param("count"), 10))
 	if err != nil {
 		util.LogError(c.AbortWithError(500, err))
 		return

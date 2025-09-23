@@ -18,6 +18,7 @@ var (
 type (
 	AssetListItem struct {
 		Hash     string
+		Name     string
 		FileTime time.Time
 	}
 )
@@ -39,9 +40,12 @@ func Close() {
 	util.LogError(DB.Close())
 }
 
+// ListAssets returns an array of AssetListItem, sorted by date desc
 func ListAssets(offset, count int) ([]AssetListItem, error) {
 
-	stmt, err := DB.Prepare("SELECT hash, filetime FROM origin LIMIT ? OFFSET ?;")
+	stmt, err := DB.Prepare("SELECT hash, name, filetime FROM origin " +
+		"ORDER BY filetime DESC, hash ASC " +
+		"LIMIT ? OFFSET ?;")
 	if err != nil {
 		return nil, err
 	}
@@ -52,9 +56,8 @@ func ListAssets(offset, count int) ([]AssetListItem, error) {
 	if rows, err := stmt.Query(count, offset); err == nil {
 		defer util.CloseOrLog(rows)
 		for rows.Next() {
-			fmt.Println(".")
 			var item AssetListItem
-			if err := rows.Scan(&item.Hash, &item.FileTime); err != nil {
+			if err := rows.Scan(&item.Hash, &item.Name, &item.FileTime); err != nil {
 				return items, err
 			}
 			items = append(items, item)
