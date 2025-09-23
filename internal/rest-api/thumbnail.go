@@ -18,6 +18,12 @@ import (
 
 var (
 	ThumbnailMimeType = "image/png"
+	ThumbnailWidth    = 400
+
+	//ThumbnailInterpolator = draw.NearestNeighbor
+	//ThumbnailInterpolator = draw.ApproxBiLinear
+	ThumbnailInterpolator = draw.BiLinear
+	//ThumbnailInterpolator = draw.CatmullRom
 )
 
 // generateThumbnail returns a thumbnail image generate from an asset
@@ -38,10 +44,22 @@ func generateThumbnail(assetHash string, meta metadata.AssetMetadata) ([]byte, s
 		return nil, "", fmt.Errorf("failed to decode asset: %w", err)
 	}
 
-	destSize := image.Rect(0, 0, 400, 200)
+	imgWidth := img.Bounds().Dx()
+	var scaleToWidth int
+	switch {
+	case imgWidth < ThumbnailWidth:
+		scaleToWidth = imgWidth
+	default:
+		scaleToWidth = ThumbnailWidth
+	}
+	scaleToHeight := int(float64(img.Bounds().Dy()) * (float64(scaleToWidth) / float64(imgWidth)))
+	fmt.Printf("scale to width: %d, height: %d (%d * (%d / %d))\n", scaleToWidth, scaleToHeight,
+		img.Bounds().Dy(), scaleToWidth, imgWidth)
+
+	destSize := image.Rect(0, 0, scaleToWidth, scaleToHeight)
 	thumb := image.NewRGBA(destSize)
 
-	draw.NearestNeighbor.Scale(thumb, destSize, img, destSize, draw.Over, nil)
+	ThumbnailInterpolator.Scale(thumb, destSize, img, img.Bounds(), draw.Over, nil)
 
 	var outBuf bytes.Buffer
 	writer := bufio.NewWriter(&outBuf)
