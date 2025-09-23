@@ -18,7 +18,7 @@ func main() {
 	router.GET("/assets/list", listAssets)
 	router.GET("/assets/list/:offset", listAssets)
 	router.GET("/assets/list/:offset/:count", listAssets)
-	router.GET("/assets/thumbnail/:hash", restapi.Thumbnail)
+	router.GET("/assets/thumbnail/:hash", restapi.GetPreview)
 
 	util.Check(router.Run("localhost:8080"), "Failed to start server")
 }
