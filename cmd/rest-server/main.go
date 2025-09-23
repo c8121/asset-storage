@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	restapi "github.com/c8121/asset-storage/internal/rest-api"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 
@@ -17,6 +18,7 @@ func main() {
 	router.GET("/assets/list", listAssets)
 	router.GET("/assets/list/:offset", listAssets)
 	router.GET("/assets/list/:offset/:count", listAssets)
+	router.GET("/assets/thumbnail/:hash", restapi.Thumbnail)
 
 	util.Check(router.Run("localhost:8080"), "Failed to start server")
 }

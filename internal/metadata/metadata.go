@@ -97,6 +97,13 @@ func LoadIfExists(path string) (AssetMetadata, error) {
 	return assetMetadata, err
 }
 
+// LoadByHash returns AssetMetadata loaded from JSON-file
+func LoadByHash(assetHash string) (AssetMetadata, error) {
+	path := GetMetaDataFilePath(assetHash)
+	return LoadIfExists(path)
+}
+
+// GetMetaDataFilePath returns the path and filename of a meta-data file.
 func GetMetaDataFilePath(assetHash string) string {
 	name := fmt.Sprintf("%s%s", assetHash[2:], ".json")
 	path := filepath.Join(

@@ -162,6 +162,17 @@ func HashFromPath(path string) string {
 
 }
 
+// LoadByHash returns AssetMetadata loaded from JSON-file
+func LoadByHash(assetHash string) ([]byte, error) {
+	if path, err := FindByHash(assetHash); err == nil {
+		if buf, err := os.ReadFile(path); err == nil {
+			return buf, nil
+		}
+	}
+
+	return nil, os.ErrNotExist
+}
+
 // TimePeriodName Create a name corresponding to period in time (each 4 hours having same name)
 func TimePeriodName() string {
 	ts := time.Now().UnixMilli() / 1000 / 60 / 24 / 4
