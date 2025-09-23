@@ -22,7 +22,7 @@ type (
 	}
 )
 
-// Open Open SQLite database file + init
+// Open Connect to SQLite database file + init
 func Open() {
 	fmt.Printf("Open DB %s\n", DBFile)
 	db, err := sql.Open("sqlite", DBFile)
@@ -33,7 +33,7 @@ func Open() {
 	initDatabase()
 }
 
-// Close Close Database
+// Close Disconnect from Database
 func Close() {
 	fmt.Printf("Close DB %s\n", DBFile)
 	util.LogError(DB.Close())
@@ -73,13 +73,13 @@ func AddMetaData(hash string, meta *metadata.AssetMetadata) error {
 	stmt, err := DB.Prepare("INSERT INTO asset(hash, mimetype) VALUES(?, ?) " +
 		"ON CONFLICT DO UPDATE SET mimetype=excluded.mimetype;")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to prepare: %w", err)
 	}
-	defer util.LogError(stmt.Close())
+	defer util.CloseOrLog(stmt)
 
 	_, err = stmt.Exec(hash, meta.MimeType)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to execute: %w", err)
 	}
 
 	for _, origin := range meta.Origins {
@@ -103,12 +103,16 @@ func addOrigin(hash string, origin *metadata.Origin) error {
 
 	stmt, err := DB.Prepare("INSERT INTO origin(hash, name, path, owner, filetime) VALUES(?, ?, ?, ?, ?);")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to prepare: %w", err)
 	}
 	defer util.CloseOrLog(stmt)
 
 	_, err = stmt.Exec(hash, origin.Name, origin.Path, origin.Owner, origin.FileTime)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to execute: %w", err)
+	}
+
+	return nil
 }
 
 // removeOrigin Remove Origin from database
