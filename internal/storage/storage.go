@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gabriel-vasile/mimetype"
 )
@@ -19,12 +20,13 @@ const (
 	FilePermissions = 0744
 )
 
-// BaseDir Directory for all contents of asset storage.
-func BaseDir() string {
-	return "/tmp/asset-storage"
+// Init creates required directories
+func Init() {
+	util.CreateDirIfNotExists(config.AssetStorageBaseDir, FilePermissions)
+	util.CreateDirIfNotExists(config.AssetStorageTempDir, FilePermissions)
 }
 
-// AddFile Add one file to asset-storage
+// AddFile adds one or more file to asset-storage.
 // Returns content-hash, file-path, mime-type, error
 func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
@@ -83,7 +85,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
 	destName := hashHex[2:]
 	destDir := fmt.Sprintf("%s/%s/%s",
-		BaseDir(),
+		config.AssetStorageBaseDir,
 		TimePeriodName(),
 		hashHex[:2])
 
@@ -115,7 +117,7 @@ func FindByHash(hashHex string) (assetPath string, err error) {
 	//Fast check first: Check if file exists in current time-period
 	destName := hashHex[2:]
 	destDir := filepath.Join(
-		BaseDir(),
+		config.AssetStorageBaseDir,
 		TimePeriodName(),
 		hashHex[:2])
 
@@ -127,14 +129,14 @@ func FindByHash(hashHex string) (assetPath string, err error) {
 	}
 
 	//Evaluate all time-period dirs
-	dirs, err := os.ReadDir(BaseDir())
+	dirs, err := os.ReadDir(config.AssetStorageBaseDir)
 	if errors.Is(err, os.ErrNotExist) {
 		return destPath, err
 	}
 	util.Check(err, "Failed to read directory")
 	for _, file := range dirs {
 		destDir = filepath.Join(
-			BaseDir(),
+			config.AssetStorageBaseDir,
 			file.Name(),
 			hashHex[:2])
 		destPath = filepath.Join(
@@ -180,14 +182,9 @@ func TimePeriodName() string {
 	return s
 }
 
-// TempDir Temporary dir. Should be on same drive as BaseDir()
-func TempDir() string {
-	return "/tmp"
-}
-
 // TempFile Create temp file of panic
 func TempFile() *os.File {
-	file, err := os.CreateTemp(TempDir(), "asset-*.tmp")
+	file, err := os.CreateTemp(config.AssetStorageTempDir, "asset-*.tmp")
 	if err != nil {
 		panic(err)
 	}

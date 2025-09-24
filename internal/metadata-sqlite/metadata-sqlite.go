@@ -3,16 +3,17 @@ package mdsqlite
 import (
 	"database/sql"
 	"fmt"
+	"path/filepath"
 	"time"
 
+	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/util"
 	_ "modernc.org/sqlite"
 )
 
 var (
-	DBFile = "/home/christianh/asset-storage-metadata.sqlite"
-	DB     *sql.DB
+	DB *sql.DB
 )
 
 type (
@@ -25,9 +26,13 @@ type (
 
 // Open Connect to SQLite database file + init
 func Open() {
-	fmt.Printf("Open DB %s\n", DBFile)
-	db, err := sql.Open("sqlite", DBFile)
-	util.Check(err, "Failed to open sqlite database: "+DBFile)
+
+	dbDir := filepath.Dir(config.AssetMetaDataDb)
+	util.CreateDirIfNotExists(dbDir, metadata.FilePermissions)
+
+	fmt.Printf("Open DB %s\n", config.AssetMetaDataDb)
+	db, err := sql.Open("sqlite", config.AssetMetaDataDb)
+	util.Check(err, "Failed to open sqlite database: "+config.AssetMetaDataDb)
 
 	DB = db
 
@@ -36,7 +41,7 @@ func Open() {
 
 // Close Disconnect from Database
 func Close() {
-	fmt.Printf("Close DB %s\n", DBFile)
+	fmt.Printf("Close DB %s\n", config.AssetMetaDataDb)
 	util.LogError(DB.Close())
 }
 
@@ -138,7 +143,7 @@ func removeOrigin(hash string, origin *metadata.Origin) error {
 
 // initDatabase Create tables and indexes
 func initDatabase() {
-	fmt.Printf("Init DB %s\n", DBFile)
+	fmt.Printf("Init DB %s\n", config.AssetMetaDataDb)
 	dbInitExec("CREATE TABLE IF NOT EXISTS asset(hash TEXT(64) PRIMARY KEY, " +
 		"mimetype TEXT(128));")
 	dbInitExec("CREATE TABLE IF NOT EXISTS origin(hash TEXT(64), " +

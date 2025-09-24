@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/c8121/asset-storage/internal/config"
 	restapi "github.com/c8121/asset-storage/internal/rest-api"
 	spaserver "github.com/c8121/asset-storage/internal/spa-server"
 	"github.com/c8121/asset-storage/internal/util"
@@ -10,6 +11,9 @@ import (
 )
 
 func main() {
+
+	config.LoadDefault()
+
 	mdsqlite.Open()
 	defer mdsqlite.Close()
 

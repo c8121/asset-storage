@@ -6,36 +6,28 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/c8121/asset-storage/internal/config"
 	"github.com/gin-gonic/gin"
-)
-
-var (
-	HttpRoot = filepath.Dir(os.Args[0]) + "/vue-ui"
 )
 
 func CreateRoutes(router *gin.Engine) {
 
-	if len(HttpRoot) == 0 {
+	if len(config.SpaHttpRoot) == 0 {
 		panic("spaserver.HttpRoot not set")
 	}
 
-	//Development: When using "go run...", path must be set manually
-	if strings.Contains(HttpRoot, "go-build") {
-		HttpRoot = "/home/christianh/Workspace/go/asset-storage/vue-ui"
-	}
-
-	dir, err := os.ReadDir(HttpRoot)
+	dir, err := os.ReadDir(config.SpaHttpRoot)
 	if err != nil {
-		panic(fmt.Errorf("failed to read spaserver.HttpRoot: %s", HttpRoot))
+		panic(fmt.Errorf("failed to read spaserver.HttpRoot: %s", config.SpaHttpRoot))
 	}
 
 	for _, e := range dir {
 		if strings.HasPrefix(e.Name(), "index.") {
-			router.StaticFile("/", filepath.Join(HttpRoot, e.Name()))
+			router.StaticFile("/", filepath.Join(config.SpaHttpRoot, e.Name()))
 		} else if !e.IsDir() {
-			router.StaticFile("/"+e.Name(), filepath.Join(HttpRoot, e.Name()))
+			router.StaticFile("/"+e.Name(), filepath.Join(config.SpaHttpRoot, e.Name()))
 		} else {
-			router.Static("/"+e.Name(), filepath.Join(HttpRoot, e.Name()))
+			router.Static("/"+e.Name(), filepath.Join(config.SpaHttpRoot, e.Name()))
 		}
 	}
 }

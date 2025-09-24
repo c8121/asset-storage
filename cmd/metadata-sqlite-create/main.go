@@ -6,17 +6,21 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
-	"github.com/c8121/asset-storage/internal/metadata-sqlite"
+	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
 func main() {
+
+	config.LoadDefault()
+
 	mdsqlite.Open()
 	defer mdsqlite.Close()
 
-	util.Check(readAllMetaData(metadata.BaseDir()), "Failed to read meta-data directory")
+	util.Check(readAllMetaData(config.AssetMetaDataBaseDir), "Failed to read meta-data directory")
 }
 
 // readAllMetaData recurively find JSON meta-data an write to SQLite database

@@ -8,6 +8,7 @@ import (
 	"os/user"
 	"path/filepath"
 
+	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
 )
@@ -27,6 +28,9 @@ func main() {
 	if currentUserErr != nil {
 		panic(currentUserErr)
 	}
+
+	config.LoadDefault()
+	storage.Init()
 
 	for _, file := range files {
 		if file[:1] == "-" {

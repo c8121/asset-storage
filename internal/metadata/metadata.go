@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
@@ -28,9 +29,9 @@ const (
 	FilePermissions = 0744
 )
 
-// BaseDir Directory for all meta-data of assets.
-func BaseDir() string {
-	return "/tmp/asset-metadata"
+// Init creates required directories
+func Init() {
+	util.CreateDirIfNotExists(config.AssetMetaDataBaseDir, FilePermissions)
 }
 
 // CreateNew Create new AssetMetadata struct, filled with given data
@@ -107,7 +108,7 @@ func LoadByHash(assetHash string) (AssetMetadata, error) {
 func GetMetaDataFilePath(assetHash string) string {
 	name := fmt.Sprintf("%s%s", assetHash[2:], ".json")
 	path := filepath.Join(
-		BaseDir(),
+		config.AssetMetaDataBaseDir,
 		assetHash[:2],
 		name)
 	return path
