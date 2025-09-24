@@ -1,0 +1,33 @@
+.assets {
+    display: flow-root;
+}
+
+.assets .asset {
+    float: left;
+    width: 200px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.asset .asset-image {
+    height: 180px;
+    overflow: hidden;
+}
+
+.asset .asset-image img {
+    position: relative;
+    z-index: 1;
+}
+
+.asset .asset-filename {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 0;
+}
+
+.asset-group-header {
+    clear: both;
+    display: block;
+    border-bottom: 1px solid #ccc
+}

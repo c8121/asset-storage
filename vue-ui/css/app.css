@@ -1,0 +1,37 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+#clientMessages, #clientProgressInfo {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 99;
+}
+
+.loadSpinnerWrapper {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 98;
+    background-image: url("/img/spinner.gif");
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+
+/* App frames */
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#mainContainer {
+    position: relative;
+    height: 100%;
+}
