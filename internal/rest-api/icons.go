@@ -22,7 +22,7 @@ func loadIconByMimeType(mimeType string) ([]byte, string, error) {
 
 	thumb := strings.Replace(strings.ToLower(mimeType), "/", "-", 1) + ByMimeTypeThumbnailExt
 	if bytes, err := ByMimeTypeThumbnails.ReadFile("icons/" + thumb); err == nil {
-		return bytes, "", nil
+		return bytes, DefaultFileThumbnailMimeType, nil
 	}
 
 	thumb = strings.ToLower(mimeType)
@@ -41,5 +41,5 @@ func loadIconByMimeType(mimeType string) ([]byte, string, error) {
 
 // loadDefaultIcon returns the default icon & mime-type
 func loadDefaultIcon() ([]byte, string, error) {
-	return DefaultFileThumbnail, ByMimeTypeThumbnailMimeType, nil
+	return DefaultFileThumbnail, DefaultFileThumbnailMimeType, nil
 }

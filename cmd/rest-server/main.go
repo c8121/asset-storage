@@ -13,11 +13,7 @@ func main() {
 	defer mdsqlite.Close()
 
 	router := gin.Default()
-	router.GET("/assets/:hash", restapi.GetAsset)
-	router.GET("/assets/list", restapi.ListAssets)
-	router.GET("/assets/list/:offset", restapi.ListAssets)
-	router.GET("/assets/list/:offset/:count", restapi.ListAssets)
-	router.GET("/assets/thumbnail/:hash", restapi.GetPreview)
+	restapi.CreateRoutes(router)
 
 	util.Check(router.Run("localhost:8080"), "Failed to start server")
 }
