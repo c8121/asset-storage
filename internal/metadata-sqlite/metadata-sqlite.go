@@ -22,6 +22,10 @@ type (
 		Name     string
 		FileTime time.Time
 	}
+
+	AssetListFilter struct {
+		MimeType string
+	}
 )
 
 // Open Connect to SQLite database file + init
@@ -46,11 +50,29 @@ func Close() {
 }
 
 // ListAssets returns an array of AssetListItem, sorted by date desc
-func ListAssets(offset, count int) ([]AssetListItem, error) {
+func ListAssets(offset, count int, filter *AssetListFilter) ([]AssetListItem, error) {
 
-	stmt, err := DB.Prepare("SELECT hash, name, filetime FROM origin " +
-		"ORDER BY filetime DESC, hash ASC " +
-		"LIMIT ? OFFSET ?;")
+	var query = "SELECT o.hash, name, filetime FROM origin o INNER JOIN asset a ON o.hash = a.hash "
+	var where = ""
+	var limit = "ORDER BY filetime DESC, o.hash ASC LIMIT ? OFFSET ?;"
+
+	var params = make([]any, 0)
+
+	if filter != nil && filter.MimeType != "" {
+		params = append(params, filter.MimeType)
+		where += "(mimetype LIKE ?)"
+	}
+
+	params = append(params, count)
+	params = append(params, offset)
+
+	if where != "" {
+		query += "WHERE " + where + " "
+	}
+	query += limit
+	//fmt.Printf("Query: %s %v\n", query, params)
+
+	stmt, err := DB.Prepare(query)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +80,7 @@ func ListAssets(offset, count int) ([]AssetListItem, error) {
 
 	var items []AssetListItem
 
-	if rows, err := stmt.Query(count, offset); err == nil {
+	if rows, err := stmt.Query(params...); err == nil {
 		defer util.CloseOrLog(rows)
 		for rows.Next() {
 			var item AssetListItem
