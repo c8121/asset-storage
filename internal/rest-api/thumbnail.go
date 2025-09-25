@@ -64,10 +64,10 @@ func generateThumbnail(assetHash string, meta metadata.AssetMetadata) ([]byte, s
 
 	var outBuf bytes.Buffer
 	writer := bufio.NewWriter(&outBuf)
-	if err := png.Encode(writer, thumb); err != nil {
+	if err := png.Encode(writer, thumb); err != nil || outBuf.Len() == 0 {
 		return nil, "", fmt.Errorf("failed to encode png: %w", err)
 	}
 
-	fmt.Printf("Created thumbnail (%d bytes, %s)\n", outBuf.Len(), destSize)
+	//fmt.Printf("Created thumbnail (%d bytes, %s)\n", outBuf.Len(), destSize)
 	return outBuf.Bytes(), ThumbnailMimeType, nil
 }
