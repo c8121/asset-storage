@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -78,27 +77,15 @@ func addFile(path string) error {
 	}
 
 	//Create/Update meta-data
-	metaDataFile := metadata.GetMetaDataFilePath(assetHash)
-	fmt.Printf("MetaDataFile: %s\n", metaDataFile)
-
-	metaData, err := metadata.LoadIfExists(metaDataFile)
-	if errors.Is(err, os.ErrNotExist) {
-		metaData = metadata.CreateNew(
-			mimeType,
-			filepath.Base(path),
-			filepath.Dir(path),
-			currentUser.Username,
-			stat.ModTime())
-	} else if err != nil {
-		fmt.Printf("Error adding meta-data '%s': %s\n", metaDataFile, err)
-	} else {
-		metaData.AddOrigin(
-			filepath.Base(path),
-			filepath.Dir(path),
-			currentUser.Username,
-			stat.ModTime())
+	_, err = metadata.AddMetaData(
+		assetHash,
+		mimeType,
+		filepath.Base(path),
+		filepath.Dir(path),
+		currentUser.Username,
+		stat.ModTime())
+	if err != nil {
+		fmt.Printf("Error adding meta-data '%s': %s\n", path, err)
 	}
-
-	//fmt.Printf("MetaData: %s\n", metaData)
-	return metaData.Save(metaDataFile)
+	return err
 }

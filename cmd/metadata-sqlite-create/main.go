@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,7 +8,6 @@ import (
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
-	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
@@ -41,9 +39,11 @@ func readAllMetaData(path string) error {
 				return err
 			}
 		} else {
-			if hash, meta, err := readMetaData(filePath); err == nil {
+			if hash, meta, err := metadata.LoadIfExists(filePath); err == nil {
 				if err = mdsqlite.AddMetaData(hash, &meta); err != nil {
 					return err
+				} else {
+					fmt.Printf("Added '%s'\n", filePath)
 				}
 			} else {
 				return err
@@ -51,16 +51,4 @@ func readAllMetaData(path string) error {
 		}
 	}
 	return nil
-}
-
-// readMetaData Read JSON-file, return hash + AssetMetadata
-func readMetaData(jsonFile string) (hash string, meta metadata.AssetMetadata, err error) {
-	fmt.Printf("%s\n", jsonFile)
-
-	if buf, err := os.ReadFile(jsonFile); err == nil {
-		err = json.Unmarshal(buf, &meta)
-		return storage.HashFromPath(jsonFile), meta, err
-	} else {
-		return "", meta, err
-	}
 }
