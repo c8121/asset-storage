@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 var (
@@ -17,7 +16,8 @@ var (
 
 	SpaHttpRoot = filepath.Dir(os.Args[0]) + "/vue-ui" // Root directory to service SPA from
 
-	baseDir = flag.String("base", "", "Base directory for storage, meta-data, db...")
+	cmdBaseDir     = flag.String("base", "", "Base directory for storage, meta-data, db...")
+	cmdSpaHttpRoot = flag.String("spa", "", "HTTP root directory of SPA app")
 )
 
 // LoadDefault initializes configuration with defaults,
@@ -27,7 +27,7 @@ func LoadDefault() {
 
 	flag.Parse()
 
-	useBaseDir := *baseDir
+	useBaseDir := *cmdBaseDir
 	if useBaseDir == "" {
 		if userHome, err := os.UserHomeDir(); err != nil {
 			panic("failed to get user home directory")
@@ -43,12 +43,9 @@ func LoadDefault() {
 	AssetMetaDataBaseDir = useBaseDir + "/asset-storage/meta"
 	AssetMetaDataDb = useBaseDir + "/asset-storage/db/asset-metadata.sqlite"
 
-	//Development: When using "go run...", path must be set manually
-	if strings.Contains(SpaHttpRoot, "go-build") {
-		SpaHttpRoot = "/home/christianh/Workspace/go/asset-storage/vue-ui"
-	}
-	//Testing Build: Adjust path if in "bin" dir
-	if strings.Contains(SpaHttpRoot, "/bin/") || strings.Contains(SpaHttpRoot, "\\bin/") {
-		SpaHttpRoot = filepath.Dir(os.Args[0]) + "/../vue-ui"
+	useSpaHttpRoot := *cmdSpaHttpRoot
+	if useSpaHttpRoot != "" {
+		SpaHttpRoot = useSpaHttpRoot
+		fmt.Printf("Using SPA directory: %s\n", SpaHttpRoot)
 	}
 }
