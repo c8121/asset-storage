@@ -30,7 +30,8 @@ func Init() {
 // Returns content-hash, file-path, mime-type, error
 func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
-	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+	stat, err := os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
 		fmt.Printf("'%s' does not exist\n", path)
 		return "", "", "", os.ErrNotExist
 	}
@@ -39,6 +40,8 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 	var tempDest StorageWriter
 	if config.UseGzip {
 		tempDest, err = NewTempZipFileWriter()
+	} else if stat.Size() <= config.MaxMemFileSize {
+		tempDest, err = NewMemFileWriter()
 	} else {
 		tempDest, err = NewTempFileWriter()
 	}
@@ -85,7 +88,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 	destPath, err := FindByHash(hashHex)
 	if err == nil {
 		fmt.Printf("File already exists: '%s'\n", destPath)
-		util.PanicOnError(os.Remove(tempDest.Name()), "Failed to remove temp file")
+		util.PanicOnError(tempDest.Remove(), "Failed to remove temp file")
 		return hashHex, destPath, mimetypeName, nil
 	}
 

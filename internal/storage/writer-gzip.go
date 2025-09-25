@@ -34,6 +34,10 @@ func (writer *StorageZipFileWriter) Move(path string) error {
 	return os.Rename(writer.Name(), path)
 }
 
+func (writer *StorageZipFileWriter) Remove() error {
+	return os.Remove(writer.Name())
+}
+
 func NewTempZipFileWriter() (*StorageZipFileWriter, error) {
 	file, err := os.CreateTemp(config.AssetStorageTempDir, "asset-*.tmp")
 	if err != nil {

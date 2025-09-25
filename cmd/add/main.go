@@ -19,6 +19,7 @@ var (
 )
 
 func main() {
+
 	flag.Parse()
 	files := flag.Args()
 	if len(files) == 0 {

@@ -14,13 +14,15 @@ var (
 	AssetMetaDataBaseDir = "/tmp/asset-metadata"        // Base directory for all meta-data of assets.
 	AssetMetaDataDb      = "/tmp/asset-metadata.sqlite" // Data source name of database
 
-	UseGzip = false //Note: Cannot be changed after storage was created!
+	UseGzip              = false //Note: Cannot be changed after storage was created!
+	MaxMemFileSize int64 = 1000 * 1000 * 400
 
 	SpaHttpRoot = filepath.Dir(os.Args[0]) + "/vue-ui" // Root directory to service SPA from
 
-	cmdBaseDir     = flag.String("base", "", "Base directory for storage, meta-data, db...")
-	cmdUseGzip     = flag.Bool("gzip", false, "Use GZIP compression")
-	cmdSpaHttpRoot = flag.String("spa", "", "HTTP root directory of SPA app")
+	cmdBaseDir        = flag.String("base", "", "Base directory for storage, meta-data, db...")
+	cmdUseGzip        = flag.Bool("gzip", false, "Use GZIP compression")
+	cmdSpaHttpRoot    = flag.String("spa", "", "HTTP root directory of SPA app")
+	cmdMaxMemFileSize = flag.Int64("maxmem", 0, "Max memory file size in bytes")
 )
 
 // LoadDefault initializes configuration with defaults,
@@ -51,9 +53,13 @@ func LoadDefault() {
 		fmt.Printf("Using GZIP\n")
 	}
 
-	useSpaHttpRoot := *cmdSpaHttpRoot
-	if useSpaHttpRoot != "" {
-		SpaHttpRoot = useSpaHttpRoot
+	if *cmdMaxMemFileSize > 0 {
+		MaxMemFileSize = *cmdMaxMemFileSize
+		fmt.Printf("Max memory file size: %d\n", MaxMemFileSize)
+	}
+
+	if *cmdSpaHttpRoot != "" {
+		SpaHttpRoot = *cmdSpaHttpRoot
 		fmt.Printf("Using SPA directory: %s\n", SpaHttpRoot)
 	}
 }

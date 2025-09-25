@@ -11,6 +11,7 @@ type StorageWriter interface {
 	Write([]byte) (int, error)
 	Close() error
 	Move(path string) error
+	Remove() error
 }
 
 type StorageFileWriter struct {
@@ -31,6 +32,10 @@ func (writer *StorageFileWriter) Close() error {
 
 func (writer *StorageFileWriter) Move(path string) error {
 	return os.Rename(writer.Name(), path)
+}
+
+func (writer *StorageFileWriter) Remove() error {
+	return os.Remove(writer.Name())
 }
 
 func NewTempFileWriter() (*StorageFileWriter, error) {
