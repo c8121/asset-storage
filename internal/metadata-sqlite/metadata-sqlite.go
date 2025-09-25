@@ -32,7 +32,7 @@ func Open() {
 
 	fmt.Printf("Open DB %s\n", config.AssetMetaDataDb)
 	db, err := sql.Open("sqlite", config.AssetMetaDataDb)
-	util.Check(err, "Failed to open sqlite database: "+config.AssetMetaDataDb)
+	util.PanicOnError(err, "Failed to open sqlite database: "+config.AssetMetaDataDb)
 
 	DB = db
 
@@ -157,5 +157,5 @@ func initDatabase() {
 // dbInitExec Execute DDL
 func dbInitExec(ddl string) {
 	_, err := DB.Exec(ddl)
-	util.Check(err, "Failed to init database")
+	util.PanicOnError(err, "Failed to init database")
 }

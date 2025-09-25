@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-func Check(e error, message string) {
+func PanicOnError(e error, message string) {
 	if e != nil {
 		fmt.Println(message)
 		fmt.Printf("Check/Panic: %s\n", e)

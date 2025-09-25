@@ -105,7 +105,7 @@ func (assetMetaData *AssetMetadata) AddOrigin(name string, path string, owner st
 // Save Create dir if not exists and save JSON
 func (assetMetaData *AssetMetadata) Save(path string) error {
 
-	util.Check(os.MkdirAll(filepath.Dir(path), FilePermissions), "Failed to create destination directory")
+	util.PanicOnError(os.MkdirAll(filepath.Dir(path), FilePermissions), "Failed to create destination directory")
 
 	jsonBytes, err := json.Marshal(assetMetaData)
 	if err != nil {

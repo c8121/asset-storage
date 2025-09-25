@@ -37,13 +37,14 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 	fmt.Println("Add file:", path)
 
 	tempDest := TempFile()
+	util.PanicOnError(err, "Failed to create temp file")
 	fmt.Println("Temp file created:", tempDest.Name())
 
 	buf := make([]byte, IoBufferSize)
 	in, err := os.Open(path)
-	util.Check(err, "Failed to open file")
+	util.PanicOnError(err, "Failed to open file")
 	defer func(in *os.File) {
-		util.Check(in.Close(), "Failed to close file")
+		util.PanicOnError(in.Close(), "Failed to close file")
 	}(in)
 
 	hash := sha256.New()
@@ -54,10 +55,10 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 		if err == io.EOF {
 			break
 		}
-		util.Check(err, "Failed to read file")
+		util.PanicOnError(err, "Failed to read file")
 
 		n, err = tempDest.Write(buf[:n])
-		util.Check(err, "Failed to write to temp file")
+		util.PanicOnError(err, "Failed to write to temp file")
 
 		if len(mimetypeName) == 0 {
 			mime := mimetype.Detect(buf[:n])
@@ -68,7 +69,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 		hash.Write(buf[:n])
 	}
 
-	util.Check(tempDest.Close(), "Failed to close temp file")
+	util.PanicOnError(tempDest.Close(), "Failed to close temp file")
 
 	hashHex := fmt.Sprintf("%x", hash.Sum(nil))
 	if len(hashHex) < 2 {
@@ -79,7 +80,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 	destPath, err := FindByHash(hashHex)
 	if err == nil {
 		fmt.Printf("File already exists: '%s'\n", destPath)
-		util.Check(os.Remove(tempDest.Name()), "Failed to remove temp file")
+		util.PanicOnError(os.Remove(tempDest.Name()), "Failed to remove temp file")
 		return hashHex, destPath, mimetypeName, nil
 	}
 
@@ -89,20 +90,20 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 		TimePeriodName(),
 		hashHex[:2])
 
-	util.Check(os.MkdirAll(destDir, FilePermissions), "Failed to create destination directory")
+	util.PanicOnError(os.MkdirAll(destDir, FilePermissions), "Failed to create destination directory")
 
 	destPath = fmt.Sprintf("%s/%s",
 		destDir,
 		destName)
 
 	if _, err := os.Stat(destPath); err == nil || os.IsExist(err) {
-		util.Check(os.Remove(tempDest.Name()), "Failed to remove temp file")
+		util.PanicOnError(os.Remove(tempDest.Name()), "Failed to remove temp file")
 		panic("File already exists") //Panic, because check was done above with FindByHash
 	}
 
 	fmt.Printf("Adding '%s' to %s\n", path, destPath)
-	util.Check(os.Rename(tempDest.Name(), destPath), "Failed to move temp file")
-	util.Check(os.Chmod(destPath, FilePermissions), "Failed to set permissions")
+	util.PanicOnError(tempDest.Move(destPath), "Failed to move temp file")
+	util.PanicOnError(os.Chmod(destPath, FilePermissions), "Failed to set permissions")
 
 	return hashHex, destPath, mimetypeName, nil
 }
@@ -133,7 +134,7 @@ func FindByHash(hashHex string) (assetPath string, err error) {
 	if errors.Is(err, os.ErrNotExist) {
 		return destPath, err
 	}
-	util.Check(err, "Failed to read directory")
+	util.PanicOnError(err, "Failed to read directory")
 	for _, file := range dirs {
 		destDir = filepath.Join(
 			config.AssetStorageBaseDir,
@@ -150,7 +151,7 @@ func FindByHash(hashHex string) (assetPath string, err error) {
 	return "", os.ErrNotExist
 }
 
-// HashFromPath Extract full hash from path (.../XX/XXX...)
+// HashFromPath Extract full hash from path (.../hash[:2]/hash[2:]...)
 func HashFromPath(path string) string {
 	dir, name := filepath.Split(path)
 	_, dir2 := filepath.Split(dir[:len(dir)-1])

@@ -11,6 +11,13 @@ import (
 	"github.com/c8121/asset-storage/internal/util"
 )
 
+/*
+	Update meta-data-database by reading all meta-data JSON-files
+	an writing contents to database.
+
+	Not required if database is intact, because cmd/add also updates the database.
+*/
+
 func main() {
 
 	config.LoadDefault()
@@ -18,7 +25,7 @@ func main() {
 	mdsqlite.Open()
 	defer mdsqlite.Close()
 
-	util.Check(readAllMetaData(config.AssetMetaDataBaseDir), "Failed to read meta-data directory")
+	util.PanicOnError(readAllMetaData(config.AssetMetaDataBaseDir), "Failed to read meta-data directory")
 }
 
 // readAllMetaData recurively find JSON meta-data an write to SQLite database

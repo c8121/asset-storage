@@ -19,5 +19,5 @@ func main() {
 	router := gin.Default()
 	restapi.CreateRoutes(router)
 
-	util.Check(router.Run("localhost:8080"), "Failed to start server")
+	util.PanicOnError(router.Run("localhost:8080"), "Failed to start server")
 }
