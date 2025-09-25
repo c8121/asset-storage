@@ -9,6 +9,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
+	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
 )
 
@@ -30,6 +31,9 @@ func main() {
 
 	config.LoadDefault()
 	storage.Init()
+
+	mdsqlite.Open()
+	defer mdsqlite.Close()
 
 	for _, file := range files {
 		if file[:1] == "-" {
@@ -77,7 +81,7 @@ func addFile(path string) error {
 	}
 
 	//Create/Update meta-data
-	_, err = metadata.AddMetaData(
+	meta, err := metadata.AddMetaData(
 		assetHash,
 		mimeType,
 		filepath.Base(path),
@@ -86,6 +90,13 @@ func addFile(path string) error {
 		stat.ModTime())
 	if err != nil {
 		fmt.Printf("Error adding meta-data '%s': %s\n", path, err)
+		return err
+	}
+
+	//Create/Update meta-data-database
+	err = mdsqlite.AddMetaData(assetHash, meta)
+	if err != nil {
+		fmt.Printf("Error adding meta-data to database '%s': %s\n", path, err)
 	}
 	return err
 }
