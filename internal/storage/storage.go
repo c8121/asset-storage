@@ -36,7 +36,12 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 	}
 	fmt.Println("Add file:", path)
 
-	tempDest := TempFile()
+	var tempDest StorageWriter
+	if config.UseGzip {
+		tempDest, err = NewTempZipFileWriter()
+	} else {
+		tempDest, err = NewTempFileWriter()
+	}
 	util.PanicOnError(err, "Failed to create temp file")
 	fmt.Println("Temp file created:", tempDest.Name())
 
@@ -165,11 +170,19 @@ func HashFromPath(path string) string {
 
 }
 
-// LoadByHash returns AssetMetadata loaded from JSON-file
-func LoadByHash(assetHash string) ([]byte, error) {
+// Open returns asset content
+func Open(assetHash string) (StorageReader, error) {
 	if path, err := FindByHash(assetHash); err == nil {
-		if buf, err := os.ReadFile(path); err == nil {
-			return buf, nil
+
+		var reader StorageReader
+		if config.UseGzip {
+			reader, err = NewZipFileReader(path)
+		} else {
+			reader, err = NewFileReader(path)
+		}
+
+		if err == nil {
+			return reader, nil
 		}
 	}
 
@@ -181,13 +194,4 @@ func TimePeriodName() string {
 	ts := time.Now().UnixMilli() / 1000 / 60 / 24 / 4
 	s := fmt.Sprintf("%x", ts)
 	return s
-}
-
-// TempFile Create temp file of panic
-func TempFile() *os.File {
-	file, err := os.CreateTemp(config.AssetStorageTempDir, "asset-*.tmp")
-	if err != nil {
-		panic(err)
-	}
-	return file
 }

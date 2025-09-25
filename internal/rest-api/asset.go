@@ -2,6 +2,7 @@ package restapi
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/c8121/asset-storage/internal/metadata"
@@ -26,12 +27,24 @@ func GetAsset(c *gin.Context) {
 		return
 	}
 
-	buf, err := storage.LoadByHash(hash)
+	reader, err := storage.Open(hash)
 	if err != nil {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 	}
+	defer reader.Close()
 
-	c.Data(http.StatusOK, meta.MimeType, buf)
+	c.Status(http.StatusOK)
+	c.Header("Content-Type", meta.MimeType)
+
+	buf := make([]byte, 4096)
+	for {
+		n, err := reader.Read(buf)
+		if err == io.EOF {
+			break
+		}
+		c.Writer.Write(buf[:n])
+		c.Writer.Flush()
+	}
 }
 
 // ListAssets is a rest-api handler to send a list of assets

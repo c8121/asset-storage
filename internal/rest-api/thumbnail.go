@@ -34,12 +34,13 @@ func generateThumbnail(assetHash string, meta metadata.AssetMetadata) ([]byte, s
 		return nil, "", fmt.Errorf("mime-type not supported: %s", meta.MimeType)
 	}
 
-	buf, err := storage.LoadByHash(assetHash)
+	reader, err := storage.Open(assetHash)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to load asset: %w", err)
 	}
+	defer reader.Close()
 
-	img, _, err := image.Decode(bytes.NewReader(buf))
+	img, _, err := image.Decode(reader)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to decode asset: %w", err)
 	}

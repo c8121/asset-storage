@@ -14,9 +14,12 @@ var (
 	AssetMetaDataBaseDir = "/tmp/asset-metadata"        // Base directory for all meta-data of assets.
 	AssetMetaDataDb      = "/tmp/asset-metadata.sqlite" // Data source name of database
 
+	UseGzip = false //Note: Cannot be changed after storage was created!
+
 	SpaHttpRoot = filepath.Dir(os.Args[0]) + "/vue-ui" // Root directory to service SPA from
 
 	cmdBaseDir     = flag.String("base", "", "Base directory for storage, meta-data, db...")
+	cmdUseGzip     = flag.Bool("gzip", false, "Use GZIP compression")
 	cmdSpaHttpRoot = flag.String("spa", "", "HTTP root directory of SPA app")
 )
 
@@ -42,6 +45,11 @@ func LoadDefault() {
 	AssetStorageTempDir = useBaseDir + "/asset-storage/tmp"
 	AssetMetaDataBaseDir = useBaseDir + "/asset-storage/meta"
 	AssetMetaDataDb = useBaseDir + "/asset-storage/db/asset-metadata.sqlite"
+
+	UseGzip = *cmdUseGzip
+	if UseGzip {
+		fmt.Printf("Using GZIP\n")
+	}
 
 	useSpaHttpRoot := *cmdSpaHttpRoot
 	if useSpaHttpRoot != "" {
