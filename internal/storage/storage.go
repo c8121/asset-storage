@@ -37,14 +37,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 	}
 	fmt.Println("Add file:", path)
 
-	var tempDest StorageWriter
-	if config.UseGzip {
-		tempDest, err = NewTempZipFileWriter()
-	} else if stat.Size() <= config.MaxMemFileSize {
-		tempDest, err = NewMemFileWriter()
-	} else {
-		tempDest, err = NewTempFileWriter()
-	}
+	tempDest, err := getTempWriter(stat.Size())
 	util.PanicOnError(err, "Failed to create temp file")
 	fmt.Println("Temp file created:", tempDest.Name())
 
@@ -203,4 +196,24 @@ func TimePeriodName() string {
 	ts := time.Now().UnixMilli() / 1000 / 60 / 24 / 4
 	s := fmt.Sprintf("%x", ts)
 	return s
+}
+
+func getTempWriter(size int64) (StorageWriter, error) {
+
+	var writer StorageWriter
+	var err error
+
+	if config.UseGzip {
+		if size <= config.MaxMemFileSize {
+			writer, err = NewMemZipFileWriter()
+		} else {
+			writer, err = NewTempZipFileWriter()
+		}
+	} else if size <= config.MaxMemFileSize {
+		writer, err = NewMemFileWriter()
+	} else {
+		writer, err = NewTempFileWriter()
+	}
+
+	return writer, err
 }
