@@ -13,7 +13,7 @@ import (
 
 /*
 	Update meta-data-database by reading all meta-data JSON-files
-	an writing contents to database.
+	and writing contents to database.
 
 	Not required if database is intact, because cmd/add also updates the database.
 */
