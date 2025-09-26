@@ -17,7 +17,7 @@ To add new files to the archive
 
 ### spa-server
 
-A HTTP Server which provides a Single-Page-Application to browser the storage
+A HTTP Server which provides a Single-Page-Application to browse the storage
 
 *Note: This is work in progress, important features like TLS and authentication are missing at the moment*
 

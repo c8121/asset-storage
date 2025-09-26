@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/sha256"
 	"flag"
 	"fmt"
 	"os"
@@ -14,7 +15,9 @@ var (
 	AssetMetaDataBaseDir = "/tmp/asset-metadata"        // Base directory for all meta-data of assets.
 	AssetMetaDataDb      = "/tmp/asset-metadata.sqlite" // Data source name of database
 
-	UseGzip              = false //Note: Cannot be changed after storage was created!
+	UseGzip = false //Note: Cannot be changed after storage was created!
+	XorKey  []byte  //Note: Cannot be changed after storage was created!
+
 	MaxMemFileSize int64 = 1000 * 1000 * 400
 
 	SpaHttpRoot = filepath.Dir(os.Args[0]) + "/vue-ui" // Root directory to service SPA from
@@ -23,6 +26,8 @@ var (
 	cmdUseGzip        = flag.Bool("gzip", false, "Use GZIP compression")
 	cmdSpaHttpRoot    = flag.String("spa", "", "HTTP root directory of SPA app")
 	cmdMaxMemFileSize = flag.Int64("maxmem", 0, "Max memory file size in bytes")
+
+	cmdXorKey = flag.String("xor", "", "XOR Key for content obfusication")
 )
 
 // LoadDefault initializes configuration with defaults,
@@ -61,5 +66,15 @@ func LoadDefault() {
 	if *cmdSpaHttpRoot != "" {
 		SpaHttpRoot = *cmdSpaHttpRoot
 		fmt.Printf("Using SPA directory: %s\n", SpaHttpRoot)
+	}
+
+	if *cmdXorKey != "" {
+		if len(*cmdXorKey) < 64 {
+			sha := sha256.New()
+			XorKey = fmt.Appendf(nil, "%x", sha.Sum([]byte(*cmdXorKey)))
+		} else {
+			XorKey = []byte(*cmdXorKey)
+		}
+		fmt.Printf("Xor obfusication enabled, key length: %d (%s)\n", len(XorKey), string(XorKey))
 	}
 }

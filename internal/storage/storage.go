@@ -41,6 +41,13 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 	util.PanicOnError(err, "Failed to create temp file")
 	fmt.Println("Temp file created:", tempDest.Name())
 
+	var outWriter io.Writer
+	if len(config.XorKey) > 0 {
+		outWriter = NewXorWriter(tempDest)
+	} else {
+		outWriter = tempDest
+	}
+
 	buf := make([]byte, IoBufferSize)
 	in, err := os.Open(path)
 	if err != nil {
@@ -63,16 +70,17 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 		}
 		util.PanicOnError(err, "Failed to read file")
 
-		n, err = tempDest.Write(buf[:n])
-		util.PanicOnError(err, "Failed to write to temp file")
-		size += int64(n)
-
-		if len(mimetypeName) == 0 {
+		if len(mimetypeName) == 0 { //must be before outWriter.Write, because buf might get xor'ed
 			mime := mimetype.Detect(buf[:n])
 			mimetypeName = mime.String()
 		}
 
-		hash.Write(buf[:n])
+		hash.Write(buf[:n]) //must be before outWriter.Write
+
+		n, err = outWriter.Write(buf[:n])
+		util.PanicOnError(err, "Failed to write to temp file")
+		size += int64(n)
+
 	}
 
 	util.PanicOnError(tempDest.Close(), "Failed to close temp file")
@@ -184,7 +192,11 @@ func Open(assetHash string) (StorageReader, error) {
 		}
 
 		if err == nil {
-			return reader, nil
+			if len(config.XorKey) > 0 {
+				return NewXorReader(reader), nil
+			} else {
+				return reader, nil
+			}
 		}
 	}
 

@@ -37,7 +37,7 @@ func GetAsset(c *gin.Context) {
 	c.Status(http.StatusOK)
 	c.Header("Content-Type", meta.MimeType)
 
-	buf := make([]byte, 4096)
+	buf := make([]byte, storage.IoBufferSize)
 	for {
 		n, err := reader.Read(buf)
 		if err == io.EOF {
