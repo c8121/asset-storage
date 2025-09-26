@@ -1,6 +1,7 @@
 package mdsqlite
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"path/filepath"
@@ -100,7 +101,26 @@ func ListAssets(offset, count int, filter *AssetListFilter) ([]AssetListItem, er
 // AddMetaData Upsert meta-data to database
 func AddMetaData(hash string, meta *metadata.AssetMetadata) error {
 
-	stmt, err := DB.Prepare("INSERT INTO asset(hash, mimetype) VALUES(?, ?) " +
+	ctx := context.Background()
+	tx, err := DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = AddMetaDataTx(tx, hash, meta)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+
+}
+
+// AddMetaDataTx Upsert meta-data to database within a transaction
+func AddMetaDataTx(tx *sql.Tx, hash string, meta *metadata.AssetMetadata) error {
+
+	stmt, err := tx.Prepare("INSERT INTO asset(hash, mimetype) VALUES(?, ?) " +
 		"ON CONFLICT DO UPDATE SET mimetype=excluded.mimetype;")
 	if err != nil {
 		return fmt.Errorf("failed to prepare: %w", err)
@@ -113,7 +133,7 @@ func AddMetaData(hash string, meta *metadata.AssetMetadata) error {
 	}
 
 	for _, origin := range meta.Origins {
-		err = addOrigin(hash, &origin)
+		err = AddOriginTx(tx, hash, &origin)
 		if err != nil {
 			return err
 		}
@@ -123,15 +143,33 @@ func AddMetaData(hash string, meta *metadata.AssetMetadata) error {
 
 }
 
-// addOrigin Add Origin to database if not exists
-func addOrigin(hash string, origin *metadata.Origin) error {
+// AddOrigin Add Origin to database if not exists
+func AddOrigin(hash string, origin *metadata.Origin) error {
 
-	delErr := removeOrigin(hash, origin)
+	ctx := context.Background()
+	tx, err := DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = AddOriginTx(tx, hash, origin)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+// AddOriginTx Add Origin to database if not exists within a transaction
+func AddOriginTx(tx *sql.Tx, hash string, origin *metadata.Origin) error {
+
+	delErr := removeOrigin(tx, hash, origin)
 	if delErr != nil {
 		return delErr
 	}
 
-	stmt, err := DB.Prepare("INSERT INTO origin(hash, name, path, owner, filetime) VALUES(?, ?, ?, ?, ?);")
+	stmt, err := tx.Prepare("INSERT INTO origin(hash, name, path, owner, filetime) VALUES(?, ?, ?, ?, ?);")
 	if err != nil {
 		return fmt.Errorf("failed to prepare: %w", err)
 	}
@@ -146,9 +184,9 @@ func addOrigin(hash string, origin *metadata.Origin) error {
 }
 
 // removeOrigin Remove Origin from database
-func removeOrigin(hash string, origin *metadata.Origin) error {
+func removeOrigin(tx *sql.Tx, hash string, origin *metadata.Origin) error {
 
-	stmt, err := DB.Prepare("DELETE FROM origin WHERE " +
+	stmt, err := tx.Prepare("DELETE FROM origin WHERE " +
 		"hash = ? " +
 		"AND name = ? " +
 		"AND path = ? " +
@@ -174,6 +212,8 @@ func initDatabase() {
 	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_name on origin(name);")
 	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_owner on origin(owner);")
 	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_filetime on origin(filetime);")
+
+	dbInitExec("PRAGMA journal_mode = WAL")
 }
 
 // dbInitExec Execute DDL
