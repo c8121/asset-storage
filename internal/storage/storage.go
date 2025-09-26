@@ -50,6 +50,10 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
 	buf := make([]byte, IoBufferSize)
 	in, err := os.Open(path)
+	if err != nil {
+		fmt.Printf("Cannot open '%s': %s\n", path, err)
+		return "", "", "", os.ErrNotExist
+	}
 	util.PanicOnError(err, "Failed to open file")
 	defer func(in *os.File) {
 		util.PanicOnError(in.Close(), "Failed to close file")
@@ -57,6 +61,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
 	hash := sha256.New()
 	mimetypeName := ""
+	size := int64(0)
 
 	for {
 		n, err := in.Read(buf)
@@ -67,11 +72,11 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
 		n, err = tempDest.Write(buf[:n])
 		util.PanicOnError(err, "Failed to write to temp file")
+		size += int64(n)
 
 		if len(mimetypeName) == 0 {
 			mime := mimetype.Detect(buf[:n])
 			mimetypeName = mime.String()
-			fmt.Println("MIME type:", mimetypeName)
 		}
 
 		hash.Write(buf[:n])
@@ -79,11 +84,12 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
 	util.PanicOnError(tempDest.Close(), "Failed to close temp file")
 
+	fmt.Printf("MIME type: %s, Size: %d\n", mimetypeName, size)
+
 	hashHex := fmt.Sprintf("%x", hash.Sum(nil))
 	if len(hashHex) < 2 {
 		panic("Invalid hash")
 	}
-	fmt.Println("Hash:", hashHex)
 
 	destPath, err := FindByHash(hashHex)
 	if err == nil {
