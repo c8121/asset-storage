@@ -1,5 +1,21 @@
 # asset-storage
 
+Basically a DAM-System (Digital Asset Management). Includes a Webserver providing a SPA (Single Page Application) 
+to browse the storage content.
+
+## Goals
+
+**DAM**: Manage Pictures, Documents...
+
+**Portable**: Runs on Windows, Linux, Mac. No installation required, just copy. Can be copied to a external HD or Stick
+which then can be used to store assets from different devices.
+
+**Server included**: Can be used on a NAS for example.
+
+**Deduplication**: Same file is stored automatically only once, no matter how often it was added.
+
+## Features
+
 Store files into an archive directory
 
 - Deduplicated (same file only once, determined by content-hash)
@@ -21,7 +37,7 @@ A HTTP Server which provides a Single-Page-Application to browse the storage
 
 *Note: This is work in progress, important features like TLS and authentication are missing at the moment*
 
-    spa-server [-gzip] [-base <directory>] [-spa <http-root-directory of spa-app>]
+    spa-server [-gzip] [-xor <key>] [-base <directory>] [-spa <http-root-directory of spa-app>]
 
 ### rest-server
 
@@ -29,7 +45,7 @@ A HTTP Server which provides a REST-API to access the storage. This server is in
 
 *Note: This is work in progress, important features like TLS and authentication are missing at the moment*
 
-    rest-server [-gzip] [-base <directory>]
+    rest-server [-gzip] [-xor <key>] [-base <directory>]
 
 ### metadata-db-create
 
@@ -42,9 +58,10 @@ Not required if database is intact, because `add` also updates the database.
 ## App Commandline args
 
 
-Parameter     | Description
---------------| -----------
-base          | Asset-storage base dir containing all data (file, meta-data, database). Default is `$HOME/asset-storage`
-gzip          | Use gzip to compress data. **Important:** Cannot be mixed, use always or never for one storage.
-maxmem        | Max size in bytes when reading files while adding to storage. If a file is larger, it will not be read into memory and a temp-file will be used
-spa           | HttpRoot-Directory which contains the SPA-files (HTML, JS, etc)
+| Parameter         | Description                                                                                                                                                                                                                                                                                                                                     |
+|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| base <dir&gt;     | Asset-storage base dir containing all data (file, meta-data, database). Default is `$HOME/asset-storage`                                                                                                                                                                                                                                        |
+| gzip              | Use gzip to compress data.<br/> **Important:** Cannot be mixed, use always or never for one storage.                                                                                                                                                                                                                                            |
+| maxmem <bytes&gt; | Max size in bytes when reading files while adding to storage. If a file is larger, it will not be read into memory and a temp-file will be used                                                                                                                                                                                                 |
+| spa <dir&gt;      | HttpRoot-Directory which contains the SPA-files (HTML, JS, etc)                                                                                                                                                                                                                                                                                 |
+| xor <key&gt;      | Content will be XOR'ed to obfusicate. This is to avoid manual changes to files (when content is XOR'ed, files cannot be openend and modified directly from storage directory) <br/>**Important:** Cannot be mixed, use always with same key or never for one storage. <br/>**Important:** Use same key for all apps with same storage directory |
