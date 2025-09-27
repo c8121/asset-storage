@@ -108,17 +108,16 @@ func encodeTest(t *testing.T, s string, k string) {
 
 	r := storage.NewXorReader(trw)
 
-	out := make([]byte, 19)
-	os := make([]byte, 0)
+	ts = ""
+	buf := make([]byte, 3)
 	for {
-		n, err := r.Read(out)
+		n, err := r.Read(buf)
 		if err != nil {
 			break
 		}
-		os = append(os, out[:n]...)
+		ts += string(buf[:n])
 	}
 
-	ts = string(os)
 	if s != ts {
 		t.Errorf("Data not restored: '%s'\n", ts)
 	}

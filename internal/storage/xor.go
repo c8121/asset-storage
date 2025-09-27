@@ -4,34 +4,36 @@ import (
 	"github.com/c8121/asset-storage/internal/config"
 )
 
+type XorEncoder interface {
+	Encode(b []byte)
+}
+
+type Xor struct {
+	Key []byte
+	kl  int //key length
+	ki  int //key index
+}
+
 // XorReader wraps a StorageReader, xor's bytes on Read(...)
 type XorReader struct {
 	reader StorageReader
-	buf    []byte
+	xor    XorEncoder
 }
 
-// XorReader wraps a StorageWriter, xor's bytes on Write(...)
+// XorWriter wraps a StorageWriter, xor's bytes on Write(...)
 type XorWriter struct {
 	writer StorageWriter
-	buf    []byte
+	xor    XorEncoder
 }
 
 // Read reads from wrapped reader, xor'ing all bytes
 func (r *XorReader) Read(p []byte) (int, error) {
-
-	if len(config.XorKey) == 0 {
-		return r.reader.Read(p)
-	}
-
-	min := min(len(r.buf), len(p))
-
-	n, err := r.reader.Read(r.buf[:min])
+	n, err := r.reader.Read(p)
 	if err != nil {
-		return n, err
+		return 0, err
 	}
-	xor(r.buf[:n])
-	copy(p, r.buf[:n])
-	return n, err
+	r.xor.Encode(p)
+	return n, nil
 }
 
 // Close closes the wrapped reader
@@ -41,54 +43,33 @@ func (r *XorReader) Close() error {
 
 // NewXorReader creates a new XorReader, wrapping the given StorageReader
 func NewXorReader(sr StorageReader) *XorReader {
-	return &XorReader{sr, make([]byte, len(config.XorKey))}
+	return &XorReader{sr, &Xor{config.XorKey, len(config.XorKey), 0}}
 }
 
 // Write writes to wrapped writer, xor.ing all bytes
 func (w *XorWriter) Write(p []byte) (int, error) {
-
-	if len(config.XorKey) == 0 {
-		return w.writer.Write(p)
-	}
-
-	n := len(p)
-	bn := len(w.buf)
-	for off := 0; off < n; {
-		i := 0
-		for ; i < bn && off < n; i++ {
-			w.buf[i] = p[off]
-			off++
-		}
-		xor(w.buf[:i])
-		_, err := w.writer.Write(w.buf[:i])
-		if err != nil {
-			return 0, err
-		}
-	}
-	return len(p), nil
+	w.xor.Encode(p)
+	return w.writer.Write(p)
 }
 
 // NewXorWriter creates a new XorWriter, wrapping the given StorageWriter
 func NewXorWriter(sw StorageWriter) *XorWriter {
-	return &XorWriter{sw, make([]byte, len(config.XorKey))}
+	return &XorWriter{sw, &Xor{config.XorKey, len(config.XorKey), 0}}
 }
 
-// xor if config.XorKey length greater 0
-func xor(b []byte) {
+// Encode does b ^ e.Key if key length greater 0
+func (e *Xor) Encode(b []byte) {
 
-	kl := len(config.XorKey)
-	if kl == 0 {
+	if e.kl == 0 {
 		return
 	}
 
-	ki := 0
-
 	for i := range b {
 
-		b[i] ^= config.XorKey[ki]
+		b[i] ^= e.Key[e.ki]
 
-		if ki++; ki == kl {
-			ki = 0
+		if e.ki++; e.ki == e.kl {
+			e.ki = 0
 		}
 	}
 }
