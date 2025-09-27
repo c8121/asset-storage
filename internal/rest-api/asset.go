@@ -51,17 +51,16 @@ func GetAsset(c *gin.Context) {
 // ListAssets is a rest-api handler to send a list of assets
 func ListAssets(c *gin.Context) {
 
-	var filter = &mdsqlite.AssetListFilter{
+	var filter = &mdsqlite.AssetFilter{
 		MimeType: strings.ReplaceAll(
 			strings.ReplaceAll(c.Param("mimetype"),
 				"_", "/"),
 			"*", "%"),
+		Offset: util.Atoi(c.Param("offset"), 0),
+		Count:  util.Atoi(c.Param("count"), 0),
 	}
 
-	items, err := mdsqlite.ListAssets(
-		util.Atoi(c.Param("offset"), 0),
-		util.Atoi(c.Param("count"), 10),
-		filter)
+	items, err := mdsqlite.ListAssets(filter)
 	if err != nil {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 		return

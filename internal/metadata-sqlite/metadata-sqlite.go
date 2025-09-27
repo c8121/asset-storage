@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
-	"time"
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
@@ -15,18 +14,6 @@ import (
 
 var (
 	DB *sql.DB
-)
-
-type (
-	AssetListItem struct {
-		Hash     string
-		Name     string
-		FileTime time.Time
-	}
-
-	AssetListFilter struct {
-		MimeType string
-	}
 )
 
 // Open Connect to SQLite database file + init
@@ -48,54 +35,6 @@ func Open() {
 func Close() {
 	fmt.Printf("Close DB %s\n", config.AssetMetaDataDb)
 	util.LogError(DB.Close())
-}
-
-// ListAssets returns an array of AssetListItem, sorted by date desc
-func ListAssets(offset, count int, filter *AssetListFilter) ([]AssetListItem, error) {
-
-	var query = "SELECT o.hash, name, filetime FROM origin o INNER JOIN asset a ON o.hash = a.hash "
-	var where = ""
-	var limit = "ORDER BY filetime DESC, o.hash ASC LIMIT ? OFFSET ?;"
-
-	var params = make([]any, 0)
-
-	if filter != nil && filter.MimeType != "" {
-		params = append(params, filter.MimeType)
-		where += "(mimetype LIKE ?)"
-	}
-
-	params = append(params, count)
-	params = append(params, offset)
-
-	if where != "" {
-		query += "WHERE " + where + " "
-	}
-	query += limit
-	//fmt.Printf("Query: %s %v\n", query, params)
-
-	stmt, err := DB.Prepare(query)
-	if err != nil {
-		return nil, err
-	}
-	defer util.CloseOrLog(stmt)
-
-	var items []AssetListItem
-
-	if rows, err := stmt.Query(params...); err == nil {
-		defer util.CloseOrLog(rows)
-		for rows.Next() {
-			var item AssetListItem
-			if err := rows.Scan(&item.Hash, &item.Name, &item.FileTime); err != nil {
-				return items, err
-			}
-			items = append(items, item)
-		}
-
-	} else {
-		return items, err
-	}
-
-	return items, nil
 }
 
 // AddMetaData Upsert meta-data to database
@@ -199,25 +138,4 @@ func removeOrigin(tx *sql.Tx, hash string, origin *metadata.Origin) error {
 
 	_, err = stmt.Exec(hash, origin.Name, origin.Path, origin.Owner, origin.FileTime)
 	return err
-}
-
-// initDatabase Create tables and indexes
-func initDatabase() {
-	fmt.Printf("Init DB %s\n", config.AssetMetaDataDb)
-	dbInitExec("CREATE TABLE IF NOT EXISTS asset(hash TEXT(64) PRIMARY KEY, " +
-		"mimetype TEXT(128));")
-	dbInitExec("CREATE TABLE IF NOT EXISTS origin(hash TEXT(64), " +
-		"name TEXT(1000), path TEXT(4000), owner TEXT(100), filetime DATETIME);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_hash on origin(hash);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_name on origin(name);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_owner on origin(owner);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_filetime on origin(filetime);")
-
-	dbInitExec("PRAGMA journal_mode = WAL")
-}
-
-// dbInitExec Execute DDL
-func dbInitExec(ddl string) {
-	_, err := DB.Exec(ddl)
-	util.PanicOnError(err, "Failed to init database")
 }
