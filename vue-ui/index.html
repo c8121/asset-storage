@@ -30,6 +30,10 @@
                     path: '/',
                     component: () => VueComponentUtil.loadComponent('/vue/components/AssetList.js')
                 },
+                {
+                    path: '/upload',
+                    component: () => VueComponentUtil.loadComponent('/vue/components/Upload.js')
+                },
             ]
 
             const router = VueRouter.createRouter({
