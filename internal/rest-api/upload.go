@@ -3,6 +3,7 @@ package restapi
 import (
 	"io"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -91,6 +92,8 @@ func AddUploadedFile(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
+
+	util.LogError(os.Remove(path))
 
 	c.JSON(http.StatusOK, req)
 }
