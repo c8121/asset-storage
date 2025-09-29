@@ -3,8 +3,6 @@ package storage
 import (
 	"bytes"
 	"os"
-
-	"github.com/c8121/asset-storage/internal/config"
 )
 
 type StorageMemFileWriter struct {
@@ -39,7 +37,5 @@ func (writer *StorageMemFileWriter) Remove() error {
 }
 
 func NewMemFileWriter(size int64) (*StorageMemFileWriter, error) {
-func NewMemFileWriter() (*StorageMemFileWriter, error) {
-	return &StorageMemFileWriter{bytes.NewBuffer(make([]byte, 0, config.MaxMemFileSize))}, nil
 	return &StorageMemFileWriter{bytes.NewBuffer(make([]byte, 0, size))}, nil
 }
