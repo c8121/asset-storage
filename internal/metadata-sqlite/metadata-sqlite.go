@@ -22,8 +22,14 @@ func Open() {
 	dbDir := filepath.Dir(config.AssetMetaDataDb)
 	util.CreateDirIfNotExists(dbDir, metadata.FilePermissions)
 
+	url := "file:" + config.AssetMetaDataDb +
+		"?_pragma=journal_mode(wal)" +
+		"&_pragma=busy_timeout(500)" +
+		"&_pragma=synchronous(normal)" +
+		"&_txlock=immediate"
+
 	fmt.Printf("Open DB %s\n", config.AssetMetaDataDb)
-	db, err := sql.Open("sqlite", config.AssetMetaDataDb)
+	db, err := sql.Open("sqlite", url)
 	util.PanicOnError(err, "Failed to open sqlite database: "+config.AssetMetaDataDb)
 
 	DB = db
