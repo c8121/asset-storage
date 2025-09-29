@@ -65,10 +65,10 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
 	for {
 		n, err := in.Read(buf)
-		if err == io.EOF {
+		if n == 0 && err == io.EOF {
 			break
 		}
-		util.PanicOnError(err, "Failed to read file")
+		util.PanicOnIoError(err, "Failed to read file")
 
 		if len(mimetypeName) == 0 { //must be before outWriter.Write, because buf might get xor'ed
 			mime := mimetype.Detect(buf[:n])

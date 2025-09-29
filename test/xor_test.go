@@ -7,6 +7,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 type TestReaderWriter struct {
@@ -73,9 +74,10 @@ func readerTest(t *testing.T) {
 	os := make([]byte, 0)
 	for {
 		n, err := trw.Read(out)
-		if err != nil {
+		if n == 0 && err == io.EOF {
 			break
 		}
+		util.PanicOnIoError(err, "Failed to read bytes")
 		os = append(os, out[:n]...)
 	}
 
@@ -112,9 +114,10 @@ func encodeTest(t *testing.T, s string, k string) {
 	buf := make([]byte, 3)
 	for {
 		n, err := r.Read(buf)
-		if err != nil {
+		if n == 0 && err == io.EOF {
 			break
 		}
+		util.PanicOnIoError(err, "Failed to read file")
 		ts += string(buf[:n])
 	}
 

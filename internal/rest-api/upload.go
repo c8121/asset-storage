@@ -1,6 +1,7 @@
 package restapi
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/c8121/asset-storage/internal/storage"
@@ -22,9 +23,10 @@ func ReceiveUpload(c *gin.Context) {
 	buf := make([]byte, 4096)
 	for {
 		n, err := c.Request.Body.Read(buf)
-		if err != nil {
+		if n == 0 && err == io.EOF {
 			break
 		}
+		util.PanicOnIoError(err, "Failed to read body")
 
 		_, err = w.Write(buf[:n])
 		if err != nil {

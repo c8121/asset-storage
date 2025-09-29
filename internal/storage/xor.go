@@ -1,7 +1,10 @@
 package storage
 
 import (
+	"io"
+
 	"github.com/c8121/asset-storage/internal/config"
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 type XorEncoder interface {
@@ -29,9 +32,10 @@ type XorWriter struct {
 // Read reads from wrapped reader, xor'ing all bytes
 func (r *XorReader) Read(p []byte) (int, error) {
 	n, err := r.reader.Read(p)
-	if err != nil {
-		return 0, err
+	if n == 0 && err == io.EOF {
+		return n, err
 	}
+	util.PanicOnIoError(err, "Failed to read bytes")
 	r.xor.Encode(p)
 	return n, nil
 }

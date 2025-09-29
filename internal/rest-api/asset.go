@@ -40,9 +40,11 @@ func GetAsset(c *gin.Context) {
 	buf := make([]byte, storage.IoBufferSize)
 	for {
 		n, err := reader.Read(buf)
-		if err == io.EOF {
+		if n == 0 && err == io.EOF {
 			break
 		}
+		util.PanicOnIoError(err, "Failed to read file")
+
 		c.Writer.Write(buf[:n])
 		c.Writer.Flush()
 	}
