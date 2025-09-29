@@ -76,9 +76,9 @@ func NewTempZipFileWriter() (*StorageZipFileWriter, error) {
 	return zip, nil
 }
 
-func NewMemZipFileWriter() (*StorageZipFileWriter, error) {
+func NewMemZipFileWriter(size int64) (*StorageZipFileWriter, error) {
 
-	buf := bytes.NewBuffer(make([]byte, 0, config.MaxMemFileSize))
+	buf := bytes.NewBuffer(make([]byte, 0, size))
 
 	zip := &StorageZipFileWriter{}
 	zip.File = nil

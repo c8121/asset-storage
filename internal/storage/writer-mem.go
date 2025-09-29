@@ -38,6 +38,8 @@ func (writer *StorageMemFileWriter) Remove() error {
 	return nil
 }
 
+func NewMemFileWriter(size int64) (*StorageMemFileWriter, error) {
 func NewMemFileWriter() (*StorageMemFileWriter, error) {
 	return &StorageMemFileWriter{bytes.NewBuffer(make([]byte, 0, config.MaxMemFileSize))}, nil
+	return &StorageMemFileWriter{bytes.NewBuffer(make([]byte, 0, size))}, nil
 }
