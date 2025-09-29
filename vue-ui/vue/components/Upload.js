@@ -3,32 +3,13 @@
 
         template: `
             <div :class="cssClass">
-                <div @dragover="dragOver" @drop="drop">
+                <div @dragover="dragOver" @drop="drop" :class="innerCssClass">
                     <label class="btn btn-secondary" role="button" for="formFileMultiple" v-html="labelCaption"></label>
                     <input class="d-none" type="file" @change="fileChanged" id="formFileMultiple" multiple>
-                    <button v-if="showUploadButton" @click="upload" class="btn btn-primary">Upload</button>
                 </div>
-                                
-                <div v-if="showItemsList && object && object.items" class="mt-3">
-                    <div class="assets row row-cols-auto g-3">
-                        <div class="asset col" v-for="asset in object.items">
-                            <div class="card bg-light">
-                                <img @click="editMetaData(asset)" :src="'/assets/preview?HASH=' + asset.HASH" />
-                                <div class="card-body">
-                                    {{ asset.meta.name }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
             </div>`,
 
         props: {
-            showItemsList: {
-                type: Boolean,
-                default: true
-            },
             labelCaption: {
                 type: String,
                 default: "Datei hochladen oder hierher ziehen"
@@ -36,16 +17,15 @@
             cssClass: {
                 type: String,
                 default: "m-2"
+            },
+            innerCssClass: {
+                type: String,
+                default: "p-5 border border-primary-subtle bg-body-tertiary"
             }
         },
 
         data() {
-            return {
-                object: {},
-                fileNames: [],
-                fileData: [],
-                showUploadButton: false
-            }
+            return {}
         },
         methods: {
             fileChanged(e) {
@@ -54,53 +34,42 @@
                 if (!files.length)
                     return;
 
-                //Remove previously selected files
-                self.fileNames.splice(0, self.fileNames.length);
-                self.fileData.splice(0, self.fileData.length);
-
-                self.showUploadButton = true;
-
                 for (const file of files) {
-                    const reader = new FileReader();
-                    reader.onload = function () {
-                        self.fileNames.push(file.name);
-                        self.fileData.push(this.result);
-                        if (self.fileData.length === files.length)
-                            self.upload();
+
+                    console.log(file)
+
+                    const request = new XMLHttpRequest();
+                    request.open('POST', '/assets/upload');
+                    request.onprogress = function() {
+                        console.log("Upload progress: " + arguments)
+                        console.log(arguments)
                     }
-                    reader.readAsDataURL(file);
+                    request.onreadystatechange = function () {
+                        if (request.readyState === 4) {
+                            if (request.status === 200) {
+                                
+                                const json = JSON.parse(request.responseText)
+                                console.log(json)
+
+                                self.addUploadedFile(json, file)
+
+                            } else if (this.status !== 0)
+                                console.error("Upload failed", request)
+                        }
+                    }
+                    request.send(file);
                 }
             },
-            upload() {
-
-                const self = this;
-
-                if (!self.fileData)
-                    return;
-
-                self.showUploadButton = false;
-
-                const query = {
-                    names: self.fileNames,
-                    dataUrls: self.fileData
+            addUploadedFile(json, file) {
+                const query = { 
+                    TempName: json.tempName,
+                    Name: file.name,
+                    Owner: "spa", //TODO
+                    FileTime: new Date(file.lastModified).toJSON()
                 }
-                client.post('/assets/upload', query).then((json) => {
-                    self.object = json;
-                    self.$emit('uploadFinished', json);
+                client.post("/assets/upload/add", query).then((json) => {
+                    console.log(json);
                 })
-            },
-            editMetaData(asset) {
-                const self = this;
-                const dlg = dialog.create();
-                dlg.setTitle("Edit Meta-Data");
-                dlg.setConfirmText("Save");
-                VueComponentUtil.loadComponent('/vue/components/AssetMetaDataEdit.js', {hash: asset.HASH}).then((component) => {
-                    const vm = dlg.setContentComponent(component);
-                    vm.showSaveButton(false);
-                    dlg.addOnConfirmListener(() => vm.updateMetaData().then((metaData) => {
-                        asset.meta = metaData;
-                    }));
-                });
             },
             dragOver(e) {
                 e.preventDefault();

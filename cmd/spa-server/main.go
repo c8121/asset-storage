@@ -4,6 +4,7 @@ import (
 	"github.com/c8121/asset-storage/internal/config"
 	restapi "github.com/c8121/asset-storage/internal/rest-api"
 	spaserver "github.com/c8121/asset-storage/internal/spa-server"
+	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 
@@ -13,6 +14,7 @@ import (
 func main() {
 
 	config.LoadDefault()
+	storage.Init()
 
 	mdsqlite.Open()
 	defer mdsqlite.Close()
