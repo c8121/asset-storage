@@ -14,6 +14,8 @@ which then can be used to store assets from different devices.
 
 **Deduplication**: Same file is stored automatically only once, no matter how often it was added.
 
+**Resilience**: Files are stored in directories, one per time period, to enable quick backups even on large storages. Meta-Data stored separately in JSON-Format. Database can be recreated from Meta-Data and vice versa.
+
 ## Features
 
 Store files into an archive directory
