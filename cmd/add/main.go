@@ -96,29 +96,32 @@ func addFile(path string) error {
 func addFileAndMetadata(path string, stat os.FileInfo) error {
 
 	//Add file to storage
-	assetHash, _, mimeType, err := storage.AddFile(path)
+	assetHash, _, mimeType, isNew, err := storage.AddFile(path)
 	if err != nil {
 		fmt.Printf("Error adding '%s': %s\n", path, err)
 		return err
 	}
 
-	//Create/Update meta-data
-	meta, err := metadata.AddMetaData(
-		assetHash,
-		mimeType,
-		filepath.Base(path),
-		filepath.Dir(path),
-		currentUser.Username,
-		stat.ModTime())
-	if err != nil {
-		fmt.Printf("Error adding meta-data '%s': %s\n", path, err)
-		return err
-	}
+	if isNew || !config.SkipMetaDataIfExists {
 
-	//Create/Update meta-data-database
-	err = mdsqlite.AddMetaData(assetHash, meta)
-	if err != nil {
-		fmt.Printf("Error adding meta-data to database '%s': %s\n", path, err)
+		//Create/Update meta-data
+		meta, err := metadata.AddMetaData(
+			assetHash,
+			mimeType,
+			filepath.Base(path),
+			filepath.Dir(path),
+			currentUser.Username,
+			stat.ModTime())
+		if err != nil {
+			fmt.Printf("Error adding meta-data '%s': %s\n", path, err)
+			return err
+		}
+
+		//Create/Update meta-data-database
+		err = mdsqlite.AddMetaData(assetHash, meta)
+		if err != nil {
+			fmt.Printf("Error adding meta-data to database '%s': %s\n", path, err)
+		}
 	}
 	return err
 }

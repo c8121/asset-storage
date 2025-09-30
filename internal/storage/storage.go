@@ -28,12 +28,12 @@ func Init() {
 
 // AddFile adds one or more file to asset-storage.
 // Returns content-hash, file-path, mime-type, error
-func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
+func AddFile(path string) (assetHash, assetPath, mimeType string, isNew bool, err error) {
 
 	stat, err := os.Stat(path)
 	if errors.Is(err, os.ErrNotExist) {
 		fmt.Printf("'%s' does not exist\n", path)
-		return "", "", "", os.ErrNotExist
+		return "", "", "", true, os.ErrNotExist
 	}
 	fmt.Println("Add file:", path)
 
@@ -52,7 +52,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 	in, err := os.Open(path)
 	if err != nil {
 		fmt.Printf("Cannot open '%s': %s\n", path, err)
-		return "", "", "", os.ErrNotExist
+		return "", "", "", true, os.ErrNotExist
 	}
 	defer util.CloseOrLog(in)
 
@@ -65,7 +65,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 		if n == 0 && err == io.EOF {
 			break
 		} else if err != nil {
-			return "", "", "", fmt.Errorf("failed to read: %w", err)
+			return "", "", "", true, fmt.Errorf("failed to read: %w", err)
 		}
 
 		if len(mimetypeName) == 0 { //must be before outWriter.Write, because buf might get xor'ed
@@ -77,7 +77,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
 		n, err = outWriter.Write(buf[:n])
 		if err != nil {
-			return "", "", "", fmt.Errorf("failed to write: %w", err)
+			return "", "", "", true, fmt.Errorf("failed to write: %w", err)
 		}
 		size += int64(n)
 
@@ -89,14 +89,14 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
 	hashHex := fmt.Sprintf("%x", hash.Sum(nil))
 	if len(hashHex) < 2 {
-		return "", "", "", fmt.Errorf("invalid hash length: %d", len(hashHex))
+		return "", "", "", true, fmt.Errorf("invalid hash length: %d", len(hashHex))
 	}
 
 	destPath, err := FindByHash(hashHex)
 	if err == nil {
 		fmt.Printf("File already exists: '%s'\n", destPath)
 		util.LogError(tempDest.Remove())
-		return hashHex, destPath, mimetypeName, nil
+		return hashHex, destPath, mimetypeName, false, nil
 	}
 
 	destName := hashHex[2:]
@@ -107,7 +107,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 
 	err = os.MkdirAll(destDir, FilePermissions)
 	if err != nil {
-		return "", "", "", fmt.Errorf("failed to create directory: %w", err)
+		return "", "", "", true, fmt.Errorf("failed to create directory: %w", err)
 	}
 
 	destPath = fmt.Sprintf("%s/%s",
@@ -122,11 +122,11 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 	fmt.Printf("Adding '%s' to %s\n", path, destPath)
 	err = tempDest.Move(destPath)
 	if err != nil {
-		return "", "", "", fmt.Errorf("failed to move file: %w", err)
+		return "", "", "", true, fmt.Errorf("failed to move file: %w", err)
 	}
 	util.LogError(os.Chmod(destPath, FilePermissions))
 
-	return hashHex, destPath, mimetypeName, nil
+	return hashHex, destPath, mimetypeName, true, nil
 }
 
 // FindByHash Check all time-periods if file exists

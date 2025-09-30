@@ -20,12 +20,15 @@ var (
 
 	MaxMemFileSize int64 = 1000 * 1000 * 400
 
+	SkipMetaDataIfExists = false
+
 	SpaHttpRoot = filepath.Dir(os.Args[0]) + "/vue-ui" // Root directory to service SPA from
 
-	cmdBaseDir        = flag.String("base", "", "Base directory for storage, meta-data, db...")
-	cmdUseGzip        = flag.Bool("gzip", false, "Use GZIP compression")
-	cmdSpaHttpRoot    = flag.String("spa", "", "HTTP root directory of SPA app")
-	cmdMaxMemFileSize = flag.Int64("maxmem", 0, "Max memory file size in bytes")
+	cmdBaseDir              = flag.String("base", "", "Base directory for storage, meta-data, db...")
+	cmdUseGzip              = flag.Bool("gzip", false, "Use GZIP compression")
+	cmdSpaHttpRoot          = flag.String("spa", "", "HTTP root directory of SPA app")
+	cmdMaxMemFileSize       = flag.Int64("maxmem", 0, "Max memory file size in bytes")
+	cmdSkipMetaDataIfExists = flag.Bool("skip-meta", false, "Skip meta data update if file exist")
 
 	cmdXorKey = flag.String("xor", "", "XOR Key for content obfusication")
 )
@@ -61,6 +64,11 @@ func LoadDefault() {
 	if *cmdMaxMemFileSize > 0 {
 		MaxMemFileSize = *cmdMaxMemFileSize
 		fmt.Printf("Max memory file size: %d\n", MaxMemFileSize)
+	}
+
+	SkipMetaDataIfExists = *cmdSkipMetaDataIfExists
+	if SkipMetaDataIfExists {
+		fmt.Printf("Will not update meta-data on existing files\n")
 	}
 
 	if *cmdSpaHttpRoot != "" {

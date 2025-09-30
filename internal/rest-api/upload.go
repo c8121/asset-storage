@@ -67,30 +67,33 @@ func AddUploadedFile(c *gin.Context) {
 	path := filepath.Join(config.AssetStorageTempDir, req.TempName)
 
 	//Add file to storage
-	assetHash, _, mimeType, err := storage.AddFile(path)
+	assetHash, _, mimeType, isNew, err := storage.AddFile(path)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	//Create/Update meta-data
-	meta, err := metadata.AddMetaData(
-		assetHash,
-		mimeType,
-		req.Name,
-		"",
-		req.Owner,
-		req.FileTime)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
-		return
-	}
+	if isNew || !config.SkipMetaDataIfExists {
+		
+		//Create/Update meta-data
+		meta, err := metadata.AddMetaData(
+			assetHash,
+			mimeType,
+			req.Name,
+			"",
+			req.Owner,
+			req.FileTime)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, err.Error())
+			return
+		}
 
-	//Create/Update meta-data-database
-	err = mdsqlite.AddMetaData(assetHash, meta)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
-		return
+		//Create/Update meta-data-database
+		err = mdsqlite.AddMetaData(assetHash, meta)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, err.Error())
+			return
+		}
 	}
 
 	util.LogError(os.Remove(path))
