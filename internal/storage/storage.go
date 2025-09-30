@@ -54,10 +54,7 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 		fmt.Printf("Cannot open '%s': %s\n", path, err)
 		return "", "", "", os.ErrNotExist
 	}
-	util.PanicOnError(err, "Failed to open file")
-	defer func(in *os.File) {
-		util.PanicOnError(in.Close(), "Failed to close file")
-	}(in)
+	defer util.CloseOrLog(in)
 
 	hash := sha256.New()
 	mimetypeName := ""
@@ -67,8 +64,9 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 		n, err := in.Read(buf)
 		if n == 0 && err == io.EOF {
 			break
+		} else if err != nil {
+			return "", "", "", fmt.Errorf("failed to read: %w", err)
 		}
-		util.PanicOnIoError(err, "Failed to read file")
 
 		if len(mimetypeName) == 0 { //must be before outWriter.Write, because buf might get xor'ed
 			mime := mimetype.Detect(buf[:n])
@@ -78,24 +76,26 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 		hash.Write(buf[:n]) //must be before outWriter.Write
 
 		n, err = outWriter.Write(buf[:n])
-		util.PanicOnError(err, "Failed to write to temp file")
+		if err != nil {
+			return "", "", "", fmt.Errorf("failed to write: %w", err)
+		}
 		size += int64(n)
 
 	}
 
-	util.PanicOnError(tempDest.Close(), "Failed to close temp file")
+	util.CloseOrLog(tempDest)
 
 	fmt.Printf("MIME type: %s, Size: %d\n", mimetypeName, size)
 
 	hashHex := fmt.Sprintf("%x", hash.Sum(nil))
 	if len(hashHex) < 2 {
-		panic("Invalid hash")
+		return "", "", "", fmt.Errorf("invalid hash length: %d", len(hashHex))
 	}
 
 	destPath, err := FindByHash(hashHex)
 	if err == nil {
 		fmt.Printf("File already exists: '%s'\n", destPath)
-		util.PanicOnError(tempDest.Remove(), "Failed to remove temp file")
+		util.LogError(tempDest.Remove())
 		return hashHex, destPath, mimetypeName, nil
 	}
 
@@ -105,7 +105,10 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 		TimePeriodName(),
 		hashHex[:2])
 
-	util.PanicOnError(os.MkdirAll(destDir, FilePermissions), "Failed to create destination directory")
+	err = os.MkdirAll(destDir, FilePermissions)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to create directory: %w", err)
+	}
 
 	destPath = fmt.Sprintf("%s/%s",
 		destDir,
@@ -117,8 +120,11 @@ func AddFile(path string) (assetHash, assetPath, mimeType string, err error) {
 	}
 
 	fmt.Printf("Adding '%s' to %s\n", path, destPath)
-	util.PanicOnError(tempDest.Move(destPath), "Failed to move temp file")
-	util.PanicOnError(os.Chmod(destPath, FilePermissions), "Failed to set permissions")
+	err = tempDest.Move(destPath)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to move file: %w", err)
+	}
+	util.LogError(os.Chmod(destPath, FilePermissions))
 
 	return hashHex, destPath, mimetypeName, nil
 }
