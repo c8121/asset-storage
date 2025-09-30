@@ -67,3 +67,15 @@ Not required if database is intact, because `add` also updates the database.
 | maxmem <bytes&gt; | Max size in bytes when reading files while adding to storage. If a file is larger, it will not be read into memory and a temp-file will be used                                                                                                                                                                                                 |
 | spa <dir&gt;      | HttpRoot-Directory which contains the SPA-files (HTML, JS, etc)                                                                                                                                                                                                                                                                                 |
 | xor <key&gt;      | Content will be XOR'ed to obfusicate. This is to avoid manual changes to files (when content is XOR'ed, files cannot be openend and modified directly from storage directory) <br/>**Important:** Cannot be mixed, use always with same key or never for one storage. <br/>**Important:** Use same key for all apps with same storage directory |
+
+## Libraries used
+
+I have used these libraries (many thanks to the authors)
+
+- SQLite: https://pkg.go.dev/modernc.org/sqlite
+- Web Services: https://pkg.go.dev/github.com/gin-gonic/gin
+- Webp decoding: https://github.com/HugoSmits86/nativewebp
+- Image scaling: https://pkg.go.dev/golang.org/x/image/draw
+- MIME type detection: https://pkg.go.dev/github.com/gabriel-vasile/mimetype
+- Web UI: https://vuejs.org/
+- CSS: https://getbootstrap.com/docs/5.0/getting-started/introduction/
