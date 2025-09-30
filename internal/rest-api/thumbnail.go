@@ -53,19 +53,29 @@ func generateThumbnail(assetHash string, meta metadata.AssetMetadata) ([]byte, s
 	default:
 		scaleToWidth = ThumbnailWidth
 	}
-	scaleToHeight := int(float64(img.Bounds().Dy()) * (float64(scaleToWidth) / float64(imgWidth)))
-	fmt.Printf("scale to width: %d, height: %d (%d * (%d / %d))\n", scaleToWidth, scaleToHeight,
-		img.Bounds().Dy(), scaleToWidth, imgWidth)
-
-	destSize := image.Rect(0, 0, scaleToWidth, scaleToHeight)
-	thumb := image.NewRGBA(destSize)
-
-	ThumbnailInterpolator.Scale(thumb, destSize, img, img.Bounds(), draw.Over, nil)
 
 	var outBuf bytes.Buffer
-	writer := bufio.NewWriter(&outBuf)
-	if err := png.Encode(writer, thumb); err != nil || outBuf.Len() == 0 {
-		return nil, "", fmt.Errorf("failed to encode png (%d/%d): %v", scaleToWidth, scaleToHeight, err)
+	if imgWidth > scaleToWidth {
+
+		scaleToHeight := int(float64(img.Bounds().Dy()) * (float64(scaleToWidth) / float64(imgWidth)))
+		fmt.Printf("scale to width: %d, height: %d (%d * (%d / %d))\n", scaleToWidth, scaleToHeight,
+			img.Bounds().Dy(), scaleToWidth, imgWidth)
+
+		destSize := image.Rect(0, 0, scaleToWidth, scaleToHeight)
+		thumb := image.NewRGBA(destSize)
+
+		ThumbnailInterpolator.Scale(thumb, destSize, img, img.Bounds(), draw.Over, nil)
+
+		writer := bufio.NewWriter(&outBuf)
+		if err := png.Encode(writer, thumb); err != nil || outBuf.Len() == 0 {
+			return nil, "", fmt.Errorf("failed to encode png: %v", err)
+		}
+
+	} else {
+		writer := bufio.NewWriter(&outBuf)
+		if err := png.Encode(writer, img); err != nil || outBuf.Len() == 0 {
+			return nil, "", fmt.Errorf("failed to encode png: %v", err)
+		}
 	}
 
 	//fmt.Printf("Created thumbnail (%d bytes, %s)\n", outBuf.Len(), destSize)
