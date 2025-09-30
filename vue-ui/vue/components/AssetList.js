@@ -51,8 +51,8 @@
                                             :src="'/assets/thumbnail/' + asset.Hash" />
                                     </div>
                                 </div>
-                                <div class="card-footer">
-                                    
+                                <div class="card-footer text-end p-0">
+                                    <button @click="showMetaData(asset)" class="btn btn-sm"><i>M</i></button>
                                 </div>
                             </div>
                         </div>
@@ -161,6 +161,10 @@
 
             downloadAsset(asset) {
                 window.open('/assets/' + asset.Hash);
+            },
+
+            showMetaData(asset) {
+                window.open('/assets/metadata/' + asset.Hash);
             },
 
             //Autoload more items when scrolling to bottom
