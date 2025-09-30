@@ -10,6 +10,18 @@
         template: `
             <div class="widget AssetList">
                 <div v-if="list" class="assets row row-cols-auto g-3 mt-1">
+                    <div class="sticky-top bg-white pb-2">
+                        <div class="row">
+                            <div class="col-auto">
+                                <div class="input-group input-group-sm">
+                                    <label for="page" class="input-group-text border-light-subtle">Page</label>
+                                    <input id="page" v-model="page" class="form-control w-auto border-light-subtle" @changed="pageChanged" @keyup.enter="pageChanged">
+                                    <button class="btn btn-outline-secondary border-light-subtle" @click="page-=(page>1?1:0);pageChanged()">&lt;</button>
+                                    <button class="btn btn-outline-secondary border-light-subtle" @click="page++;pageChanged()">&gt;</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <template v-for="asset in list">
                         <div v-if="asset.nextGroup" class="asset-group-header">{{ asset.groupKey }}</div>
                         <div class="asset col">
@@ -49,6 +61,7 @@
 
                 offset: 0,
                 count: 30,
+                page: 1,
 
                 loading: false
             }
@@ -63,6 +76,7 @@
                         self.list = json;
                         self.createGroupKeys(self.list);
                     }
+                    self.page = (self.offset / self.count) + 1;
                     self.loading = false;
                     self.enableAutoLoadMore();
                 });
@@ -80,8 +94,16 @@
                         for(const item of json)
                             self.list.push(item)
                     }
+                    self.page = (self.offset / self.count) + 1;
                     self.loading = false;
                 });
+            },
+            pageChanged() {
+                const self = this;
+
+                self.list.splice(0, self.list.length);
+                self.offset = (self.page - 1) * self.count
+                self.loadDataObject()
             },
 
             createGroupKeys(list) {
