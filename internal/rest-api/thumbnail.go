@@ -14,6 +14,8 @@ import (
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
 	"golang.org/x/image/draw"
+
+	_ "github.com/HugoSmits86/nativewebp"
 )
 
 var (
