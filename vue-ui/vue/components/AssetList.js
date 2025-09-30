@@ -15,9 +15,9 @@
                             <div class="col-auto">
                                 <div class="input-group input-group-sm">
                                     <label for="page" class="input-group-text border-light-subtle">Page</label>
-                                    <input id="page" v-model="page" class="form-control w-auto border-light-subtle" @changed="pageChanged" @keyup.enter="pageChanged">
-                                    <button class="btn btn-outline-secondary border-light-subtle" @click="page-=(page>1?1:0);pageChanged()">&lt;</button>
-                                    <button class="btn btn-outline-secondary border-light-subtle" @click="page++;pageChanged()">&gt;</button>
+                                    <input id="page" v-model="page" class="form-control w-auto border-light-subtle text-center" style="width: 50px !important" @changed="pageChanged" @keyup.enter="pageChanged">
+                                    <button v-if="page>1" class="btn btn-outline-secondary border-light-subtle" @click="page-=(page>1?1:0);pageChanged()">&lt;</button>
+                                    <button v-if="showLoadMore" class="btn btn-outline-secondary border-light-subtle" @click="page++;pageChanged()">&gt;</button>
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -27,6 +27,7 @@
                                         <option :value="null">Any</option>
                                         <option value="image_*">Image</option>
                                         <option value="image_jpeg">Image: JPG</option>
+                                        <option value="image_webp">Image: WEBP</option>
                                         <option value="image_png">Image: PNG</option>
                                         <option value="image_gif">Image: GIF</option>
                                         <option value="video_*">Video</option>
@@ -45,10 +46,11 @@
                                         {{ asset.Name }}
                                     </div>
                                     <div class="asset-image">
-                                        <img  @click="selectAsset(asset)"
+                                        <img @click="selectAsset(asset)"
                                             role="button"
                                             class="card-img-top asset-preview not-ready" 
-                                            :src="'/assets/thumbnail/' + asset.Hash" />
+                                            :src="'/assets/thumbnail/' + asset.Hash"
+                                            :alt="asset.Name" :title="asset.Name" />
                                     </div>
                                 </div>
                                 <div class="card-footer text-end p-0">
@@ -61,7 +63,7 @@
                 <div class="row m-2">
                     <div class="col text-start"></div>
                     <div class="col text-center">
-                        <button @click="loadMore" class="btn btn-light" id="loadMore">Load more...</button>
+                        <button v-if="showLoadMore" @click="loadMore" class="btn btn-light" id="loadMore">Load more...</button>
                     </div>
                     <div class="col text-end"></div>
                 </div>
@@ -78,7 +80,8 @@
                 page: 1,
                 type: null,
 
-                loading: false
+                loading: false,
+                showLoadMore: true
             }
         },
         methods: {
@@ -89,9 +92,10 @@
                 client.get(self.getListUrl()).then((json) => {
                     if (json) {
                         self.list = json;
+                        self.showLoadMore = json.length >= self.count
+                        self.page = (self.offset + self.count) / self.count;
                         self.createGroupKeys(self.list);
                     }
-                    self.page = (self.offset / self.count) + 1;
                     self.loading = false;
                     self.enableAutoLoadMore();
                 });
@@ -105,11 +109,12 @@
 
                 client.get(self.getListUrl()).then((json) => {
                     if (json) {
+                        self.showLoadMore = json.length > 0
+                        self.page = (self.offset + self.count) / self.count;
                         self.createGroupKeys(json);
                         for (const item of json)
                             self.list.push(item)
                     }
-                    self.page = (self.offset / self.count) + 1;
                     self.loading = false;
                 });
             },
@@ -173,7 +178,7 @@
 
                 const loadMoreButton = document.getElementById("loadMore");
                 self.scrollListener = (e) => {
-                    if (self.loading)
+                    if (self.loading || !self.showLoadMore)
                         return;
 
                     const rect = loadMoreButton.getBoundingClientRect();

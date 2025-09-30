@@ -22,8 +22,10 @@
 .asset .asset-filename {
     position: absolute;
     top: 0;
+    left: 0;
     width: 100%;
     z-index: 0;
+    font-size: 0.7em;
 }
 
 .asset-group-header {

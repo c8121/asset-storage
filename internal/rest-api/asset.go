@@ -68,5 +68,10 @@ func ListAssets(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, items)
+	if len(items) > 0 {
+		c.IndentedJSON(http.StatusOK, items)
+	} else {
+		//https://github.com/gin-gonic/gin/issues/125 ?
+		c.Data(http.StatusOK, "application/json", []byte("[]"))
+	}
 }

@@ -11,6 +11,7 @@ func CreateRoutes(router *gin.Engine) {
 	router.GET("/assets/list/:offset/:count", ListAssets)
 	router.GET("/assets/list/:offset/:count/:mimetype", ListAssets)
 	router.GET("/assets/thumbnail/:hash", GetPreview)
+	router.GET("/assets/metadata/:hash", GetMetaData)
 	router.POST("/assets/upload", ReceiveUpload)
 	router.POST("/assets/upload/add", AddUploadedFile)
 }
