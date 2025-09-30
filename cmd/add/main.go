@@ -6,11 +6,17 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"time"
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
+)
+
+const (
+	MaxAttemptsPerFile      = 10
+	MinWaitSecondsAfterFail = 3
 )
 
 var (
@@ -73,6 +79,21 @@ func addFile(path string) error {
 		}
 		return nil
 	}
+
+	for attempt := 0; attempt < MaxAttemptsPerFile; attempt++ {
+		err = addFileAndMetadata(path, stat)
+		if err == nil {
+			return nil
+		}
+
+		wait := time.Duration(attempt*MinWaitSecondsAfterFail) * time.Second
+		fmt.Printf("Error, attempt %d/%d, waiting %d: %s\n", attempt+1, MaxAttemptsPerFile, wait, filepath.Base(path))
+		time.Sleep(wait)
+	}
+	return err
+}
+
+func addFileAndMetadata(path string, stat os.FileInfo) error {
 
 	//Add file to storage
 	assetHash, _, mimeType, err := storage.AddFile(path)

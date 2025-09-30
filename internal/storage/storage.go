@@ -217,7 +217,7 @@ func TimePeriodName() string {
 }
 
 // newTempWriter creates either
-//   - NewTempZipFileWriter or NewMemZipFileWriter if congig.UseGzip is true
+//   - NewTempZipFileWriter or NewMemZipFileWriter if config.UseGzip is true
 //   - NewTempFileWriter or NewMemFileWriter
 func newTempWriter(size int64) (StorageWriter, error) {
 
