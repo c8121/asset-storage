@@ -24,7 +24,7 @@ func init() {
 func DbGetMimeType(name string, createIfNotExists bool) (*MimeType, error) {
 
 	ctx := context.Background()
-	tx, err := DB.BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func dbCreateMimeTypeTx(tx *sql.Tx, name string) (*MimeType, error) {
 	return &mimeType, nil
 }
 
-func DbInitMimeType() {
-	_, err := DB.Exec("CREATE TABLE IF NOT EXISTS mime_type(id integer PRIMARY KEY, name TEXT(32));")
+func dbInitMimeType() {
+	_, err := db.Exec("CREATE TABLE IF NOT EXISTS mime_type(id integer PRIMARY KEY, name TEXT(32));")
 	util.PanicOnError(err, "failed to create table: mime_type")
 }
