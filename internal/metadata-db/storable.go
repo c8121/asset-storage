@@ -1,6 +1,7 @@
 package metadata_db
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
@@ -8,10 +9,16 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("not found")
-	ErrNotSelectable = errors.New("not a scanable")
-	ErrNotInsertable = errors.New("not a insertable")
+	ErrNotIdentifyable = errors.New("not implementing WithId")
+	ErrNotFound        = errors.New("not found")
+	ErrNotSelectable   = errors.New("not a Selectable")
+	ErrNotInsertable   = errors.New("not a Insertable")
+	ErrNotUpdateable   = errors.New("not a Updateable")
 )
+
+type WithId interface {
+	GetId() int64
+}
 
 type Selectable interface {
 	GetSelectQuery() string
@@ -31,14 +38,32 @@ type Updateable interface {
 	Exec(stmt *sql.Stmt) (sql.Result, error)
 }
 
-func Create(tx *sql.Tx, insertIfNotExists bool, o any) error {
+// Get first tries to Load(...), then Insert(...) if insertIfNotExists = true
+func Get(insertIfNotExists bool, o Selectable) error {
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = GetTx(tx, insertIfNotExists, o)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+// GetTx first tries to Load(...), then Insert(...) if insertIfNotExists = true
+func GetTx(tx *sql.Tx, insertIfNotExists bool, o any) error {
 
 	scanable, ok := o.(Selectable)
 	if !ok {
 		return ErrNotSelectable
 	}
 
-	err := Load(tx, scanable)
+	err := LoadTx(tx, scanable)
 	if err == ErrNotFound {
 		if insertIfNotExists {
 
@@ -47,7 +72,7 @@ func Create(tx *sql.Tx, insertIfNotExists bool, o any) error {
 				return ErrNotInsertable
 			}
 
-			err = Insert(tx, insertable)
+			err = InsertTx(tx, insertable)
 			if err != nil {
 				return err
 			}
@@ -62,7 +87,20 @@ func Create(tx *sql.Tx, insertIfNotExists bool, o any) error {
 	return nil
 }
 
-func Load(tx *sql.Tx, o Selectable) error {
+// Load selects data from database and applies to given Selectable
+func Load(o Selectable) error {
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Commit()
+
+	return LoadTx(tx, o)
+}
+
+// LoadTx selects data from database and applies to given Selectable
+func LoadTx(tx *sql.Tx, o Selectable) error {
 
 	if o == nil {
 		return errors.New("object is nil")
@@ -91,7 +129,52 @@ func Load(tx *sql.Tx, o Selectable) error {
 	return nil
 }
 
-func Insert(tx *sql.Tx, o Insertable) error {
+// Save checks it object exists in database (GetId() != 0) and then does Insert or Update
+func Save(o any) error {
+
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = SaveTx(tx, o)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+// Save checks it object exists in database (GetId() != 0) and then does Insert or Update
+func SaveTx(tx *sql.Tx, o any) error {
+
+	withId, ok := o.(WithId)
+	if !ok {
+		return ErrNotIdentifyable
+	}
+
+	var err error
+	if withId.GetId() == 0 {
+		insertable, ok := o.(Insertable)
+		if !ok {
+			return ErrNotInsertable
+		}
+		err = InsertTx(tx, insertable)
+	} else {
+		updateable, ok := o.(Updateable)
+		if !ok {
+			return ErrNotUpdateable
+		}
+		err = UpdateTx(tx, updateable)
+	}
+
+	return err
+}
+
+// InsertTx created new record in database with contents of given Insertable
+func InsertTx(tx *sql.Tx, o Insertable) error {
 
 	if o == nil {
 		return errors.New("object is nil")
@@ -117,7 +200,8 @@ func Insert(tx *sql.Tx, o Insertable) error {
 	return nil
 }
 
-func Update(tx *sql.Tx, o Updateable) error {
+// Insert updates an existing record in database with contents of given Insertable
+func UpdateTx(tx *sql.Tx, o Updateable) error {
 
 	if o == nil {
 		return errors.New("object is nil")

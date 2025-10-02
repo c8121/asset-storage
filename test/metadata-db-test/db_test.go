@@ -21,6 +21,34 @@ func TestDb(t *testing.T) {
 
 	mimeTypeTest(t)
 	assetTest(t)
+	pathTest(t)
+}
+
+func pathTest(t *testing.T) {
+
+	testPaths := []string{"", "test1", "test2/", "/test3/", "/test4\\\\", "C5:/test/", "C6:\\test", "C7:/test/file.txt",
+		"C8:\\test\\file.txt", "///test9///file.txt", "file:///C10:/home/test"}
+	expectLen := []int{1, 1, 1, 1, 1, 2, 2, 3,
+		3, 2, 3}
+
+	for i, path := range testPaths {
+		split := metadata_db.SplitPath(path)
+		fmt.Printf("%d: '%s' = %s\n", i, path, split)
+		if len(split) != expectLen[i] {
+			t.Errorf("Expected len is %d, but result len is %d: %s", expectLen[i], len(split), path)
+		}
+
+		pathItem, err := metadata_db.GetPathItem(path, false)
+		if err != metadata_db.ErrNotFound {
+			t.Errorf("Found path item, but should not be created %s: %v, %v", path, pathItem, err)
+		}
+
+		pathItem, err = metadata_db.GetPathItem(path, true)
+		if err != nil {
+			t.Errorf("Failed to get path item %s: %v", path, err)
+		}
+		fmt.Printf("    %v\n", pathItem)
+	}
 }
 
 func assetTest(t *testing.T) {
@@ -35,7 +63,7 @@ func assetTest(t *testing.T) {
 		t.Errorf("Asset found, but none created so far")
 	}
 
-	err = asset.Create(true)
+	err = asset.Get(true)
 	util.PanicOnError(err, "Test failed")
 	fmt.Println("asset:", asset)
 	if asset.Id == 0 {
@@ -74,7 +102,7 @@ func assetTest(t *testing.T) {
 		t.Errorf("Asset duplicated")
 	}
 
-	mimeType, err := metadata_db.DbGetMimeType("text/plain", true)
+	mimeType, err := metadata_db.GetMimeType("text/plain", true)
 	util.PanicOnError(err, "Test failed")
 	asset3.MimeType = mimeType.Id
 	err = asset3.Save()
@@ -94,28 +122,27 @@ func assetTest(t *testing.T) {
 
 func mimeTypeTest(t *testing.T) {
 
-	mimeType, err := metadata_db.DbGetMimeType("text/plain", false)
-	util.PanicOnError(err, "Test failed")
+	mimeType, err := metadata_db.GetMimeType("text/plain", false)
 	fmt.Println("mimeType:", mimeType)
-	if mimeType != nil {
+	if err != metadata_db.ErrNotFound {
 		t.Errorf("MimeType found, but none created so far")
 	}
 
-	mimeType, err = metadata_db.DbGetMimeType("text/plain", true)
+	mimeType, err = metadata_db.GetMimeType("text/plain", true)
 	util.PanicOnError(err, "Test failed")
 	fmt.Println("mimeType:", mimeType)
 	if mimeType == nil {
 		t.Errorf("MimeType not found: %v", err)
 	}
 
-	mimeType2, err := metadata_db.DbGetMimeType(" text/plain ", true)
+	mimeType2, err := metadata_db.GetMimeType(" text/plain ", true)
 	util.PanicOnError(err, "Test failed")
 	fmt.Println("mimeType:", mimeType2)
 	if mimeType2.Id != mimeType.Id {
 		t.Errorf("MimeType id missmatch: %v, %v", mimeType2, mimeType)
 	}
 
-	mimeType2, err = metadata_db.DbGetMimeType(" text/plain;charset=UTF8 ", true)
+	mimeType2, err = metadata_db.GetMimeType(" text/plain;charset=UTF8 ", true)
 	util.PanicOnError(err, "Test failed")
 	fmt.Println("mimeType:", mimeType2)
 	if mimeType2.Id != mimeType.Id {

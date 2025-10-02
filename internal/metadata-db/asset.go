@@ -1,7 +1,6 @@
 package metadata_db
 
 import (
-	"context"
 	"database/sql"
 	"time"
 )
@@ -13,59 +12,20 @@ type Asset struct {
 	FileTime time.Time //Max of all origins
 }
 
+func (a *Asset) GetId() int64 {
+	return a.Id
+}
+
 func (a *Asset) Load() error {
-
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	err = Load(tx, a)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit()
+	return Load(a)
 }
 
 func (a *Asset) Save() error {
-
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	if a.Id == 0 {
-		err = Insert(tx, a)
-	} else {
-		err = Update(tx, a)
-	}
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit()
+	return Save(a)
 }
 
-func (a *Asset) Create(insertIfNotExists bool) error {
-
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	err = Create(tx, insertIfNotExists, a)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit()
+func (a *Asset) Get(insertIfNotExists bool) error {
+	return Get(insertIfNotExists, a)
 }
 
 func (a *Asset) GetSelectQuery() string {
@@ -85,7 +45,7 @@ func (a *Asset) GetInsertQuery() string {
 }
 
 func (a *Asset) GetUpdateQuery() string {
-	return "UPDATE asset SET hash=?, mimeType=?, fileTime=? WHERE ID = ?;"
+	return "UPDATE asset SET hash=?, mimeType=?, fileTime=? WHERE id = ?;"
 }
 
 func (a *Asset) GetUpdateQueryArgs() []any {

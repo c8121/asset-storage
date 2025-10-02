@@ -14,6 +14,7 @@ func SetDatabase(databse *sql.DB) {
 	db = databse
 	dbInitMimeType()
 	dbInitAsset()
+	dbInitPathItem()
 }
 
 // dbInitExec Execute DDL
