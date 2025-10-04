@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/c8121/asset-storage/internal/metadata"
-	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
@@ -53,7 +51,9 @@ func GetAsset(c *gin.Context) {
 // ListAssets is a rest-api handler to send a list of assets
 func ListAssets(c *gin.Context) {
 
-	var filter = &mdsqlite.AssetFilter{
+	c.Data(http.StatusOK, "application/json", []byte("[]"))
+
+	/*var filter = &mdsqlite.AssetFilter{
 		MimeType: strings.ReplaceAll(
 			strings.ReplaceAll(c.Param("mimetype"),
 				"_", "/"),
@@ -73,5 +73,5 @@ func ListAssets(c *gin.Context) {
 	} else {
 		//https://github.com/gin-gonic/gin/issues/125 ?
 		c.Data(http.StatusOK, "application/json", []byte("[]"))
-	}
+	}*/
 }

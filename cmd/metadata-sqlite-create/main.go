@@ -7,6 +7,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
+	metadata_db "github.com/c8121/asset-storage/internal/metadata-db"
 	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
 	"github.com/c8121/asset-storage/internal/util"
 )
@@ -28,7 +29,7 @@ func main() {
 	util.PanicOnError(readAllMetaData(config.AssetMetaDataBaseDir), "Failed to read meta-data directory")
 }
 
-// readAllMetaData recurively find JSON meta-data an write to SQLite database
+// readAllMetaData recursively find JSON meta-data an write to SQLite database
 func readAllMetaData(path string) error {
 
 	entries, err := os.ReadDir(path)
@@ -46,8 +47,8 @@ func readAllMetaData(path string) error {
 				return err
 			}
 		} else {
-			if hash, meta, err := metadata.LoadIfExists(filePath); err == nil {
-				if err = mdsqlite.AddMetaData(hash, &meta); err != nil {
+			if meta, err := metadata.LoadIfExists(filePath); err == nil {
+				if err = metadata_db.AddMetaData(meta); err != nil {
 					return err
 				} else {
 					fmt.Printf("Added '%s'\n", filePath)

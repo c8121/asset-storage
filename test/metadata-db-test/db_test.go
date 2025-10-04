@@ -21,10 +21,11 @@ func TestDb(t *testing.T) {
 
 	mimeTypeTest(t)
 	assetTest(t)
-	pathTest(t)
+	pathTest(t, true)
+	pathTest(t, false) //Test cache
 }
 
-func pathTest(t *testing.T) {
+func pathTest(t *testing.T, testDontCreateItem bool) {
 
 	testPaths := []string{"", "test1", "test2/", "/test3/", "/test4\\\\", "C5:/test/", "C6:\\test", "C7:/test/file.txt",
 		"C8:\\test\\file.txt", "///test9///file.txt", "file:///C10:/home/test"}
@@ -38,13 +39,18 @@ func pathTest(t *testing.T) {
 			t.Errorf("Expected len is %d, but result len is %d: %s", expectLen[i], len(split), path)
 		}
 
-		pathItem, err := metadata_db.GetPathItem(path, false)
-		if err != metadata_db.ErrNotFound {
-			t.Errorf("Found path item, but should not be created %s: %v, %v", path, pathItem, err)
+		if testDontCreateItem {
+			pathItem, err := metadata_db.GetPathItem(path, false)
+			if err != metadata_db.ErrNotFound {
+				t.Errorf("Found path item, but should not be created %s: %v, %v", path, pathItem, err)
+			}
 		}
 
-		pathItem, err = metadata_db.GetPathItem(path, true)
+		pathItem, err := metadata_db.GetPathItem(path, true)
 		if err != nil {
+			t.Errorf("Failed to get path item %s: %v", path, err)
+		}
+		if pathItem == nil {
 			t.Errorf("Failed to get path item %s: %v", path, err)
 		}
 		fmt.Printf("    %v\n", pathItem)

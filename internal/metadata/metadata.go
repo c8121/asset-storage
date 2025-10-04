@@ -14,12 +14,13 @@ import (
 )
 
 type (
-	AssetMetadata struct {
+	JsonAssetMetaData struct {
+		Hash     string
 		MimeType string
-		Origins  []Origin
+		Origins  []JsonAssetOrigin
 	}
 
-	Origin struct {
+	JsonAssetOrigin struct {
 		Name     string
 		Path     string
 		Owner    string
@@ -37,14 +38,14 @@ func Init() {
 }
 
 // AddMetaData creates or updates meta-data JSON file
-func AddMetaData(assetHash string, mimeType string, name string, path string, owner string, fileTime time.Time) (*AssetMetadata, error) {
+func AddMetaData(hash string, mimeType string, name string, path string, owner string, fileTime time.Time) (*JsonAssetMetaData, error) {
 
-	metaDataFile := GetMetaDataFilePath(assetHash)
-	fmt.Printf("MetaDataFile: %s\n", metaDataFile)
+	metaDataFile := GetMetaDataFilePath(hash)
 
-	_, metaData, err := LoadIfExists(metaDataFile)
+	metaData, err := LoadIfExists(metaDataFile)
 	if errors.Is(err, os.ErrNotExist) {
 		metaData = CreateNew(
+			hash,
 			mimeType,
 			name,
 			path,
@@ -61,15 +62,16 @@ func AddMetaData(assetHash string, mimeType string, name string, path string, ow
 	}
 
 	//fmt.Printf("MetaData: %s\n", metaData)
-	return &metaData, metaData.Save(metaDataFile)
+	return metaData, metaData.Save(metaDataFile)
 
 }
 
-// CreateNew Create new AssetMetadata struct, filled with given data
-func CreateNew(mimeType string, name string, path string, owner string, fileTime time.Time) AssetMetadata {
-	assetMetadata := AssetMetadata{
+// CreateNew Create new JsonAssetMetaData struct, filled with given data
+func CreateNew(hash string, mimeType string, name string, path string, owner string, fileTime time.Time) *JsonAssetMetaData {
+	assetMetadata := &JsonAssetMetaData{
+		Hash:     hash,
 		MimeType: mimeType,
-		Origins: []Origin{
+		Origins: []JsonAssetOrigin{
 			{
 				Name:     name,
 				Path:     path,
@@ -83,7 +85,7 @@ func CreateNew(mimeType string, name string, path string, owner string, fileTime
 }
 
 // AddOrigin Add origin data if not exists
-func (assetMetaData *AssetMetadata) AddOrigin(name string, path string, owner string, time time.Time) {
+func (assetMetaData *JsonAssetMetaData) AddOrigin(name string, path string, owner string, time time.Time) {
 
 	for _, origin := range assetMetaData.Origins {
 		if origin.Name == name &&
@@ -94,7 +96,7 @@ func (assetMetaData *AssetMetadata) AddOrigin(name string, path string, owner st
 		}
 	}
 
-	assetMetaData.Origins = append(assetMetaData.Origins, Origin{
+	assetMetaData.Origins = append(assetMetaData.Origins, JsonAssetOrigin{
 		Name:     name,
 		Path:     path,
 		Owner:    owner,
@@ -102,8 +104,18 @@ func (assetMetaData *AssetMetadata) AddOrigin(name string, path string, owner st
 	})
 }
 
+func GetLatestOrigin(assetMetaData *JsonAssetMetaData) *JsonAssetOrigin {
+	var latest *JsonAssetOrigin = nil
+	for _, origin := range assetMetaData.Origins {
+		if latest == nil || latest.FileTime.Before(origin.FileTime) {
+			latest = &origin
+		}
+	}
+	return latest
+}
+
 // Save Create dir if not exists and save JSON
-func (assetMetaData *AssetMetadata) Save(path string) error {
+func (assetMetaData *JsonAssetMetaData) Save(path string) error {
 
 	util.PanicOnError(os.MkdirAll(filepath.Dir(path), FilePermissions), "Failed to create destination directory")
 
@@ -116,23 +128,29 @@ func (assetMetaData *AssetMetadata) Save(path string) error {
 }
 
 // LoadIfExists Load JSON-file, if exists. Returns hash, meta-data, error
-func LoadIfExists(path string) (string, AssetMetadata, error) {
-
-	var assetMetadata AssetMetadata
+func LoadIfExists(path string) (*JsonAssetMetaData, error) {
 
 	buf, err := os.ReadFile(path)
 	if err != nil {
-		return "", assetMetadata, err
+		return nil, err
 	}
 
-	err = json.Unmarshal(buf, &assetMetadata)
-	return storage.HashFromPath(path), assetMetadata, err
+	var assetMetadata = &JsonAssetMetaData{}
+	err = json.Unmarshal(buf, assetMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	if assetMetadata.Hash == "" {
+		assetMetadata.Hash = storage.HashFromPath(path)
+	}
+	return assetMetadata, err
 }
 
-// LoadByHash returns AssetMetadata loaded from JSON-file
-func LoadByHash(assetHash string) (AssetMetadata, error) {
+// LoadByHash returns JsonAssetMetaData loaded from JSON-file
+func LoadByHash(assetHash string) (*JsonAssetMetaData, error) {
 	path := GetMetaDataFilePath(assetHash)
-	_, meta, err := LoadIfExists(path)
+	meta, err := LoadIfExists(path)
 	return meta, err
 }
 

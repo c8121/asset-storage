@@ -1,6 +1,7 @@
 package metadata_db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -28,6 +29,26 @@ func NormalizeName(name string) string {
 }
 
 func GetMimeType(name string, createIfNotExists bool) (*MimeType, error) {
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer rollbackOrLog(tx)
+
+	mimeType, err := GetMimeTypeTx(tx, name, createIfNotExists)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = commitOrLog(tx); err != nil {
+		return nil, err
+	}
+
+	return mimeType, nil
+}
+
+func GetMimeTypeTx(tx *sql.Tx, name string, createIfNotExists bool) (*MimeType, error) {
 	name = NormalizeName(name)
 	if len(name) == 0 {
 		return nil, fmt.Errorf("invalid Mime-Type: Empty name")
@@ -39,7 +60,7 @@ func GetMimeType(name string, createIfNotExists bool) (*MimeType, error) {
 	}
 
 	mimeType = &MimeType{Name: name}
-	err := Get(createIfNotExists, mimeType)
+	err := GetTx(tx, createIfNotExists, mimeType)
 	if err == nil {
 		mimeTypeCache[name] = mimeType
 	}

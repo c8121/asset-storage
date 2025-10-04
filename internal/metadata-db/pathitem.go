@@ -3,6 +3,8 @@ package metadata_db
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -12,6 +14,15 @@ type PathItem struct {
 	Name   string
 }
 
+var (
+	pathItemCache map[string]*PathItem
+)
+
+func init() {
+	pathItemCache = make(map[string]*PathItem)
+}
+
+// SplitPath split at \ and /, remove 'file:'
 func SplitPath(path string) []string {
 
 	l := len(path)
@@ -44,6 +55,16 @@ func SplitPath(path string) []string {
 	return names
 }
 
+func GetPathItemIdTx(tx *sql.Tx, path string, createIfNotExists bool) int64 {
+	pathItem, err := GetPathItemTx(tx, path, createIfNotExists)
+	if err != nil {
+		fmt.Println(err)
+		return 0
+	}
+	return pathItem.Id
+}
+
+// GetPathItem gets PathItem from db, splits path and searches
 func GetPathItem(path string, createIfNotExists bool) (*PathItem, error) {
 
 	ctx := context.Background()
@@ -51,21 +72,21 @@ func GetPathItem(path string, createIfNotExists bool) (*PathItem, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
+	defer rollbackOrLog(tx)
 
 	pathItem, err := GetPathItemTx(tx, path, createIfNotExists)
 	if err != nil {
 		return nil, err
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err = commitOrLog(tx); err != nil {
 		return nil, err
 	}
 
 	return pathItem, nil
 }
 
+// GetPathItemTx gets PathItem from db, splits path and searches
 func GetPathItemTx(tx *sql.Tx, path string, createIfNotExists bool) (*PathItem, error) {
 
 	names := SplitPath(path)
@@ -73,14 +94,24 @@ func GetPathItemTx(tx *sql.Tx, path string, createIfNotExists bool) (*PathItem, 
 
 	var pathItem *PathItem
 	for _, name := range names {
-		pathItem = &PathItem{Parent: parent, Name: name}
-		err := GetTx(tx, createIfNotExists, pathItem)
-		if err == ErrNotFound {
-			return nil, err
+
+		cacheKey := fmt.Sprintf("%d/%s", parent, name)
+		cachedItem, ok := pathItemCache[cacheKey]
+		if !ok {
+			pathItem = &PathItem{Parent: parent, Name: name}
+			err := GetTx(tx, createIfNotExists, pathItem)
+			if errors.Is(err, ErrNotFound) {
+				return nil, err
+			}
+			if err != nil {
+				return nil, err
+			}
+			pathItemCache[cacheKey] = pathItem
+		} else {
+			pathItem = cachedItem
+			//fmt.Printf("Cached: %s = %v\n", cacheKey, pathItem)
 		}
-		if err != nil {
-			return nil, err
-		}
+
 		parent = pathItem.Id
 	}
 

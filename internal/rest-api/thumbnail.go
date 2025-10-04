@@ -29,7 +29,7 @@ var (
 )
 
 // generateThumbnail returns a thumbnail image generate from an asset
-func generateThumbnail(assetHash string, meta metadata.AssetMetadata) ([]byte, string, error) {
+func generateThumbnail(assetHash string, meta *metadata.JsonAssetMetaData) ([]byte, string, error) {
 
 	check := strings.ToLower(meta.MimeType)
 	if !strings.HasPrefix(check, "image/") {

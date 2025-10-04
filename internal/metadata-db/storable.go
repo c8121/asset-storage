@@ -45,7 +45,7 @@ func Get(insertIfNotExists bool, o Selectable) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer rollbackOrLog(tx)
 
 	err = GetTx(tx, insertIfNotExists, o)
 	if err != nil {
@@ -64,7 +64,7 @@ func GetTx(tx *sql.Tx, insertIfNotExists bool, o any) error {
 	}
 
 	err := LoadTx(tx, scanable)
-	if err == ErrNotFound {
+	if errors.Is(err, ErrNotFound) {
 		if insertIfNotExists {
 
 			insertable, ok := o.(Insertable)
@@ -94,7 +94,7 @@ func Load(o Selectable) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Commit()
+	defer commitOrLog(tx)
 
 	return LoadTx(tx, o)
 }
@@ -129,7 +129,7 @@ func LoadTx(tx *sql.Tx, o Selectable) error {
 	return nil
 }
 
-// Save checks it object exists in database (GetId() != 0) and then does Insert or Update
+// Save check if object exists in database (GetId() != 0) and then does Insert or Update
 func Save(o any) error {
 
 	ctx := context.Background()
@@ -137,14 +137,14 @@ func Save(o any) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer rollbackOrLog(tx)
 
 	err = SaveTx(tx, o)
 	if err != nil {
 		return err
 	}
 
-	return tx.Commit()
+	return commitOrLog(tx)
 }
 
 // Save checks it object exists in database (GetId() != 0) and then does Insert or Update

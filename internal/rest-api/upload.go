@@ -9,7 +9,6 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
-	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
@@ -74,9 +73,9 @@ func AddUploadedFile(c *gin.Context) {
 	}
 
 	if isNew || !config.SkipMetaDataIfExists {
-		
+
 		//Create/Update meta-data
-		meta, err := metadata.AddMetaData(
+		_, err := metadata.AddMetaData(
 			assetHash,
 			mimeType,
 			req.Name,
@@ -89,11 +88,11 @@ func AddUploadedFile(c *gin.Context) {
 		}
 
 		//Create/Update meta-data-database
-		err = mdsqlite.AddMetaData(assetHash, meta)
+		/*err = mdsqlite.AddMetaData(assetHash, meta)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, err.Error())
 			return
-		}
+		}*/
 	}
 
 	util.LogError(os.Remove(path))
