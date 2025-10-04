@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/c8121/asset-storage/internal/metadata"
+	metadata_db "github.com/c8121/asset-storage/internal/metadata-db"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
@@ -30,7 +32,7 @@ func GetAsset(c *gin.Context) {
 	if err != nil {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 	}
-	defer reader.Close()
+	defer util.CloseOrLog(reader)
 
 	c.Status(http.StatusOK)
 	c.Header("Content-Type", meta.MimeType)
@@ -43,7 +45,10 @@ func GetAsset(c *gin.Context) {
 		}
 		util.PanicOnIoError(err, "Failed to read file")
 
-		c.Writer.Write(buf[:n])
+		if _, err = c.Writer.Write(buf[:n]); err != nil {
+			util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+			break
+		}
 		c.Writer.Flush()
 	}
 }
@@ -51,9 +56,7 @@ func GetAsset(c *gin.Context) {
 // ListAssets is a rest-api handler to send a list of assets
 func ListAssets(c *gin.Context) {
 
-	c.Data(http.StatusOK, "application/json", []byte("[]"))
-
-	/*var filter = &mdsqlite.AssetFilter{
+	var filter = &metadata_db.AssetListFilter{
 		MimeType: strings.ReplaceAll(
 			strings.ReplaceAll(c.Param("mimetype"),
 				"_", "/"),
@@ -62,7 +65,7 @@ func ListAssets(c *gin.Context) {
 		Count:  util.Atoi(c.Param("count"), 0),
 	}
 
-	items, err := mdsqlite.ListAssets(filter)
+	items, err := metadata_db.ListAssets(filter)
 	if err != nil {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 		return
@@ -73,5 +76,5 @@ func ListAssets(c *gin.Context) {
 	} else {
 		//https://github.com/gin-gonic/gin/issues/125 ?
 		c.Data(http.StatusOK, "application/json", []byte("[]"))
-	}*/
+	}
 }
