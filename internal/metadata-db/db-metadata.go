@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/c8121/asset-storage/internal/metadata"
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 func AddMetaData(jsonMeta *metadata.JsonAssetMetaData) error {
@@ -49,6 +50,11 @@ func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 		return err
 	}
 
+	err = removeOriginsTx(tx, asset)
+	if err != nil {
+		return err
+	}
+
 	for _, jsonOrigin := range jsonMeta.Origins {
 
 		var origin = &Origin{
@@ -65,4 +71,16 @@ func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 	}
 
 	return nil
+}
+
+func removeOriginsTx(tx *sql.Tx, asset *Asset) error {
+
+	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ?;")
+	if err != nil {
+		return err
+	}
+	defer util.CloseOrLog(stmt)
+
+	_, err = stmt.Exec(asset.Id)
+	return err
 }

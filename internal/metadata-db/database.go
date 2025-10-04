@@ -38,7 +38,7 @@ func commitOrLog(tx *sql.Tx) error {
 func rollbackOrLog(tx *sql.Tx) {
 	err := tx.Rollback()
 	if err != nil {
-		fmt.Println(fmt.Errorf("Rollback failed: %T, %v", err, err))
+		//fmt.Println(fmt.Errorf("Rollback failed: %T, %v", err, err))
 	}
 }
 
