@@ -3,6 +3,7 @@ package storage
 import (
 	"archive/zip"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/c8121/asset-storage/internal/util"
@@ -38,13 +39,37 @@ func Unpack(path string, mimeType string) ([]Unpacked, error) {
 
 	for _, file := range reader.File {
 
-		var item Unpacked
-		item.Source = path
-		item.ArchivePath = file.Name
-		item.TempPath = file.Name
+		if file.FileInfo().IsDir() {
+			continue
+		}
 
-		unpacked = append(unpacked, item)
+		reader, err := file.Open()
+		if err != nil {
+			fmt.Printf("Error opening file %s: %s\n", file.Name, err)
+			continue
+		}
 
+		writer, err := NewTempFileWriter()
+		if err != nil {
+			fmt.Printf("Error creating temp writer: %s\n", err)
+			continue
+		}
+
+		_, err = io.Copy(writer, reader)
+		if err != nil {
+			fmt.Printf("Error copying file %s: %s\n", file.Name, err)
+		} else {
+
+			var item Unpacked
+			item.Source = path
+			item.ArchivePath = file.Name
+			item.TempPath = writer.Name()
+
+			unpacked = append(unpacked, item)
+		}
+
+		util.CloseOrLog(writer)
+		util.CloseOrLog(reader)
 	}
 
 	return unpacked, nil

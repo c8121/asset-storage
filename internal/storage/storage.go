@@ -44,6 +44,7 @@ func AddFile(path string) (*AddedFileInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("Add file:", path)
 
 	reader, err := os.Open(path)
 	if err != nil {
@@ -57,11 +58,14 @@ func AddFile(path string) (*AddedFileInfo, error) {
 		return nil, err
 	}
 
-	if IsUnpackable(path, info.MimeType) {
-		unpacked, err := Unpack(path, info.MimeType)
+	if IsUnpackable(info.StoragePath, info.MimeType) {
+		unpacked, err := Unpack(info.StoragePath, info.MimeType)
 		if err == nil {
 			for _, item := range unpacked {
 				fmt.Printf(" '--> %s\n", item)
+
+				//TODO add item
+				util.LogError(os.Remove(item.TempPath))
 			}
 		} else {
 			fmt.Printf("Cannot unpack '%s': %s\n", path, err)
@@ -72,14 +76,13 @@ func AddFile(path string) (*AddedFileInfo, error) {
 }
 
 // createTempWriter creates a new StorageWriter to a temp file
-func createTempWriter(path string) (StorageWriter, error) {
+func createTempWriter(sourcePath string) (StorageWriter, error) {
 
-	stat, err := os.Stat(path)
+	stat, err := os.Stat(sourcePath)
 	if errors.Is(err, os.ErrNotExist) {
-		fmt.Printf("'%s' does not exist\n", path)
+		fmt.Printf("'%s' does not exist\n", sourcePath)
 		return nil, os.ErrNotExist
 	}
-	fmt.Println("Add file:", path)
 
 	tempDest, err := newTempWriter(stat.Size())
 	if err != nil {
