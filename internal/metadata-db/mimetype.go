@@ -3,8 +3,9 @@ package metadata_db
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"strings"
+
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 type MimeType struct {
@@ -26,6 +27,35 @@ func NormalizeName(name string) string {
 		name = strings.TrimSpace(name[:p])
 	}
 	return name
+}
+
+func ListMimeTypes() ([]MimeType, error) {
+
+	var query = "SELECT id, name FROM mimeType ORDER BY name, id;"
+
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		return nil, err
+	}
+	defer util.CloseOrLog(stmt)
+
+	var items []MimeType
+
+	if rows, err := stmt.Query(); err == nil {
+		defer util.CloseOrLog(rows)
+		for rows.Next() {
+			var item MimeType
+			if err := rows.Scan(&item.Id, &item.Name); err != nil {
+				return items, err
+			}
+			items = append(items, item)
+		}
+
+	} else {
+		return items, err
+	}
+
+	return items, nil
 }
 
 func GetMimeType(name string, createIfNotExists bool) (*MimeType, error) {
@@ -50,10 +80,6 @@ func GetMimeType(name string, createIfNotExists bool) (*MimeType, error) {
 
 func GetMimeTypeTx(tx *sql.Tx, name string, createIfNotExists bool) (*MimeType, error) {
 	name = NormalizeName(name)
-	if len(name) == 0 {
-		return nil, fmt.Errorf("invalid Mime-Type: Empty name")
-	}
-
 	mimeType, ok := mimeTypeCache[name]
 	if ok {
 		return mimeType, nil

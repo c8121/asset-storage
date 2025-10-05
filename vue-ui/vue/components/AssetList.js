@@ -30,8 +30,11 @@
                                         <option value="image_webp">Image: WEBP</option>
                                         <option value="image_png">Image: PNG</option>
                                         <option value="image_gif">Image: GIF</option>
+                                        <option value="audio_*">Audio</option>
                                         <option value="video_*">Video</option>
                                         <option value="application_pdf">PDF</option>
+                                        <option :value="null"> - </option>
+                                        <option v-for="t in mimeTypes" :value="t.Id">{{t.Name}}</option>
                                     </select>
                                 </div>
                             </div>
@@ -80,12 +83,20 @@
                 page: 1,
                 type: null,
 
+                mimeTypes: [],
+
                 loading: false,
                 showLoadMore: true
             }
         },
         methods: {
             loadDataObject() {
+                const self = this;
+                self.loadAssetList();
+                self.loadMimeTypes();
+            },
+
+            loadAssetList() {
                 const self = this;
                 self.loading = true;
 
@@ -124,7 +135,7 @@
 
                 self.list.splice(0, self.list.length);
                 self.offset = (self.page - 1) * self.count
-                self.loadDataObject()
+                self.loadAssetList()
             },
 
             typeChanged() {
@@ -132,7 +143,7 @@
 
                 self.list.splice(0, self.list.length);
                 self.offset = 0;
-                self.loadDataObject()
+                self.loadAssetList()
             },
 
             getListUrl() {
@@ -193,6 +204,20 @@
                         self.loadMore();
                 }
                 document.addEventListener('scroll', self.scrollListener);
+            },
+
+            loadMimeTypes() {
+                const self = this;
+
+                client.get("/mimetypes/list").then((json) => {
+                    if (json) {
+                        self.mimeTypes.splice(0, self.mimeTypes.length);
+                        for(const item of json) {
+                            self.mimeTypes.push(item);
+                        }
+                    }
+                });
+
             }
         }
     }
