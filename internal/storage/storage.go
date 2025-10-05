@@ -20,113 +20,145 @@ const (
 	FilePermissions = 0744
 )
 
-// Init creates required directories
-func Init() {
+type (
+	AddedFileInfo struct {
+		Hash        string
+		StoragePath string
+		MimeType    string
+		IsNewFile   bool
+		Size        int64
+	}
+)
+
+// CreateDirectories creates required directories
+func CreateDirectories() {
 	util.CreateDirIfNotExists(config.AssetStorageBaseDir, FilePermissions)
 	util.CreateDirIfNotExists(config.AssetStorageTempDir, FilePermissions)
 }
 
-// AddFile adds one or more file to asset-storage.
+// AddFile adds one file to asset-storage.
 // Returns content-hash, file-path, mime-type, error
-func AddFile(path string) (assetHash, assetPath, mimeType string, isNew bool, err error) {
+func AddFile(path string) (*AddedFileInfo, error) {
+
+	writer, err := createTempWriter(path)
+	if err != nil {
+		return nil, err
+	}
+
+	reader, err := os.Open(path)
+	if err != nil {
+		fmt.Printf("Cannot open '%s': %s\n", path, err)
+		return nil, os.ErrNotExist
+	}
+	defer util.CloseOrLog(reader)
+
+	info, err := moveToStorage(reader, writer)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, nil
+}
+
+// createTempWriter creates a new StorageWriter to a temp file
+func createTempWriter(path string) (StorageWriter, error) {
 
 	stat, err := os.Stat(path)
 	if errors.Is(err, os.ErrNotExist) {
 		fmt.Printf("'%s' does not exist\n", path)
-		return "", "", "", true, os.ErrNotExist
+		return nil, os.ErrNotExist
 	}
 	fmt.Println("Add file:", path)
 
 	tempDest, err := newTempWriter(stat.Size())
-	util.PanicOnError(err, "Failed to create temp file")
-	fmt.Println("Temp file created:", tempDest.Name())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp-writer: %w", err)
+	}
 
-	var outWriter io.Writer
+	var outWriter StorageWriter
 	if len(config.XorKey) > 0 {
 		outWriter = NewXorWriter(tempDest)
 	} else {
 		outWriter = tempDest
 	}
 
+	return outWriter, nil
+}
+
+func moveToStorage(reader io.Reader, writer StorageWriter) (*AddedFileInfo, error) {
+
+	var info = &AddedFileInfo{IsNewFile: false}
+
 	buf := make([]byte, IoBufferSize)
-	in, err := os.Open(path)
-	if err != nil {
-		fmt.Printf("Cannot open '%s': %s\n", path, err)
-		return "", "", "", true, os.ErrNotExist
-	}
-	defer util.CloseOrLog(in)
 
 	hash := sha256.New()
-	mimetypeName := ""
-	size := int64(0)
 
 	for {
-		n, err := in.Read(buf)
+		n, err := reader.Read(buf)
 		if n == 0 && err == io.EOF {
 			break
 		} else if err != nil {
-			return "", "", "", true, fmt.Errorf("failed to read: %w", err)
+			return info, fmt.Errorf("failed to read: %w", err)
 		}
 
-		if len(mimetypeName) == 0 { //must be before outWriter.Write, because buf might get xor'ed
+		if len(info.MimeType) == 0 { //must be before outWriter.Write, because buf might get xor'ed
 			mime := mimetype.Detect(buf[:n])
-			mimetypeName = mime.String()
+			info.MimeType = mime.String()
 		}
 
 		hash.Write(buf[:n]) //must be before outWriter.Write
 
-		n, err = outWriter.Write(buf[:n])
+		n, err = writer.Write(buf[:n])
 		if err != nil {
-			return "", "", "", true, fmt.Errorf("failed to write: %w", err)
+			return info, fmt.Errorf("failed to write: %w", err)
 		}
-		size += int64(n)
+		info.Size += int64(n)
 
 	}
 
-	util.CloseOrLog(tempDest)
+	util.CloseOrLog(writer)
 
-	fmt.Printf("MIME type: %s, Size: %d\n", mimetypeName, size)
-
-	hashHex := fmt.Sprintf("%x", hash.Sum(nil))
-	if len(hashHex) < 2 {
-		return "", "", "", true, fmt.Errorf("invalid hash length: %d", len(hashHex))
+	info.Hash = fmt.Sprintf("%x", hash.Sum(nil))
+	if len(info.Hash) < 2 {
+		return info, fmt.Errorf("invalid hash length: %d", len(info.Hash))
 	}
 
-	destPath, err := FindByHash(hashHex)
+	var err error
+	info.StoragePath, err = FindByHash(info.Hash)
 	if err == nil {
-		fmt.Printf("File already exists: '%s'\n", destPath)
-		util.LogError(tempDest.Remove())
-		return hashHex, destPath, mimetypeName, false, nil
+		info.IsNewFile = false
+		fmt.Printf("File already exists: '%s'\n", info.StoragePath)
+		util.LogError(writer.Remove())
+		return info, nil
 	}
 
-	destName := hashHex[2:]
+	destName := info.Hash[2:]
 	destDir := fmt.Sprintf("%s/%s/%s",
 		config.AssetStorageBaseDir,
 		TimePeriodName(),
-		hashHex[:2])
+		info.Hash[:2])
 
 	err = os.MkdirAll(destDir, FilePermissions)
 	if err != nil {
-		return "", "", "", true, fmt.Errorf("failed to create directory: %w", err)
+		return info, fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	destPath = fmt.Sprintf("%s/%s",
+	info.StoragePath = fmt.Sprintf("%s/%s",
 		destDir,
 		destName)
 
-	if _, err := os.Stat(destPath); err == nil || os.IsExist(err) {
-		util.PanicOnError(os.Remove(tempDest.Name()), "Failed to remove temp file")
+	if _, err := os.Stat(info.StoragePath); err == nil || os.IsExist(err) {
+		util.PanicOnError(os.Remove(writer.Name()), "Failed to remove temp file")
 		panic("File already exists") //Panic, because check was done above with FindByHash
 	}
 
-	fmt.Printf("Adding '%s' to %s\n", path, destPath)
-	err = tempDest.Move(destPath)
+	err = writer.Move(info.StoragePath)
 	if err != nil {
-		return "", "", "", true, fmt.Errorf("failed to move file: %w", err)
+		return info, fmt.Errorf("failed to move file: %w", err)
 	}
-	util.LogError(os.Chmod(destPath, FilePermissions))
+	util.LogError(os.Chmod(info.StoragePath, FilePermissions))
 
-	return hashHex, destPath, mimetypeName, true, nil
+	return info, nil
 }
 
 // FindByHash Check all time-periods if file exists

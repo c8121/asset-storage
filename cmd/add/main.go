@@ -23,6 +23,7 @@ const (
 var (
 	currentUser, currentUserErr = user.Current()
 	recursive                   = flag.Bool("r", false, "Recursively add files")
+	fileNameFilter              = flag.String("name", "", "File name filter (*.jpg for example")
 )
 
 func main() {
@@ -38,7 +39,7 @@ func main() {
 	}
 
 	config.LoadDefault()
-	storage.Init()
+	storage.CreateDirectories()
 
 	mdsqlite.Open()
 	defer mdsqlite.Close()
@@ -47,14 +48,14 @@ func main() {
 		if file[:1] == "-" {
 			continue
 		}
-		addErr := addFile(file)
+		addErr := addPath(file)
 		if addErr != nil {
 			fmt.Println(addErr)
 		}
 	}
 }
 
-func addFile(path string) error {
+func addPath(path string) error {
 
 	stat, err := os.Stat(path)
 	if err != nil {
@@ -73,12 +74,19 @@ func addFile(path string) error {
 		}
 		for _, file := range files {
 			filePath := filepath.Join(path, file.Name())
-			err = addFile(filePath)
+			err = addPath(filePath)
 			if err != nil {
 				fmt.Printf("Error, omitting file: '%s': %s\n", filePath, err)
 			}
 		}
 		return nil
+	}
+
+	if fileNameFilter != nil && *fileNameFilter != "" {
+		matched, err := filepath.Match(*fileNameFilter, stat.Name())
+		if !matched || err != nil {
+			return err
+		}
 	}
 
 	for attempt := 0; attempt < MaxAttemptsPerFile; attempt++ {
@@ -97,18 +105,18 @@ func addFile(path string) error {
 func addFileAndMetadata(path string, stat os.FileInfo) error {
 
 	//Add file to storage
-	assetHash, _, mimeType, isNew, err := storage.AddFile(path)
+	info, err := storage.AddFile(path)
 	if err != nil {
 		fmt.Printf("Error adding '%s': %s\n", path, err)
 		return err
 	}
 
-	if isNew || !config.SkipMetaDataIfExists {
+	if info.IsNewFile || !config.SkipMetaDataIfExists {
 
 		//Create/Update meta-data
 		meta, err := metadata.AddMetaData(
-			assetHash,
-			mimeType,
+			info.Hash,
+			info.MimeType,
 			filepath.Base(path),
 			filepath.Dir(path),
 			currentUser.Username,

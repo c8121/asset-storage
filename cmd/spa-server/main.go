@@ -14,7 +14,7 @@ import (
 func main() {
 
 	config.LoadDefault()
-	storage.Init()
+	storage.CreateDirectories()
 
 	mdsqlite.Open()
 	defer mdsqlite.Close()

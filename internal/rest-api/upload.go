@@ -66,18 +66,18 @@ func AddUploadedFile(c *gin.Context) {
 	path := filepath.Join(config.AssetStorageTempDir, req.TempName)
 
 	//Add file to storage
-	assetHash, _, mimeType, isNew, err := storage.AddFile(path)
+	info, err := storage.AddFile(path)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if isNew || !config.SkipMetaDataIfExists {
+	if info.IsNewFile || !config.SkipMetaDataIfExists {
 
 		//Create/Update meta-data
 		_, err := metadata.AddMetaData(
-			assetHash,
-			mimeType,
+			info.Hash,
+			info.MimeType,
 			req.Name,
 			"",
 			req.Owner,
