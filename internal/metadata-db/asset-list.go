@@ -2,6 +2,7 @@ package metadata_db
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/c8121/asset-storage/internal/util"
@@ -9,6 +10,7 @@ import (
 
 type AssetListItem struct {
 	Hash     string
+	Name     string
 	MimeType string
 	FileTime time.Time
 }
@@ -21,7 +23,9 @@ type AssetListFilter struct {
 
 func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 
-	var query = "SELECT a.hash, m.name as mimeType, a.fileTime FROM asset a " +
+	var query = "SELECT a.hash, m.name as mimeType, a.fileTime, " +
+		" (SELECT name FROM origin o WHERE o.asset = a.id LIMIT 1) as name " +
+		" FROM asset a " +
 		" INNER JOIN mimeType m ON a.mimeType = m.id "
 	var where = ""
 	var limit = "ORDER BY fileTime DESC, hash ASC LIMIT ? OFFSET ?;"
@@ -29,8 +33,14 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 	var params = make([]any, 0)
 
 	if filter.MimeType != "" {
-		params = append(params, filter.MimeType)
-		where += "(m.name LIKE ?)"
+		mimeTypeId, err := strconv.Atoi(filter.MimeType)
+		if err == nil {
+			params = append(params, mimeTypeId)
+			where += "(m.id = ?)"
+		} else {
+			params = append(params, filter.MimeType)
+			where += "(m.name LIKE ?)"
+		}
 	}
 
 	params = append(params, filter.Count)
@@ -54,7 +64,7 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 		defer util.CloseOrLog(rows)
 		for rows.Next() {
 			var item AssetListItem
-			if err := rows.Scan(&item.Hash, &item.MimeType, &item.FileTime); err != nil {
+			if err := rows.Scan(&item.Hash, &item.MimeType, &item.FileTime, &item.Name); err != nil {
 				return items, err
 			}
 			items = append(items, item)
