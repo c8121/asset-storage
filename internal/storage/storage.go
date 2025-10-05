@@ -57,6 +57,17 @@ func AddFile(path string) (*AddedFileInfo, error) {
 		return nil, err
 	}
 
+	if IsUnpackable(path, info.MimeType) {
+		unpacked, err := Unpack(path, info.MimeType)
+		if err == nil {
+			for _, item := range unpacked {
+				fmt.Printf(" '--> %s\n", item)
+			}
+		} else {
+			fmt.Printf("Cannot unpack '%s': %s\n", path, err)
+		}
+	}
+
 	return info, nil
 }
 
