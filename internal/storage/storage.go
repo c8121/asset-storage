@@ -23,6 +23,7 @@ const (
 type (
 	AddedFileInfo struct {
 		Hash        string
+		SourcePath  string
 		StoragePath string
 		MimeType    string
 		IsNewFile   bool
@@ -37,8 +38,8 @@ func CreateDirectories() {
 }
 
 // AddFile adds one file to asset-storage.
-// Returns content-hash, file-path, mime-type, error
-func AddFile(path string) (*AddedFileInfo, error) {
+// Returns content-hash, file-path, mime-type, error as AddedFileInfo (might be more than one if an archive was added)
+func AddFile(path string) ([]AddedFileInfo, error) {
 
 	writer, err := createTempWriter(path)
 	if err != nil {
@@ -53,26 +54,30 @@ func AddFile(path string) (*AddedFileInfo, error) {
 	}
 	defer util.CloseOrLog(reader)
 
+	infos := make([]AddedFileInfo, 0)
+
 	info, err := moveToStorage(reader, writer)
 	if err != nil {
 		return nil, err
 	}
 
+	info.SourcePath = path
+	infos = append(infos, *info)
+
 	if IsUnpackable(info.StoragePath, info.MimeType) {
 		unpacked, err := Unpack(info.StoragePath, info.MimeType)
 		if err == nil {
 			for _, item := range unpacked {
-				fmt.Printf(" '--> %s\n", item)
-
-				//TODO add item
-				util.LogError(os.Remove(item.TempPath))
+				item.SourcePath = path + "/" + item.SourcePath
+				infos = append(infos, item)
+				fmt.Printf(" '--> %s\n", item.SourcePath)
 			}
 		} else {
 			fmt.Printf("Cannot unpack '%s': %s\n", path, err)
 		}
 	}
 
-	return info, nil
+	return infos, nil
 }
 
 // createTempWriter creates a new StorageWriter to a temp file
@@ -109,25 +114,27 @@ func moveToStorage(reader io.Reader, writer StorageWriter) (*AddedFileInfo, erro
 
 	for {
 		n, err := reader.Read(buf)
-		if n == 0 && err == io.EOF {
-			break
-		} else if err != nil {
-			return info, fmt.Errorf("failed to read: %w", err)
+		if n > 0 {
+			if len(info.MimeType) == 0 { //must be before outWriter.Write, because buf might get xor'ed
+				mime := mimetype.Detect(buf[:n])
+				info.MimeType = mime.String()
+			}
+
+			hash.Write(buf[:n]) //must be before outWriter.Write
+
+			n, err = writer.Write(buf[:n])
+			if err != nil {
+				return info, fmt.Errorf("failed to write: %w", err)
+			}
+			info.Size += int64(n)
 		}
-
-		if len(info.MimeType) == 0 { //must be before outWriter.Write, because buf might get xor'ed
-			mime := mimetype.Detect(buf[:n])
-			info.MimeType = mime.String()
-		}
-
-		hash.Write(buf[:n]) //must be before outWriter.Write
-
-		n, err = writer.Write(buf[:n])
 		if err != nil {
-			return info, fmt.Errorf("failed to write: %w", err)
+			if err == io.EOF {
+				break
+			} else {
+				return info, fmt.Errorf("failed to read: %w (%d bytes read)", err, info.Size)
+			}
 		}
-		info.Size += int64(n)
-
 	}
 
 	util.CloseOrLog(writer)
@@ -141,9 +148,11 @@ func moveToStorage(reader io.Reader, writer StorageWriter) (*AddedFileInfo, erro
 	info.StoragePath, err = FindByHash(info.Hash)
 	if err == nil {
 		info.IsNewFile = false
-		fmt.Printf("File already exists: '%s'\n", info.StoragePath)
+		fmt.Printf("File already exists: '%s'\n", info.Hash)
 		util.LogError(writer.Remove())
 		return info, nil
+	} else {
+		info.IsNewFile = true
 	}
 
 	destName := info.Hash[2:]

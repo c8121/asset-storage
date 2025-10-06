@@ -3,17 +3,10 @@ package storage
 import (
 	"archive/zip"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/c8121/asset-storage/internal/util"
 )
-
-type Unpacked struct {
-	Source      string //Original path (zip-file for example)
-	ArchivePath string //Path of file in archive
-	TempPath    string //Unpacked temp file
-}
 
 func IsUnpackable(path string, mimeType string) bool {
 	if strings.HasSuffix(strings.ToLower(mimeType), "zip") {
@@ -22,14 +15,15 @@ func IsUnpackable(path string, mimeType string) bool {
 	return false
 }
 
-func Unpack(path string, mimeType string) ([]Unpacked, error) {
+// Unpack deflates files directly to storage
+func Unpack(path string, mimeType string) ([]AddedFileInfo, error) {
 
 	if !strings.HasSuffix(strings.ToLower(mimeType), "zip") {
 		fmt.Printf("Not an archive: %s, %s", path, mimeType)
 		return nil, nil
 	}
 
-	unpacked := make([]Unpacked, 0)
+	unpacked := make([]AddedFileInfo, 0)
 
 	reader, err := zip.OpenReader(path)
 	if err != nil {
@@ -49,23 +43,18 @@ func Unpack(path string, mimeType string) ([]Unpacked, error) {
 			continue
 		}
 
-		writer, err := NewTempFileWriter()
+		writer, err := newTempWriter(file.FileInfo().Size())
 		if err != nil {
 			fmt.Printf("Error creating temp writer: %s\n", err)
 			continue
 		}
 
-		_, err = io.Copy(writer, reader)
+		info, err := moveToStorage(reader, writer)
 		if err != nil {
 			fmt.Printf("Error copying file %s: %s\n", file.Name, err)
 		} else {
-
-			var item Unpacked
-			item.Source = path
-			item.ArchivePath = file.Name
-			item.TempPath = writer.Name()
-
-			unpacked = append(unpacked, item)
+			info.SourcePath = file.Name
+			unpacked = append(unpacked, *info)
 		}
 
 		util.CloseOrLog(writer)

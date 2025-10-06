@@ -1,6 +1,7 @@
 package restapi
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
+	metadata_db "github.com/c8121/asset-storage/internal/metadata-db"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
@@ -66,33 +68,34 @@ func AddUploadedFile(c *gin.Context) {
 	path := filepath.Join(config.AssetStorageTempDir, req.TempName)
 
 	//Add file to storage
-	info, err := storage.AddFile(path)
+	infos, err := storage.AddFile(path)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if info.IsNewFile || !config.SkipMetaDataIfExists {
+	for _, info := range infos {
+		if info.IsNewFile || !config.SkipMetaDataIfExists {
 
-		//Create/Update meta-data
-		_, err := metadata.AddMetaData(
-			info.Hash,
-			info.MimeType,
-			req.Name,
-			"",
-			req.Owner,
-			req.FileTime)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, err.Error())
-			return
+			//Create/Update meta-data
+			meta, err := metadata.AddMetaData(
+				info.Hash,
+				info.MimeType,
+				req.Name,
+				"",
+				req.Owner,
+				req.FileTime)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, err.Error())
+				return
+			}
+
+			//Create/Update meta-data-database
+			err = metadata_db.AddMetaData(meta)
+			if err != nil {
+				fmt.Printf("Error adding meta-data to database '%s': %s\n", path, err)
+			}
 		}
-
-		//Create/Update meta-data-database
-		/*err = mdsqlite.AddMetaData(assetHash, meta)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, err.Error())
-			return
-		}*/
 	}
 
 	util.LogError(os.Remove(path))
