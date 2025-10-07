@@ -16,6 +16,7 @@ type AssetListItem struct {
 }
 
 type AssetListFilter struct {
+	PathId   int64
 	MimeType string
 	Offset   int
 	Count    int
@@ -32,14 +33,19 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 
 	var params = make([]any, 0)
 
+	if filter.PathId != 0 {
+		params = append(params, filter.PathId)
+		where = addWhere(where, "(m.path = ?)")
+	}
+
 	if filter.MimeType != "" {
 		mimeTypeId, err := strconv.Atoi(filter.MimeType)
 		if err == nil {
 			params = append(params, mimeTypeId)
-			where += "(m.id = ?)"
+			where = addWhere(where, "(m.id = ?)")
 		} else {
 			params = append(params, filter.MimeType)
-			where += "(m.name LIKE ?)"
+			where = addWhere(where, "(m.name LIKE ?)")
 		}
 	}
 
@@ -75,4 +81,12 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 	}
 
 	return items, nil
+}
+
+func addWhere(sql string, add string) string {
+	if len(sql) > 0 {
+		return sql + " AND " + add
+	} else {
+		return add
+	}
 }

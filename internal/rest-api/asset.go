@@ -27,6 +27,7 @@ func GetAsset(c *gin.Context) {
 		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash (not found)")))
 		return
 	}
+	fmt.Println(meta)
 
 	reader, err := storage.Open(hash)
 	if err != nil {
@@ -36,6 +37,12 @@ func GetAsset(c *gin.Context) {
 
 	c.Status(http.StatusOK)
 	c.Header("Content-Type", meta.MimeType)
+
+	if len(meta.Origins) > 0 {
+		c.Header("Content-Disposition", "attachment; filename=\""+meta.Origins[0].Name+"\"")
+	} else {
+		c.Header("Content-Disposition", "attachment")
+	}
 
 	buf := make([]byte, storage.IoBufferSize)
 	for {
@@ -57,6 +64,7 @@ func GetAsset(c *gin.Context) {
 func ListAssets(c *gin.Context) {
 
 	var filter = &metadata_db.AssetListFilter{
+		PathId: int64(util.Atoi(c.Param("path"), 0)),
 		MimeType: strings.ReplaceAll(
 			strings.ReplaceAll(c.Param("mimetype"),
 				"_", "/"),
