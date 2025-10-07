@@ -27,7 +27,6 @@ func GetAsset(c *gin.Context) {
 		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash (not found)")))
 		return
 	}
-	fmt.Println(meta)
 
 	reader, err := storage.Open(hash)
 	if err != nil {
@@ -39,9 +38,9 @@ func GetAsset(c *gin.Context) {
 	c.Header("Content-Type", meta.MimeType)
 
 	if len(meta.Origins) > 0 {
-		c.Header("Content-Disposition", "attachment; filename=\""+meta.Origins[0].Name+"\"")
+		c.Header("Content-Disposition", "inline; filename=\""+meta.Origins[0].Name+"\"")
 	} else {
-		c.Header("Content-Disposition", "attachment")
+		c.Header("Content-Disposition", "inline")
 	}
 
 	buf := make([]byte, storage.IoBufferSize)

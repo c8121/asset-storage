@@ -19,8 +19,8 @@ func init() {
 	OwnerCache = make(map[string]*Owner)
 }
 
-func GetOwnerIdTx(tx *sql.Tx, path string, createIfNotExists bool) int64 {
-	owner, err := GetPathItemTx(tx, path, createIfNotExists)
+func GetOwnerIdTx(tx *sql.Tx, name string, createIfNotExists bool) int64 {
+	owner, err := GetOwnerTx(tx, name, createIfNotExists)
 	if err != nil {
 		fmt.Println(err)
 		return 0
