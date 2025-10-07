@@ -35,3 +35,29 @@ html, body {
     position: relative;
     height: 100%;
 }
+
+#mainContainer .path-items-bar {
+    background-color: #eee;
+    position: sticky;
+    overflow: scroll;
+    top: 0;
+    height: 100vh;
+    max-width: 35vh;
+}
+
+#mainContainer .path-items-bar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    padding-left: 1em;
+}
+
+#mainContainer .path-items-bar li {
+    margin: 0;
+    padding: 0;
+}
+
+#mainContainer .path-items-bar ul button {
+    font-size: 0.8rem;
+    border: none
+}

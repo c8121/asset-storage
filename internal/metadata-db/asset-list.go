@@ -25,17 +25,18 @@ type AssetListFilter struct {
 func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 
 	var query = "SELECT a.hash, m.name as mimeType, a.fileTime, " +
-		" (SELECT name FROM origin o WHERE o.asset = a.id LIMIT 1) as name " +
+		" (SELECT name FROM origin where origin.asset = a.id LIMIT 1) as name " +
 		" FROM asset a " +
 		" INNER JOIN mimeType m ON a.mimeType = m.id "
 	var where = ""
-	var limit = "ORDER BY fileTime DESC, hash ASC LIMIT ? OFFSET ?;"
+	var limit = "ORDER BY a.fileTime DESC, a.hash ASC LIMIT ? OFFSET ?;"
 
 	var params = make([]any, 0)
 
 	if filter.PathId != 0 {
 		params = append(params, filter.PathId)
-		where = addWhere(where, "(m.path = ?)")
+		query += " INNER JOIN origin o ON a.id = o.asset "
+		where = addWhere(where, "(o.path = ?)")
 	}
 
 	if filter.MimeType != "" {

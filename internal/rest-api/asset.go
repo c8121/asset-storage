@@ -70,7 +70,7 @@ func ListAssets(c *gin.Context) {
 				"_", "/"),
 			"*", "%"),
 		Offset: util.Atoi(c.Param("offset"), 0),
-		Count:  util.Atoi(c.Param("count"), 0),
+		Count:  util.Atoi(c.Param("count"), 30),
 	}
 
 	items, err := metadata_db.ListAssets(filter)

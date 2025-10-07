@@ -42,10 +42,29 @@
             });
 
             const app = Vue.createApp({
-                methods: {}
+                data() {
+                    return {
+                        pathsVisible: false
+                    }
+                },
+                methods: {
+                    togglePathItems() {
+                        this.pathsVisible = !this.pathsVisible;
+                        if(!this.pathsVisible)
+                            this.$refs.view.$.ctx.setPathItemId(null)
+                    },
+                    selectPathItem(item) {
+                        this.$refs.view.$.ctx.setPathItemId(item.Id)
+                    }
+                }
             });
             app.use(router);
-            app.mount('#app');
+
+            VueComponentUtil.loadComponent('/vue/components/PathItemTree.js').then((component) => {
+                app.component('PathItemTree', component);
+            }).then(() => {
+                app.mount('#app');
+            });
         }
 
         (function (callback) {
@@ -84,8 +103,25 @@
             </div>
         </div>
     </nav>
-    <div id="mainContainer" class="container">
-        <router-view></router-view>
+    <div id="mainContainer" class="container-fluid">
+        <div class="row">
+            <div class="col-auto p-0">
+                <div class="path-items-bar">
+                    <div class="mt-4">
+                        <button class="btn btn-sm btn-outline-secondary me-1 ms-1 mt-1" @click="togglePathItems">
+                            Paths
+                            <span v-if="pathsVisible">-</span><span v-else>+</span>
+                        </button>
+                    </div>
+                    <path-item-tree ref="treeView" @click="selectPathItem" v-if="pathsVisible"></path-item-tree>
+                </div>
+            </div>
+            <div class="col">
+                <router-view v-slot="{ Component }">
+                    <component ref="view" :is="Component" />
+                </router-view>
+            </div>
+        </div>
     </div>
 </div>
 
