@@ -18,8 +18,12 @@ var (
 // generateThumbnail returns a thumbnail image generate from an asset
 func generateThumbnail(assetHash string, meta *metadata.JsonAssetMetaData) ([]byte, string, error) {
 
+	//TODO make mime-type->converter mapping in configurable
+
 	check := strings.ToLower(meta.MimeType)
-	if strings.HasPrefix(check, "image/") {
+	if check == "image/bmp" || check == "image/tiff" {
+		return generateThumbnailWithImageMagick(assetHash, meta)
+	} else if strings.HasPrefix(check, "image/") {
 		return generateThumbnailFromImage(assetHash, meta)
 	} else if strings.HasPrefix(check, "video/") {
 		return generateThumbnailFromVideo(assetHash, meta)

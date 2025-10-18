@@ -18,7 +18,7 @@ func run(name string, args ...string) error {
 		fmt.Printf("Command failed: %s\n%s\n", o.String(), e.String())
 		return err
 	}
-	fmt.Printf("Command: %s\n%s\n", o.String(), e.String())
+	//fmt.Printf("Command: %s\n%s\n", o.String(), e.String())
 
 	return nil
 }

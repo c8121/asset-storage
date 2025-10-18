@@ -2,8 +2,6 @@ package thumbnails
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/c8121/asset-storage/internal/util"
 )
@@ -20,9 +18,9 @@ var (
 // FFmpegThumb executes ffmpeg
 func FFmpegThumb(input string, output string, width int, height int) error {
 
-	binary, err := FindFFmpegBin()
-	if binary == "" || err != nil {
-		return fmt.Errorf("FFmpeg not found (searching in %v): %v", FFmpegBinPaths, err)
+	binary := FindFFmpegBin()
+	if binary == "" {
+		return fmt.Errorf("FFmpeg not found (searching in %v)", FFmpegBinPaths)
 	}
 
 	var args []string
@@ -46,22 +44,11 @@ func FFmpegThumb(input string, output string, width int, height int) error {
 }
 
 // FindFFmpegBin checks if one of FFmpegBinPaths exists
-func FindFFmpegBin() (string, error) {
+func FindFFmpegBin() string {
 
 	if FFmpegBinPath != "" {
-		return FFmpegBinPath, nil
+		return FFmpegBinPath
 	}
-
-	for _, path := range FFmpegBinPaths {
-		l, err := filepath.Glob(path)
-		if err != nil {
-			continue
-		}
-		if len(l) > 0 {
-			FFmpegBinPath = l[0]
-			return FFmpegBinPath, nil
-		}
-	}
-
-	return "", os.ErrNotExist
+	FFmpegBinPath = util.FindFile(FFmpegBinPaths)
+	return FFmpegBinPath
 }
