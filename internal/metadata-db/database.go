@@ -14,6 +14,7 @@ var (
 func SetDatabase(databse *sql.DB) {
 	db = databse
 	dbInitMimeType()
+	dbInitFileName()
 	dbInitPathItem()
 	dbInitOwner()
 	dbInitAsset()

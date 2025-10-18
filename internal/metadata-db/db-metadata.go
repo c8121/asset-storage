@@ -59,7 +59,7 @@ func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 
 		var origin = &Origin{
 			Asset:    asset.Id,
-			Name:     jsonOrigin.Name,
+			Name:     GetFileNameIdTx(tx, jsonOrigin.Name, true),
 			Path:     GetPathItemIdTx(tx, jsonOrigin.Path, true),
 			Owner:    GetOwnerIdTx(tx, jsonOrigin.Owner, true),
 			FileTime: jsonOrigin.FileTime,

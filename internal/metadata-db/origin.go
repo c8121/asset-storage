@@ -8,7 +8,7 @@ import (
 type Origin struct {
 	Id       int64
 	Asset    int64
-	Name     string
+	Name     int64
 	Path     int64
 	Owner    int64
 	FileTime time.Time
@@ -63,7 +63,7 @@ func (o *Origin) SetId(id int64) {
 }
 
 func dbInitOrigin() {
-	dbInitExec("CREATE TABLE IF NOT EXISTS origin(id integer PRIMARY KEY, asset INTEGER, name TEXT(1024), path INTEGER, owner INTEGER, fileTime DATETIME);")
+	dbInitExec("CREATE TABLE IF NOT EXISTS origin(id integer PRIMARY KEY, asset INTEGER, name INTEGER, path INTEGER, owner INTEGER, fileTime DATETIME);")
 	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_asset on origin(asset);")
 	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_name on origin(name);")
 	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_path on origin(path);")
