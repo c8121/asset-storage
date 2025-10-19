@@ -68,6 +68,8 @@ func ListAssets(c *gin.Context) {
 			strings.ReplaceAll(c.Param("mimetype"),
 				"_", "/"),
 			"*", "%"),
+		//FileName: "a",
+		//PathName: "e",
 		Offset: util.Atoi(c.Param("offset"), 0),
 		Count:  util.Atoi(c.Param("count"), 30),
 	}

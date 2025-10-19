@@ -3,6 +3,9 @@
 Basically a DAM-System (Digital Asset Management). Includes a Webserver providing a SPA (Single Page Application) 
 to browse the storage content.
 
+> [!NOTE]
+> Work in progress, things might change and be not downward compatible 
+
 ## Goals
 
 **DAM**: Manage Pictures, Documents...
