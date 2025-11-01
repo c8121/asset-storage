@@ -12,6 +12,12 @@ type ScoredId struct {
 
 type ScoredIdMap map[int64]float32
 
+// Set one item with score, overwrite score if exists
+func (m ScoredIdMap) Set(id int64, score float32) {
+	m[id] = score
+}
+
+// Add one item with score or update by adding score.
 func (m ScoredIdMap) Add(id int64, score float32) {
 	existingScore, ok := m[id]
 	if ok {
@@ -21,6 +27,7 @@ func (m ScoredIdMap) Add(id int64, score float32) {
 	}
 }
 
+// Reduce removes items, keeping only id's from given map.
 func (m ScoredIdMap) Reduce(remains ScoredIdMap) {
 	fmt.Printf("Reduce %d by %d\n", len(m), len(remains))
 	removeIds := make([]int64, len(m))
@@ -43,7 +50,13 @@ func (m ScoredIdMap) Sort() []ScoredId {
 		items = append(items, ScoredId{k, v})
 	}
 	slices.SortFunc(items, func(a, b ScoredId) int {
-		return int((b.Score - a.Score) * 32000)
+		if a.Score == b.Score {
+			return 0
+		} else if a.Score < b.Score {
+			return 1
+		} else {
+			return -1
+		}
 	})
 
 	return items

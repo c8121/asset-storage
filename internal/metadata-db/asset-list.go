@@ -9,6 +9,7 @@ import (
 )
 
 type AssetListItem struct {
+	Id       int64
 	Hash     string
 	Name     string
 	MimeType string
@@ -29,55 +30,29 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 	//Asset.Id -> Score
 	var ids ScoredIdMap = nil
 
-	if filter.PathId != 0 {
-		var err error = nil
-		ids, err = findAssetIdsByPathId(filter.PathId)
+	filterFunctions := map[any]interface{}{
+		filter.PathId:   findAssetIdsByPathId,
+		filter.MimeType: findAssetIdsByMimeType,
+		filter.FileName: findAssetIdsByFileName,
+		filter.PathName: findAssetIdsByPathName,
+	}
+
+	for filterValue, filterFunction := range filterFunctions {
+		foundIds, err := filterFunction.(func(any) (ScoredIdMap, error))(filterValue)
+		fmt.Printf("Found %d assets by: %v\n", len(ids), filterValue)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("Found %d assets by path id: %d\n", len(ids), filter.PathId)
-	}
-
-	if filter.MimeType != "" {
-		mimeTypeIds, err := findAssetIdsByMimeType(filter.MimeType)
-		if err != nil {
-			return nil, err
-		}
-		fmt.Printf("Found %d assets by mime-type: %s\n", len(mimeTypeIds), filter.MimeType)
-		if ids != nil {
-			ids.Reduce(mimeTypeIds)
-		} else {
-			ids = mimeTypeIds
+		if foundIds != nil {
+			if ids != nil {
+				ids.Reduce(foundIds)
+			} else {
+				ids = foundIds
+			}
 		}
 	}
 
-	if filter.FileName != "" {
-		fileNameIds, err := findAssetIdsByFileName(filter.FileName)
-		if err != nil {
-			return nil, err
-		}
-		fmt.Printf("Found %d assets by file name: %s\n", len(fileNameIds), filter.FileName)
-		if ids != nil {
-			ids.Reduce(fileNameIds)
-		} else {
-			ids = fileNameIds
-		}
-	}
-
-	if filter.PathName != "" {
-		pathNameIds, err := findAssetIdsByPathName(filter.PathName)
-		if err != nil {
-			fmt.Printf("ERROR: %v\n", err)
-		}
-		fmt.Printf("Found %d assets by path name: %s\n", len(pathNameIds), filter.PathName)
-		if ids != nil {
-			ids.Reduce(pathNameIds)
-		} else {
-			ids = pathNameIds
-		}
-	}
-
-	var query = "SELECT a.hash, m.name as mimeType, a.fileTime, " +
+	var query = "SELECT a.id, a.hash, m.name as mimeType, a.fileTime, " +
 		" (SELECT name FROM origin where origin.asset = a.id LIMIT 1) as name " +
 		" FROM asset a " +
 		" INNER JOIN mimeType m ON a.mimeType = m.id "
@@ -97,8 +72,24 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 				strings.Repeat("?,", len(slice)-1) + "?" +
 				");"
 			for _, id := range slice {
+				//fmt.Printf("%d %f\n", id.Id, id.Score)
 				params = append(params, id.Id)
 			}
+			items, err := loadList(query, params...)
+			if err != nil {
+				return nil, err
+			}
+			//Retain sorting
+			mapById := listToMap(items)
+			list := make([]AssetListItem, 0, len(items))
+			for _, id := range slice {
+				item, ok := mapById[id.Id]
+				if ok {
+					list = append(list, item)
+				}
+			}
+			return list, nil
+
 		} else {
 			//Nothing found
 			empty := []AssetListItem{}
@@ -109,7 +100,20 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 		query += "ORDER BY a.fileTime DESC, a.hash ASC LIMIT ? OFFSET ?;"
 		params = append(params, filter.Count)
 		params = append(params, filter.Offset)
+
+		return loadList(query, params...)
 	}
+}
+
+func listToMap(items []AssetListItem) map[int64]AssetListItem {
+	mapById := make(map[int64]AssetListItem, len(items))
+	for _, item := range items {
+		mapById[item.Id] = item
+	}
+	return mapById
+}
+
+func loadList(query string, params ...any) ([]AssetListItem, error) {
 
 	fmt.Printf("Query: %s\n", query)
 	stmt, err := db.Prepare(query)
@@ -124,28 +128,25 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 		defer util.CloseOrLog(rows)
 		for rows.Next() {
 			var item AssetListItem
-			if err := rows.Scan(&item.Hash, &item.MimeType, &item.FileTime, &item.Name); err != nil {
-				return items, err
+			if err := rows.Scan(&item.Id, &item.Hash, &item.MimeType, &item.FileTime, &item.Name); err != nil {
+				return nil, err
 			}
 			items = append(items, item)
 		}
 
 	} else {
-		return items, err
+		return nil, err
 	}
 
 	return items, nil
 }
 
-func addWhere(sql string, add string) string {
-	if len(sql) > 0 {
-		return sql + " AND " + add
-	} else {
-		return add
-	}
-}
+func findAssetIdsByPathName(name any) (ScoredIdMap, error) {
 
-func findAssetIdsByPathName(name string) (ScoredIdMap, error) {
+	var sName = name.(string)
+	if len(sName) == 0 {
+		return nil, nil
+	}
 
 	//TODO search parents
 
@@ -154,50 +155,67 @@ func findAssetIdsByPathName(name string) (ScoredIdMap, error) {
 		"INNER JOIN asset a ON o.asset = a.id " +
 		"WHERE p.name like ?;"
 
-	var findName = "%" + strings.ReplaceAll(name, " ", "%") + "%"
+	var findName = "%" + strings.ReplaceAll(sName, " ", "%") + "%"
 
-	return findAssetIds(query, findName, func(match any) float32 {
-		return float32(len(name)) / float32(len(match.(string)))
+	return findAssetIds(query, findName, func(id int64, match any, idMap *ScoredIdMap) {
+		score := float32(len(sName)) / float32(len(match.(string)))
+		idMap.Add(id, score)
 	})
 }
 
-func findAssetIdsByFileName(name string) (ScoredIdMap, error) {
+func findAssetIdsByFileName(name any) (ScoredIdMap, error) {
+
+	var sName = name.(string)
+	if len(sName) == 0 {
+		return nil, nil
+	}
 
 	var query = "SELECT a.id, f.name FROM origin o " +
 		"INNER JOIN fileName f ON f.id = o.name " +
 		"INNER JOIN asset a ON o.asset = a.id " +
 		"WHERE f.name like ?;"
 
-	var findName = "%" + strings.ReplaceAll(name, " ", "%") + "%"
+	var findName = "%" + strings.ReplaceAll(sName, " ", "%") + "%"
 
-	return findAssetIds(query, findName, func(match any) float32 {
-		return float32(len(name)) / float32(len(match.(string)))
+	return findAssetIds(query, findName, func(id int64, match any, idMap *ScoredIdMap) {
+		score := float32(len(sName)) / float32(len(match.(string)))
+		idMap.Add(id, score)
 	})
 }
 
-func findAssetIdsByMimeType(name string) (ScoredIdMap, error) {
+func findAssetIdsByMimeType(name any) (ScoredIdMap, error) {
 
-	var query = "SELECT a.id, m.name FROM asset a " +
+	if len(name.(string)) == 0 {
+		return nil, nil
+	}
+
+	var query = "SELECT a.id, a.fileTime FROM asset a " +
 		"INNER JOIN mimeType m ON m.id = a.mimeType " +
 		"WHERE m.name like ?;"
 
-	return findAssetIds(query, name, func(match any) float32 {
-		return 0.0
+	return findAssetIds(query, name, func(id int64, match any, idMap *ScoredIdMap) {
+		dt := match.(time.Time)
+		score := float32(dt.Unix()) / float32(1000.0)
+		idMap.Set(id, score)
 	})
 }
 
-func findAssetIdsByPathId(pathId int64) (ScoredIdMap, error) {
+func findAssetIdsByPathId(pathId any) (ScoredIdMap, error) {
+
+	if pathId.(int64) == 0 {
+		return nil, nil
+	}
 
 	var query = "SELECT a.id, a.id FROM origin o " +
 		"INNER JOIN asset a ON o.asset = a.id " +
 		"WHERE path = ?;"
 
-	return findAssetIds(query, pathId, func(match any) float32 {
-		return 0.0
+	return findAssetIds(query, pathId, func(id int64, match any, idMap *ScoredIdMap) {
+		idMap.Set(id, 0.0)
 	})
 }
 
-func findAssetIds(query string, name any, calcScore func(match any) float32) (ScoredIdMap, error) {
+func findAssetIds(query string, name any, calcScore func(id int64, match any, idMap *ScoredIdMap)) (ScoredIdMap, error) {
 
 	stmt, err := db.Prepare(query)
 	if err != nil {
@@ -216,8 +234,7 @@ func findAssetIds(query string, name any, calcScore func(match any) float32) (Sc
 			if err := rows.Scan(&id, &match); err != nil {
 				return nil, err
 			}
-			score := calcScore(match)
-			ids.Add(id, score)
+			calcScore(id, match, &ids)
 		}
 		return ids, nil
 	} else {
