@@ -2,6 +2,7 @@ package metadata_db
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -105,6 +106,7 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 	}
 }
 
+// listToMap converts list of AssetListItem to a map with ID as key.
 func listToMap(items []AssetListItem) map[int64]AssetListItem {
 	mapById := make(map[int64]AssetListItem, len(items))
 	for _, item := range items {
@@ -113,6 +115,7 @@ func listToMap(items []AssetListItem) map[int64]AssetListItem {
 	return mapById
 }
 
+// loadList queries the database
 func loadList(query string, params ...any) ([]AssetListItem, error) {
 
 	fmt.Printf("Query: %s\n", query)
@@ -155,7 +158,14 @@ func findAssetIdsByPathName(name any) (ScoredIdMap, error) {
 		"INNER JOIN asset a ON o.asset = a.id " +
 		"WHERE p.name like ?;"
 
-	var findName = "%" + strings.ReplaceAll(sName, " ", "%") + "%"
+	var findName = sName
+	if strings.Contains(findName, "*") {
+		//If an asterisk was given explicitly, only use this, just replace to sql-asterisk
+		findName = strings.ReplaceAll(sName, "*", "%")
+	} else {
+		findName = "%" + strings.ReplaceAll(sName, " ", "%") + "%"
+	}
+	fmt.Printf("findAssetIdsByPathName: %s\n", findName)
 
 	return findAssetIds(query, findName, func(id int64, match any, idMap *ScoredIdMap) {
 		score := float32(len(sName)) / float32(len(match.(string)))
@@ -175,10 +185,18 @@ func findAssetIdsByFileName(name any) (ScoredIdMap, error) {
 		"INNER JOIN asset a ON o.asset = a.id " +
 		"WHERE f.name like ?;"
 
-	var findName = "%" + strings.ReplaceAll(sName, " ", "%") + "%"
+	var findName = sName
+	if strings.Contains(findName, "*") {
+		//If an asterisk was given explicitly, only use this, just replace to sql-asterisk
+		findName = strings.ReplaceAll(sName, "*", "%")
+	} else {
+		findName = "%" + strings.ReplaceAll(sName, " ", "%") + "%"
+	}
+	fmt.Printf("findAssetIdsByFileName: %s\n", findName)
 
 	return findAssetIds(query, findName, func(id int64, match any, idMap *ScoredIdMap) {
 		score := float32(len(sName)) / float32(len(match.(string)))
+		//fmt.Printf("Match: %s, Score: %f\n", match, score)
 		idMap.Add(id, score)
 	})
 }
@@ -190,8 +208,16 @@ func findAssetIdsByMimeType(name any) (ScoredIdMap, error) {
 	}
 
 	var query = "SELECT a.id, a.fileTime FROM asset a " +
-		"INNER JOIN mimeType m ON m.id = a.mimeType " +
-		"WHERE m.name like ?;"
+		"INNER JOIN mimeType m ON m.id = a.mimeType WHERE "
+
+	mimeTypeId, err := strconv.Atoi(name.(string))
+	if err == nil {
+		name = mimeTypeId
+		query += "(m.id = ?)"
+	} else {
+		name = strings.ReplaceAll(name.(string), "*", "%")
+		query += "(m.name LIKE ?)"
+	}
 
 	return findAssetIds(query, name, func(id int64, match any, idMap *ScoredIdMap) {
 		dt := match.(time.Time)
@@ -206,12 +232,14 @@ func findAssetIdsByPathId(pathId any) (ScoredIdMap, error) {
 		return nil, nil
 	}
 
-	var query = "SELECT a.id, a.id FROM origin o " +
+	var query = "SELECT a.id, a.fileTime FROM origin o " +
 		"INNER JOIN asset a ON o.asset = a.id " +
 		"WHERE path = ?;"
 
 	return findAssetIds(query, pathId, func(id int64, match any, idMap *ScoredIdMap) {
-		idMap.Set(id, 0.0)
+		dt := match.(time.Time)
+		score := float32(dt.Unix()) / float32(1000.0)
+		idMap.Set(id, score)
 	})
 }
 

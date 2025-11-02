@@ -23,19 +23,25 @@
                             <div class="col-auto">
                                 <div class="input-group input-group-sm">
                                     <label for="type" class="input-group-text border-light-subtle">Type</label>
-                                    <select v-model="type" class="form-select border-light-subtle" @change="typeChanged">
+                                    <select v-model="type" class="form-select border-light-subtle" style="max-width: 150px !important" @change="typeChanged">
                                         <option :value="null">Any</option>
-                                        <option value="image_*">Image</option>
-                                        <option value="image_jpeg">Image: JPG</option>
-                                        <option value="image_webp">Image: WEBP</option>
-                                        <option value="image_png">Image: PNG</option>
-                                        <option value="image_gif">Image: GIF</option>
-                                        <option value="audio_*">Audio</option>
-                                        <option value="video_*">Video</option>
-                                        <option value="application_pdf">PDF</option>
+                                        <option value="image/*">Image</option>
+                                        <option value="image/jpeg">Image: JPG</option>
+                                        <option value="image/webp">Image: WEBP</option>
+                                        <option value="image/png">Image: PNG</option>
+                                        <option value="image/gif">Image: GIF</option>
+                                        <option value="audio/*">Audio</option>
+                                        <option value="video/*">Video</option>
+                                        <option value="application/pdf">PDF</option>
                                         <option :value="null"> - </option>
-                                        <option v-for="t in mimeTypes" :value="t.Id">{{t.Name}}</option>
+                                        <option v-for="t in mimeTypes" :value="t.Id.toString()">{{t.Name}}</option>
                                     </select>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group input-group-sm">
+                                    <input id="findName" v-model="findName" class="form-control w-auto border-light-subtle" @keyup.enter="findByName">
+                                    <button class="btn btn-outline-secondary border-light-subtle" @click="findByName">find...</button>
                                 </div>
                             </div>
                         </div>
@@ -82,6 +88,7 @@
                 page: 1,
                 type: null,
                 pathItem: null,
+                findName: null,
 
                 mimeTypes: [],
 
@@ -100,7 +107,7 @@
                 const self = this;
                 self.loading = true;
 
-                client.get(self.getListUrl()).then((json) => {
+                client.post('/assets/list', self.getListFilter()).then((json) => {
                     if (json) {
                         self.list = json;
                         self.showLoadMore = json.length >= self.count
@@ -118,7 +125,7 @@
 
                 self.offset += self.count
 
-                client.get(self.getListUrl()).then((json) => {
+                client.post('/assets/list', self.getListFilter()).then((json) => {
                     if (json) {
                         self.showLoadMore = json.length > 0
                         self.page = (self.offset + self.count) / self.count;
@@ -146,18 +153,25 @@
                 self.loadAssetList()
             },
 
-            getListUrl() {
+            findByName() {
                 const self = this;
 
-                let url = self.pathItem
-                    ? '/assets/list/path/' + self.pathItem
-                    : '/assets/list'
-                
-                url += '/' + self.offset + '/' + self.count;
-                if (self.type)
-                    url += '/' + self.type
+                self.list.splice(0, self.list.length);
+                self.offset = 0;
+                self.loadAssetList()
+            },
 
-                return url;
+            getListFilter() {
+                const self = this;
+
+                return {
+                    Offset: self.offset,
+                    Count: self.count,
+                    MimeType: self.type,
+                    FileName: self.findName,
+                    //PathName: null,
+                    PathId: self.pathItem
+                };
             },
 
             createGroupKeys(list) {
@@ -224,7 +238,7 @@
                 client.get("/mimetypes/list").then((json) => {
                     if (json) {
                         self.mimeTypes.splice(0, self.mimeTypes.length);
-                        for(const item of json) {
+                        for (const item of json) {
                             self.mimeTypes.push(item);
                         }
                     }

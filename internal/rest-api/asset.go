@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/c8121/asset-storage/internal/metadata"
 	metadata_db "github.com/c8121/asset-storage/internal/metadata-db"
@@ -62,19 +61,18 @@ func GetAsset(c *gin.Context) {
 // ListAssets is a rest-api handler to send a list of assets
 func ListAssets(c *gin.Context) {
 
-	var filter = &metadata_db.AssetListFilter{
-		PathId: int64(util.Atoi(c.Param("path"), 0)),
-		MimeType: strings.ReplaceAll(
-			strings.ReplaceAll(c.Param("mimetype"),
-				"_", "/"),
-			"*", "%"),
-		//FileName: "a",
-		//PathName: "e",
-		Offset: util.Atoi(c.Param("offset"), 0),
-		Count:  util.Atoi(c.Param("count"), 30),
+	var listFilter *metadata_db.AssetListFilter = nil
+	err := c.ShouldBind(&listFilter)
+	if err != nil || listFilter == nil {
+		util.LogError(fmt.Errorf("failed to parse query: %w", err))
+		listFilter = &metadata_db.AssetListFilter{
+			Offset: 0,
+			Count:  30,
+		}
 	}
+	fmt.Printf("Filter: %v\n", listFilter)
 
-	items, err := metadata_db.ListAssets(filter)
+	items, err := metadata_db.ListAssets(listFilter)
 	if err != nil {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 		return
