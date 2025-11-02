@@ -10,6 +10,7 @@ type Asset struct {
 	Hash     string
 	MimeType int64
 	FileTime time.Time //Max of all origins
+	Name     int64     //Latest name
 }
 
 func (a *Asset) GetId() int64 {
@@ -29,7 +30,7 @@ func (a *Asset) Get(insertIfNotExists bool) error {
 }
 
 func (a *Asset) GetSelectQuery() string {
-	return "SELECT id, hash, mimeType, fileTime FROM asset WHERE hash = ?;"
+	return "SELECT id, hash, mimeType, fileTime, name FROM asset WHERE hash = ?;"
 }
 
 func (a *Asset) GetSelectQueryArgs() []any {
@@ -41,19 +42,19 @@ func (a *Asset) Scan(rows *sql.Rows) error {
 }
 
 func (a *Asset) GetInsertQuery() string {
-	return "INSERT INTO asset(hash, mimeType, fileTime) VALUES(?,?,?);"
+	return "INSERT INTO asset(hash, mimeType, fileTime, name) VALUES(?,?,?,?);"
 }
 
 func (a *Asset) GetUpdateQuery() string {
-	return "UPDATE asset SET hash=?, mimeType=?, fileTime=? WHERE id = ?;"
+	return "UPDATE asset SET hash=?, mimeType=?, fileTime=?, name=? WHERE id = ?;"
 }
 
 func (a *Asset) GetUpdateQueryArgs() []any {
-	return []any{&a.Hash, &a.MimeType, &a.FileTime, &a.Id}
+	return []any{&a.Hash, &a.MimeType, &a.FileTime, &a.Name, &a.Id}
 }
 
 func (a *Asset) Exec(stmt *sql.Stmt) (sql.Result, error) {
-	return stmt.Exec(&a.Hash, &a.MimeType, &a.FileTime, &a.Id)
+	return stmt.Exec(&a.Hash, &a.MimeType, &a.FileTime, &a.Name, &a.Id)
 }
 
 func (a *Asset) SetId(id int64) {
@@ -61,8 +62,9 @@ func (a *Asset) SetId(id int64) {
 }
 
 func dbInitAsset() {
-	dbInitExec("CREATE TABLE IF NOT EXISTS asset(id integer PRIMARY KEY, hash TEXT(64), mimeType integer, fileTime DATETIME);")
+	dbInitExec("CREATE TABLE IF NOT EXISTS asset(id integer PRIMARY KEY, hash TEXT(64), mimeType integer, fileTime DATETIME, name integer);")
 	dbInitExec("CREATE INDEX IF NOT EXISTS idx_asset_hash on asset(hash);")
 	dbInitExec("CREATE INDEX IF NOT EXISTS idx_asset_mimeType on asset(mimeType);")
 	dbInitExec("CREATE INDEX IF NOT EXISTS idx_asset_fileTime on asset(fileTime);")
+	dbInitExec("CREATE INDEX IF NOT EXISTS idx_asset_name on asset(name);")
 }

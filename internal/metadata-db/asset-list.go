@@ -39,11 +39,11 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 
 	for filterValue, filterFunction := range filterFunctions {
 		foundIds, err := filterFunction.(func(any) (ScoredIdMap, error))(filterValue)
-		fmt.Printf("Found %d assets by: %v\n", len(ids), filterValue)
 		if err != nil {
 			return nil, err
 		}
 		if foundIds != nil {
+			fmt.Printf("Found %d assets by: %v\n", len(ids), filterValue)
 			if ids != nil {
 				ids.Reduce(foundIds)
 			} else {
@@ -52,10 +52,10 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 		}
 	}
 
-	var query = "SELECT a.id, a.hash, m.name as mimeType, a.fileTime, " +
-		" (SELECT name FROM origin where origin.asset = a.id LIMIT 1) as name " +
+	var query = "SELECT a.id, a.hash, m.name as mimeType, a.fileTime, f.name" +
 		" FROM asset a " +
-		" INNER JOIN mimeType m ON a.mimeType = m.id "
+		" INNER JOIN mimeType m ON a.mimeType = m.id " +
+		" INNER JOIN fileName f ON a.name = f.id "
 
 	var params = make([]any, 0)
 
@@ -65,7 +65,7 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 		if endIdx >= len(sorted) {
 			endIdx = len(sorted)
 		}
-		if endIdx > 0 {
+		if filter.Offset < len(sorted) && endIdx > 0 {
 			slice := sorted[filter.Offset:endIdx]
 			fmt.Printf("Found %d (%d - %d) items\n", len(slice), filter.Offset, endIdx)
 			query += " WHERE a.id in(" +

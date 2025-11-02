@@ -43,6 +43,7 @@ func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 	latestOrigin := metadata.GetLatestOrigin(jsonMeta)
 	if latestOrigin != nil {
 		asset.FileTime = latestOrigin.FileTime
+		asset.Name = GetFileNameIdTx(tx, latestOrigin.Name, true)
 	}
 
 	err = SaveTx(tx, asset)
