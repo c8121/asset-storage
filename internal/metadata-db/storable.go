@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/c8121/asset-storage/internal/util"
 )
@@ -116,6 +117,7 @@ func LoadTx(tx *sql.Tx, o Selectable) error {
 		defer util.CloseOrLog(rows)
 		if rows.Next() {
 			if err := o.Scan(rows); err != nil {
+				fmt.Printf("Error scanning rows for %T: %s\n", o, err)
 				return err
 			}
 		} else {

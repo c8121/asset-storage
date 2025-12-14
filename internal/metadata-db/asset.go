@@ -38,7 +38,7 @@ func (a *Asset) GetSelectQueryArgs() []any {
 }
 
 func (a *Asset) Scan(rows *sql.Rows) error {
-	return rows.Scan(&a.Id, &a.Hash, &a.MimeType, &a.FileTime)
+	return rows.Scan(&a.Id, &a.Hash, &a.MimeType, &a.FileTime, &a.Name)
 }
 
 func (a *Asset) GetInsertQuery() string {
