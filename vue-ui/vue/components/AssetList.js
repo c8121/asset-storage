@@ -91,7 +91,9 @@
                                 <p class="small">{{ metaDataToast.data.MimeType }}</p>
 
                                 <div v-for="origin in metaDataToast.data.Origins">
-                                    <p class="text-primary">
+                                    <p class="text-primary"
+                                         @click="selectAsset(metaDataToast.data)"
+                                         role="button">
                                         {{ origin.FileTime }}<br />
                                         <strong>{{ origin.Name }}</strong><br />
                                         <small>{{ origin.Path }}</small>

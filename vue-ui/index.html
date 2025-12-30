@@ -50,11 +50,14 @@
                 methods: {
                     togglePathItems() {
                         this.pathsVisible = !this.pathsVisible;
-                        if(!this.pathsVisible)
-                            this.$refs.view.$.ctx.setPathItemId(null)
+                        const component = this.$refs.view.$.ctx;
+                        if(!this.pathsVisible && component && component.setPathItemId)
+                            component.setPathItemId(null)
                     },
                     selectPathItem(item) {
-                        this.$refs.view.$.ctx.setPathItemId(item.Id)
+                        const component = this.$refs.view.$.ctx;
+                        if(component && component.setPathItemId)
+                            component.setPathItemId(item.Id)
                     }
                 }
             });

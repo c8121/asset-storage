@@ -17,6 +17,7 @@
 .asset .asset-image img {
     position: relative;
     z-index: 1;
+    width: auto;
 }
 
 .asset .asset-filename {
