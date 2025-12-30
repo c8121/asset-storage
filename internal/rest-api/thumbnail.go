@@ -23,6 +23,8 @@ func generateThumbnail(assetHash string, meta *metadata.JsonAssetMetaData) ([]by
 	check := strings.ToLower(meta.MimeType)
 	if check == "image/bmp" || check == "image/tiff" {
 		return generateThumbnailWithImageMagick(assetHash, meta)
+	} else if strings.HasPrefix(check, "application/pdf") {
+		return generateThumbnailWithImageMagick(assetHash, meta)
 	} else if strings.HasPrefix(check, "image/") {
 		return generateThumbnailFromImage(assetHash, meta)
 	} else if strings.HasPrefix(check, "video/") {

@@ -5,6 +5,7 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	"os"
+	"strings"
 
 	_ "github.com/HugoSmits86/nativewebp"
 	"github.com/c8121/asset-storage/internal/config"
@@ -27,7 +28,13 @@ func generateThumbnailWithImageMagick(assetHash string, meta *metadata.JsonAsset
 	}
 	util.LogError(out.Close())
 
-	err = thumbnails.ImageMagickThumb(in, out.Name(), ThumbnailWidth, -1)
+	mimeType := strings.ToLower(meta.MimeType)
+	if strings.HasPrefix(mimeType, "application/pdf") {
+		err = thumbnails.ImageMagickThumbFromPdf(in, out.Name(), ThumbnailWidth, -1)
+	} else {
+		err = thumbnails.ImageMagickThumb(in, out.Name(), ThumbnailWidth, -1)
+	}
+
 	if err != nil {
 		util.LogError(os.Remove(out.Name()))
 		return nil, "", fmt.Errorf("Failed to create thumbnail: %w", err)
