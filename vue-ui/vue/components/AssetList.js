@@ -3,6 +3,10 @@
 
         parentUrl: '/vue/components/common/BaseObjectWidget.js',
 
+        components: {
+            'PathItemTree': '/vue/components/PathItemTree.js'
+        },
+
         mixins: [
             ui.vueMixin
         ],
@@ -12,6 +16,18 @@
                 <div v-if="list" class="assets row row-cols-auto g-3 mt-1">
                     <div class="sticky-top bg-white pb-2 pt-2">
                         <div class="row">
+                            <div class="col-auto">
+                                <div class="pathDropdown">
+                                    <button class="btn btn-sm btn-outline-secondary border-light-subtle dropdown-toggle" 
+                                        type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                        Paths
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <PathItemTree ref="pathItemTree" :value="null"
+                                            @click="pathItemClicked"></PathItemTree>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="col-auto">
                                 <div class="input-group input-group-sm">
                                     <label for="page" class="input-group-text border-light-subtle">Page</label>
@@ -224,9 +240,9 @@
                 }
             },
 
-            setPathItemId(id) {
+            pathItemClicked(item) {
                 const self = this;
-                self.pathItem = id;
+                self.pathItem = item.Id;
                 self.list.splice(0, self.list.length);
                 self.offset = 0;
                 self.loadAssetList()

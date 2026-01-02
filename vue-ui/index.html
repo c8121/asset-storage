@@ -48,26 +48,11 @@
                     }
                 },
                 methods: {
-                    togglePathItems() {
-                        this.pathsVisible = !this.pathsVisible;
-                        const component = this.$refs.view.$.ctx;
-                        if(!this.pathsVisible && component && component.setPathItemId)
-                            component.setPathItemId(null)
-                    },
-                    selectPathItem(item) {
-                        const component = this.$refs.view.$.ctx;
-                        if(component && component.setPathItemId)
-                            component.setPathItemId(item.Id)
-                    }
                 }
             });
             app.use(router);
 
-            VueComponentUtil.loadComponent('/vue/components/PathItemTree.js').then((component) => {
-                app.component('PathItemTree', component);
-            }).then(() => {
-                app.mount('#app');
-            });
+            app.mount('#app');
         }
 
         (function (callback) {
@@ -107,24 +92,9 @@
         </div>
     </nav>
     <div id="mainContainer" class="container-fluid">
-        <div class="row">
-            <div class="col-auto p-0">
-                <div class="path-items-bar">
-                    <div class="mt-4">
-                        <button class="btn btn-sm btn-outline-secondary me-1 ms-1 mt-1" @click="togglePathItems">
-                            Paths
-                            <span v-if="pathsVisible">-</span><span v-else>+</span>
-                        </button>
-                    </div>
-                    <path-item-tree ref="treeView" @click="selectPathItem" v-if="pathsVisible"></path-item-tree>
-                </div>
-            </div>
-            <div class="col">
-                <router-view v-slot="{ Component }">
-                    <component ref="view" :is="Component"></component>
-                </router-view>
-            </div>
-        </div>
+        <router-view v-slot="{ Component }">
+            <component ref="view" :is="Component"></component>
+        </router-view>
     </div>
 </div>
 
