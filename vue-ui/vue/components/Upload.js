@@ -7,6 +7,9 @@
                     <label class="btn btn-secondary" role="button" for="formFileMultiple" v-html="labelCaption"></label>
                     <input class="d-none" type="file" @change="fileChanged" id="formFileMultiple" multiple>
                 </div>
+                <div v-if="message" :class="'alert mt-2 ' + messageClass">
+                    {{ message }}
+                </div>
             </div>`,
 
         props: {
@@ -25,7 +28,10 @@
         },
 
         data() {
-            return {}
+            return {
+                message: '',
+                messageClass: 'alert-success'
+            }
         },
         methods: {
             fileChanged(e) {
@@ -36,13 +42,14 @@
 
                 for (const file of files) {
 
-                    console.log(file)
+                    self.message = "Uploading: " + file.name;
+                    self.messageClass = 'alert-primary';
 
                     const request = new XMLHttpRequest();
                     request.open('POST', '/assets/upload');
-                    request.onprogress = function() {
-                        console.log("Upload progress: " + arguments)
-                        console.log(arguments)
+                    request.upload.onprogress = function(progress) {
+                        self.message = "Upload progress: " + progress.loaded + " of " + progress.total;
+                        self.messageClass = 'alert-primary';
                     }
                     request.onreadystatechange = function () {
                         if (request.readyState === 4) {
@@ -61,6 +68,11 @@
                 }
             },
             addUploadedFile(json, file) {
+                const self = this;
+
+                self.message = "Adding file to archive: " + file.name;
+                self.messageClass = 'alert-primary';
+
                 const query = { 
                     TempName: json.tempName,
                     Name: file.name,
@@ -69,6 +81,8 @@
                 }
                 client.post("/assets/upload/add", query).then((json) => {
                     console.log(json);
+                    self.message = "Added " + json.Name;
+                    self.messageClass = 'alert-success';
                 })
             },
             dragOver(e) {
