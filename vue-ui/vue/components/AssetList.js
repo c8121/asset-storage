@@ -4,7 +4,8 @@
         parentUrl: '/vue/components/common/BaseObjectWidget.js',
 
         components: {
-            'PathItemTree': '/vue/components/PathItemTree.js'
+            'PathItemTree': '/vue/components/PathItemTree.js',
+            'MetaData': '/vue/components/MetaData.js'
         },
 
         mixins: [
@@ -95,32 +96,7 @@
 
 
                 <div class="position-fixed toast-container top-0 end-0 p-3">
-
-                    <div id="metaDataToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="toast-header">
-                            <strong class="me-auto">Meta-Data</strong>
-                            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                        </div>
-                        <div class="toast-body">
-                            <div v-if="metaDataToast.data">
-                                <p class="small text-secondary">{{ metaDataToast.data.Hash }}</p>
-                                <p class="small">{{ metaDataToast.data.MimeType }}</p>
-
-                                <div v-for="origin in metaDataToast.data.Origins">
-                                    <p class="text-primary"
-                                         @click="selectAsset(metaDataToast.data)"
-                                         role="button">
-                                        {{ origin.FileTime }}<br />
-                                        <strong>{{ origin.Name }}</strong><br />
-                                        <small>{{ origin.Path }}</small>
-                                    </p>
-                                </div>
-
-                                <!-- <pre>{{ metaDataToast.data }}</pre> -->
-                            </div>
-                        </div>
-                    </div>
-
+                    <MetaData ref="metaDataToast" :value="metaDataToast.data" @file-click="selectAsset(metaDataToast.data)"></MetaData>
                 </div>
 
             </div>
@@ -260,7 +236,7 @@
                 const self = this;
                 client.get('/assets/metadata/' + asset.Hash).then((json) => {
                     self.metaDataToast.data = json;
-                    document.getElementById("metaDataToast").classList.add('show');
+                    self.$refs.metaDataToast.showToast();
                 });
             },
 
