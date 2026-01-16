@@ -19,13 +19,17 @@
                         <div class="row">
                             <div class="col-auto">
                                 <div class="pathDropdown">
-                                    <button class="btn btn-sm btn-outline-secondary border-light-subtle dropdown-toggle" 
-                                        type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                                        Paths
-                                    </button>
-                                    <div class="dropdown-menu">
-                                        <PathItemTree ref="pathItemTree" :value="null"
-                                            @click="pathItemClicked"></PathItemTree>
+                                    <div class="input-group input-group-sm">
+                                        <button class="btn btn-sm btn-outline-secondary border-light-subtle dropdown-toggle" 
+                                            type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                            {{ pathButtonText }}
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <PathItemTree ref="pathItemTree" :value="null"
+                                                @click="pathItemClicked"></PathItemTree>
+                                        </div>
+                                        <button v-if="pathItem" class="btn btn-sm btn-outline-secondary border-light-subtle"
+                                            @click="clearPathFilter">x</button>
                                     </div>
                                 </div>
                             </div>
@@ -57,8 +61,12 @@
                             </div>
                             <div class="col-auto">
                                 <div class="input-group input-group-sm">
-                                    <input id="findName" v-model="findName" class="form-control w-auto border-light-subtle" @keyup.enter="findByName">
-                                    <button class="btn btn-outline-secondary border-light-subtle" @click="findByName">find...</button>
+                                    <input id="findName" v-model="findName" class="form-control w-auto border-light-subtle border-end-0"
+                                            @keyup.enter="findByName">
+                                    <button v-if="findName" class="btn btn-sm btn-outline-secondary border-light-subtle border-start-0"
+                                            @click="clearFindFilter">x</button>
+                                    <button class="btn btn-outline-secondary border-light-subtle" 
+                                            @click="findByName">find...</button>
                                 </div>
                             </div>
                         </div>
@@ -118,6 +126,8 @@
                 loading: false,
                 showLoadMore: true,
 
+                pathButtonText: 'Paths',
+
                 metaDataToast: {
                     data: null
                 }
@@ -146,6 +156,13 @@
                 });
             },
 
+            reloadAssetList(offset) {
+                const self = this;
+                self.list.splice(0, self.list.length);
+                self.offset = offset;
+                self.loadAssetList();
+            },
+
             loadMore() {
                 const self = this;
                 self.loading = true;
@@ -166,26 +183,23 @@
 
             pageChanged() {
                 const self = this;
-
-                self.list.splice(0, self.list.length);
-                self.offset = (self.page - 1) * self.count
-                self.loadAssetList()
+                self.reloadAssetList((self.page - 1) * self.count);
             },
 
             typeChanged() {
                 const self = this;
-
-                self.list.splice(0, self.list.length);
-                self.offset = 0;
-                self.loadAssetList()
+                self.reloadAssetList(0);
             },
 
             findByName() {
                 const self = this;
+                self.reloadAssetList(0);
+            },
 
-                self.list.splice(0, self.list.length);
-                self.offset = 0;
-                self.loadAssetList()
+            clearFindFilter() {
+                const self = this;
+                self.findName = null;
+                self.reloadAssetList(0);
             },
 
             getListFilter() {
@@ -219,9 +233,15 @@
             pathItemClicked(item) {
                 const self = this;
                 self.pathItem = item.Id;
-                self.list.splice(0, self.list.length);
-                self.offset = 0;
-                self.loadAssetList()
+                self.reloadAssetList(0);
+                self.pathButtonText = item.Name;
+            },
+
+            clearPathFilter() {
+                const self = this;
+                self.pathItem = null;
+                self.reloadAssetList(0);
+                self.pathButtonText = 'Paths';
             },
 
             selectAsset(asset) {
