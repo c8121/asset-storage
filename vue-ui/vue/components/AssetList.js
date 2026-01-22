@@ -5,6 +5,7 @@
 
         components: {
             'PathItemTree': '/vue/components/PathItemTree.js',
+            'Upload': '/vue/components/Upload.js',
             'MetaData': '/vue/components/MetaData.js',
             'SelectedAssets': '/vue/components/SelectedAssets.js',
         },
@@ -74,6 +75,10 @@
                                 <button class="btn btn-sm btn-outline-secondary border-light-subtle"
                                     @click="$refs.selectionToast.showToast()">{{ Object.keys(selectionToast.data).length }} files selected</button>
                             </div>
+                            <div class="col-auto">
+                                <button class="btn btn-sm btn-outline-secondary border-light-subtle"
+                                    @click="$refs.uploadToast.showToast()">Upload</button>
+                            </div>
                         </div>
                     </div>
                     <template v-for="asset in list">
@@ -110,6 +115,8 @@
 
 
                 <div class="position-fixed toast-container top-0 end-0 p-3">
+                    <Upload ref="uploadToast" 
+                        @meta-data-click="showMetaData"></Upload>
                     <MetaData ref="metaDataToast" :value="metaDataToast.data" 
                         @file-click="downloadAsset(metaDataToast.data)"></MetaData>
                     <SelectedAssets ref="selectionToast" :value="selectionToast.data" 

@@ -2,43 +2,77 @@
     return {
 
         template: `
-            <div :class="cssClass">
-                <div @dragover="dragOver" @drop="drop" :class="innerCssClass">
-                    <label class="btn btn-secondary" role="button" for="formFileMultiple" v-html="labelCaption"></label>
-                    <input class="d-none" type="file" @change="fileChanged" id="formFileMultiple" multiple>
+            <div :class="'toast ' + showToastCss" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="me-auto">{{ headerCaption }}</strong>
+                    <button type="button" class="btn-close" aria-label="Close" @click="hideToast"></button>
                 </div>
-                <div v-if="message" :class="'alert mt-2 ' + messageClass">
-                    {{ message }}
+                <div class="toast-body">
+                    <div style="overflow: auto;max-height: 50vh;">
+                        <div @dragover="dragOver" @drop="drop" :class="innerCssClass">
+                            <label class="btn btn-secondary" role="button" for="formFileMultiple" v-html="labelCaption"></label>
+                            <input class="d-none" type="file" @change="fileChanged" id="formFileMultiple" multiple>
+                        </div>
+                        <div v-if="message" :class="'alert mt-2 ' + messageClass">
+                            {{ message }}
+                        </div>
+                        <div v-if="addedFiles && addedFiles.length">
+                            <div v-for="file in addedFiles" class="p-2"
+                                role="button"
+                                @click="onMetaDataClick(file)">
+                                <template v-for="(origin, index) in file.Origins">
+                                    <div v-if="index == 0"><strong>{{ origin.Name }}</strong></div>
+                                    <div v-else class="small"> {{ origin.Name }}</div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>`,
 
         props: {
+            headerCaption: {
+                type: String,
+                default: "Upload"
+            },
             labelCaption: {
                 type: String,
                 default: "Datei hochladen oder hierher ziehen"
             },
-            cssClass: {
-                type: String,
-                default: "m-2"
-            },
             innerCssClass: {
                 type: String,
-                default: "p-5 border border-primary-subtle bg-body-tertiary"
+                default: "p-3 border border-primary-subtle bg-body-tertiary"
             }
         },
 
         data() {
             return {
                 message: '',
-                messageClass: 'alert-success'
+                messageClass: 'alert-success',
+
+                addedFiles: [],
+
+                showToastCss: ''
             }
         },
         methods: {
+            showToast() {
+                this.showToastCss = 'show';
+                this.message = null;
+                this.addedFiles.splice(0, this.addedFiles.length);
+            },
+            hideToast() {
+                this.showToastCss = '';
+            },
             fileChanged(e) {
                 const self = this;
                 const files = e.target.files || e.dataTransfer.files;
                 if (!files.length)
                     return;
+
+                self.addedFiles.splice(0, self.addedFiles.length);
+                self.message = "Start uploading";
+                self.messageClass = 'alert-primary';
 
                 for (const file of files) {
 
@@ -80,8 +114,10 @@
                     FileTime: new Date(file.lastModified).toJSON()
                 }
                 client.post("/assets/upload/add", query).then((json) => {
-                    console.log(json);
-                    self.message = "Added " + json.Name;
+                    for(const item of json) {
+                        self.addedFiles.push(item);
+                    }
+                    self.message = "Added " + self.addedFiles.length + " file(s)";
                     self.messageClass = 'alert-success';
                 })
             },
@@ -91,10 +127,14 @@
             drop(e) {
                 e.preventDefault();
                 this.fileChanged(e);
+            },
+            onMetaDataClick(asset) {
+                this.$emit('metaDataClick', asset);
             }
         },
         emits: [
-            'uploadFinished'
+            'uploadFinished',
+            'metaDataClick'
         ],
     }
 })();

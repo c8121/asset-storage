@@ -74,6 +74,8 @@ func AddUploadedFile(c *gin.Context) {
 		return
 	}
 
+	var list = make([]metadata.JsonAssetMetaData, 0)
+
 	for _, info := range infos {
 		if info.IsNewFile || !config.SkipMetaDataIfExists {
 
@@ -90,6 +92,8 @@ func AddUploadedFile(c *gin.Context) {
 				return
 			}
 
+			list = append(list, *meta)
+
 			//Create/Update meta-data-database
 			err = metadata_db.AddMetaData(meta)
 			if err != nil {
@@ -100,5 +104,5 @@ func AddUploadedFile(c *gin.Context) {
 
 	util.LogError(os.Remove(path))
 
-	c.JSON(http.StatusOK, req)
+	c.JSON(http.StatusOK, list)
 }
