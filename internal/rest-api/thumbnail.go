@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	_ "image/gif"
-	_ "image/jpeg"
-
-	_ "github.com/HugoSmits86/nativewebp"
 	"github.com/c8121/asset-storage/internal/metadata"
 )
 
@@ -15,7 +11,8 @@ var (
 	ThumbnailWidth = 150
 )
 
-// generateThumbnail returns a thumbnail image generate from an asset
+// generateThumbnail returns a thumbnail image generate from an asset.
+// Returns content, mimeType, error
 func generateThumbnail(assetHash string, meta *metadata.JsonAssetMetaData) ([]byte, string, error) {
 
 	//TODO make mime-type->converter mapping in configurable
