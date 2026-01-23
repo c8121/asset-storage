@@ -6,6 +6,7 @@
         components: {
             'PathItemTree': '/vue/components/PathItemTree.js',
             'Upload': '/vue/components/Upload.js',
+            'Download': '/vue/components/Download.js',
             'MetaData': '/vue/components/MetaData.js',
             'SelectedAssets': '/vue/components/SelectedAssets.js',
         },
@@ -71,9 +72,9 @@
                                             @click="findByName">find...</button>
                                 </div>
                             </div>
-                            <div class="col-auto" v-if="Object.keys(selectionToast.data).length > 0">
+                            <div class="col-auto" v-if="Object.keys(selectedAssets).length > 0">
                                 <button class="btn btn-sm btn-outline-secondary border-light-subtle"
-                                    @click="$refs.selectionToast.showToast()">{{ Object.keys(selectionToast.data).length }} files selected</button>
+                                    @click="$refs.selectionToast.showToast()">{{ Object.keys(selectedAssets).length }} files selected</button>
                             </div>
                             <div class="col-auto">
                                 <button class="btn btn-sm btn-outline-secondary border-light-subtle"
@@ -90,7 +91,7 @@
                                         {{ asset.Name }}
                                     </div>
                                     <div class="asset-image">
-                                        <img @click="downloadAsset(asset)"
+                                        <img @click="showDownload(asset)"
                                             role="button"
                                             class="card-img-top asset-preview not-ready" 
                                             :src="'/assets/thumbnail/' + asset.Hash"
@@ -115,11 +116,13 @@
 
 
                 <div class="position-fixed toast-container top-0 end-0 p-3">
+                    <Download ref="downloadToast" :value="selectedAssetMetaData" 
+                        @file-click="downloadAsset"></Download>
                     <Upload ref="uploadToast" 
                         @meta-data-click="showMetaData"></Upload>
-                    <MetaData ref="metaDataToast" :value="metaDataToast.data" 
-                        @file-click="downloadAsset(metaDataToast.data)"></MetaData>
-                    <SelectedAssets ref="selectionToast" :value="selectionToast.data" 
+                    <MetaData ref="metaDataToast" :value="selectedAssetMetaData" 
+                        @file-click="downloadAsset(selectedAssetMetaData)"></MetaData>
+                    <SelectedAssets ref="selectionToast" :value="selectedAssets" 
                         @file-click="downloadAsset"
                         @remove-click="unselectAsset"
                         @meta-data-click="showMetaData"></SelectedAssets>
@@ -146,13 +149,9 @@
 
                 pathButtonText: 'Paths',
 
-                metaDataToast: {
-                    data: null
-                },
+                selectedAssetMetaData: null,
 
-                selectionToast: {
-                    data: {}
-                }
+                selectedAssets: {}
             }
         },
         methods: {
@@ -269,11 +268,11 @@
             selectAssetClick(asset, e) {
                 const self = this;
                 if(e.target.checked) {
-                    self.selectionToast.data[asset.Hash] = asset;
+                    self.selectedAssets[asset.Hash] = asset;
                 } else {
-                    delete self.selectionToast.data[asset.Hash];
+                    delete self.selectedAssets[asset.Hash];
                 }
-                if(Object.keys(self.selectionToast.data).length > 0)
+                if(Object.keys(self.selectedAssets).length > 0)
                     self.$refs.selectionToast.showToast();
                 else
                     self.$refs.selectionToast.hideToast();
@@ -281,8 +280,8 @@
 
             unselectAsset(asset) {
                 const self = this;
-                delete self.selectionToast.data[asset.Hash];
-                if(Object.keys(self.selectionToast.data).length > 0)
+                delete self.selectedAssets[asset.Hash];
+                if(Object.keys(self.selectedAssets).length > 0)
                     self.$refs.selectionToast.showToast();
                 else
                     self.$refs.selectionToast.hideToast();
@@ -290,17 +289,25 @@
 
             isSelected(asset) {
                 const self = this;
-                return self.selectionToast.data.hasOwnProperty(asset.Hash);
+                return self.selectedAssets.hasOwnProperty(asset.Hash);
             },
 
             downloadAsset(asset) {
                 window.open('/assets/' + asset.Hash);
             },
 
+            showDownload(asset) {
+                const self = this;
+                client.get('/assets/metadata/' + asset.Hash).then((json) => {
+                    self.selectedAssetMetaData = json;
+                    self.$refs.downloadToast.showToast();
+                });
+            },
+
             showMetaData(asset) {
                 const self = this;
                 client.get('/assets/metadata/' + asset.Hash).then((json) => {
-                    self.metaDataToast.data = json;
+                    self.selectedAssetMetaData = json;
                     self.$refs.metaDataToast.showToast();
                 });
             },
