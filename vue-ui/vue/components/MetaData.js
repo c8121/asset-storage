@@ -9,18 +9,24 @@
                 </div>
                 <div class="toast-body">
                     <div v-if="value">
-                        <p class="small text-secondary">{{ value.Hash }}</p>
-                        <p class="small">{{ value.MimeType }}</p>
-
-                        <div v-for="origin in value.Origins">
-                            <p class="text-primary"
-                                    @click="onFileClick()"
-                                    role="button">
-                                {{ origin.FileTime }}<br />
-                                <strong>{{ origin.Name }}</strong><br />
-                                <small>{{ origin.Path }}</small>
-                            </p>
+                        <div @click="onFileClick()" role="button">
+                            <span class="text-primary">{{ value.Origins[0].Name }}</span>
+                            <span class="text-secondary ps-3 text-nowrap">{{ value.MimeType }}</span>
                         </div>
+
+                        <div class="mt-3">
+                            <div v-for="origin in value.Origins" class="border border-light-subtle rounded p-1 mb-1">
+                                <a
+                                        @click="onFileClick()"
+                                        role="button">
+                                    {{ formatter.date(origin.FileTime) }}<br />
+                                    <small class="text-secondary pe-1">{{ origin.Path }}</small>
+                                    <strong class="text-primary">{{ origin.Name }}</strong>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3 small text-secondary">{{ value.Hash }}</div>
 
                         <!-- <pre>{{ value }}</pre> -->
                     </div>
@@ -40,7 +46,9 @@
 
         data() {
             return {
-                showToastCss: ''
+                showToastCss: '',
+
+                formatter: Formatter
             }
         },
         methods: {

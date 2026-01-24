@@ -10,19 +10,23 @@
                 <div class="toast-body">
                     <div v-if="value">
 
-                        <p class="small text-secondary">{{ value.Hash }}</p>
-                        <p class="small">{{ value.MimeType }}</p>
+                        <div>
+                            <span class="text-primary">{{ value.Origins[0].Name }}</span>
+                            <span class="text-secondary ps-3 text-nowrap">{{ value.MimeType }}</span>
+                        </div>
 
-                        <p>
+                        <div class="mt-3">
                             <button class="btn btn-primary"
                                 @click="onFileClick()">
                                 {{ buttonCaption }}
                             </button>
-                        </p>
+                        </div>
 
-                        <p><a class="small" 
-                            data-bs-toggle="collapse"
-                            href="#downloadFiltered" role="button">Download filtered (not availabe yet)</a></p>
+                        <div class="mt-3">
+                            <a class="small" 
+                                data-bs-toggle="collapse"
+                                href="#downloadFiltered" role="button">Download filtered (not availabe yet)</a>
+                        </div>
                         <div class="collapse" id="downloadFiltered">
                             <form method="post" ref="filterRequest" target="_blank">
                                 <div class="mt-5">
@@ -90,8 +94,8 @@
             },
             onFilterClick() {
                 const self = this;
-                self.$refs.filterRequest.action = 
-                    "/assets/filter/" + self.filterName + 
+                self.$refs.filterRequest.action =
+                    "/assets/filter/" + self.filterName +
                     "/" + self.value.Hash;
                 self.$refs.filterRequest.submit();
             }

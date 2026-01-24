@@ -27,7 +27,7 @@
                                             type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                             {{ pathButtonText }}
                                         </button>
-                                        <div class="dropdown-menu">
+                                        <div class="dropdown-menu" style="overflow: auto;max-height: 90vh;">
                                             <PathItemTree ref="pathItemTree" :value="null"
                                                 @click="pathItemClicked"></PathItemTree>
                                         </div>
@@ -189,8 +189,9 @@
                 self.loading = true;
 
                 self.offset += self.count
+                const filter = self.getListFilter();
 
-                client.post('/assets/list', self.getListFilter()).then((json) => {
+                client.post('/assets/list', filter).then((json) => {
                     if (json) {
                         self.showLoadMore = json.length > 0
                         self.page = (self.offset + self.count) / self.count;
@@ -267,12 +268,12 @@
 
             selectAssetClick(asset, e) {
                 const self = this;
-                if(e.target.checked) {
+                if (e.target.checked) {
                     self.selectedAssets[asset.Hash] = asset;
                 } else {
                     delete self.selectedAssets[asset.Hash];
                 }
-                if(Object.keys(self.selectedAssets).length > 0)
+                if (Object.keys(self.selectedAssets).length > 0)
                     self.$refs.selectionToast.showToast();
                 else
                     self.$refs.selectionToast.hideToast();
@@ -281,7 +282,7 @@
             unselectAsset(asset) {
                 const self = this;
                 delete self.selectedAssets[asset.Hash];
-                if(Object.keys(self.selectedAssets).length > 0)
+                if (Object.keys(self.selectedAssets).length > 0)
                     self.$refs.selectionToast.showToast();
                 else
                     self.$refs.selectionToast.hideToast();
@@ -316,23 +317,28 @@
             enableAutoLoadMore() {
                 const self = this;
 
-                const loadMoreButton = document.getElementById("loadMore");
-                self.scrollListener = (e) => {
-                    if (self.loading || !self.showLoadMore)
-                        return;
+                if (!self.scrollListener) {
 
-                    const rect = loadMoreButton.getBoundingClientRect();
-                    const elemTop = rect.top;
-                    const elemBottom = rect.bottom;
+                    self.scrollListener = (e) => {
 
-                    // Only completely visible elements return true:
-                    var isVisible = (elemTop >= 0) && (elemBottom <= window.innerHeight);
-                    // Partially visible elements return true:
-                    //isVisible = elemTop < window.innerHeight && elemBottom >= 0;
-                    if (isVisible)
-                        self.loadMore();
+                        if (self.loading || !self.showLoadMore)
+                            return;
+
+                        const loadMoreButton = document.getElementById("loadMore");
+                        const rect = loadMoreButton.getBoundingClientRect();
+                        const elemTop = rect.top;
+                        const elemBottom = rect.bottom;
+
+                        // Only completely visible elements return true:
+                        const isVisible = (elemTop > 0) && (elemBottom <= window.innerHeight);
+                        // Partially visible elements return true:
+                        //const isVisible = elemTop < window.innerHeight && elemBottom >= 0;
+                        if (isVisible) {
+                            self.loadMore();
+                        }
+                    }
+                    document.addEventListener('scroll', self.scrollListener);
                 }
-                document.addEventListener('scroll', self.scrollListener);
             },
 
             loadMimeTypes() {
