@@ -1,4 +1,4 @@
-package thumbnails
+package shell_command
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ var (
 )
 
 // FFmpegThumb executes ffmpeg
-func FFmpegThumb(input string, output string, width int, height int) error {
+func FFmpegThumb(inputFilePath string, outputFilePath string, width int, height int) error {
 
 	binary := FindFFmpegBin()
 	if binary == "" {
@@ -30,7 +30,7 @@ func FFmpegThumb(input string, output string, width int, height int) error {
 	}
 
 	args = append(args, "-y") //Overwrite
-	args = append(args, "-i", input)
+	args = append(args, "-i", inputFilePath)
 
 	args = append(args, "-vf")
 	args = append(args, fmt.Sprintf("scale=%d:%d", util.Iif(width > 0, width, -1), util.Iif(height > 0, height, -1)))
@@ -38,9 +38,9 @@ func FFmpegThumb(input string, output string, width int, height int) error {
 	args = append(args, "-frames:v", "1")
 	args = append(args, "-update", "true")
 
-	args = append(args, output)
+	args = append(args, outputFilePath)
 
-	return run(binary, args...)
+	return util.RunSilent(binary, args...)
 }
 
 // FindFFmpegBin checks if one of FFmpegBinPaths exists

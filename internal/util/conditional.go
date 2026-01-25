@@ -7,3 +7,12 @@ func Iif(condition bool, then any, ele any) any {
 		return ele
 	}
 }
+
+func GetOrDefault(m map[string]string, key string, defaultValue string) string {
+	v, ok := m[key]
+	if ok {
+		return v
+	} else {
+		return defaultValue
+	}
+}

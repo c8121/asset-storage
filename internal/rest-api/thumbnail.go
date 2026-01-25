@@ -2,8 +2,10 @@ package restapi
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/c8121/asset-storage/internal/filter"
 	"github.com/c8121/asset-storage/internal/metadata"
 )
 
@@ -17,16 +19,23 @@ func generateThumbnail(assetHash string, meta *metadata.JsonAssetMetaData) ([]by
 
 	//TODO make mime-type->converter mapping in configurable
 
+	params := map[string]string{}
+	params["width"] = strconv.Itoa(ThumbnailWidth)
+
+	var f filter.Filter
+
 	check := strings.ToLower(meta.MimeType)
 	if check == "image/bmp" || check == "image/tiff" {
-		return generateThumbnailWithImageMagick(assetHash, meta)
+		f = filter.NewImageMagickFilter()
 	} else if strings.HasPrefix(check, "application/pdf") {
-		return generateThumbnailWithImageMagick(assetHash, meta)
+		f = filter.NewImageMagickFilter()
 	} else if strings.HasPrefix(check, "image/") {
-		return generateThumbnailFromImage(assetHash, meta)
+		f = filter.NewImageFilter()
 	} else if strings.HasPrefix(check, "video/") {
-		return generateThumbnailFromVideo(assetHash, meta)
+		f = filter.NewFFmpegFilter()
 	} else {
 		return nil, "", fmt.Errorf("mime-type not supported: %s", meta.MimeType)
 	}
+
+	return f.Apply(assetHash, meta, params)
 }

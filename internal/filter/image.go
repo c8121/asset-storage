@@ -1,10 +1,12 @@
-package restapi
+package filter
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+
 	"bufio"
 	"bytes"
-	"fmt"
-	"strings"
 
 	"image"
 	_ "image/gif"
@@ -19,16 +21,21 @@ import (
 	_ "github.com/HugoSmits86/nativewebp"
 )
 
-var (
-	ThumbnailMimeType = "image/png"
+type ImageFilter struct {
+	DefaultWidth          string
+	ThumbnailInterpolator draw.Interpolator
+}
 
-	//ThumbnailInterpolator = draw.NearestNeighbor
-	//ThumbnailInterpolator = draw.ApproxBiLinear
-	ThumbnailInterpolator = draw.BiLinear
-	//ThumbnailInterpolator = draw.CatmullRom
-)
+func NewImageFilter() *ImageFilter {
+	f := &ImageFilter{}
+	f.DefaultWidth = "400"
+	f.ThumbnailInterpolator = draw.BiLinear
+	return f
+}
 
-func generateThumbnailFromImage(assetHash string, meta *metadata.JsonAssetMetaData) ([]byte, string, error) {
+func (f ImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
+
+	thumbnailWidth, _ := strconv.Atoi(util.GetOrDefault(params, "width", f.DefaultWidth))
 
 	check := strings.ToLower(meta.MimeType)
 	if !strings.HasPrefix(check, "image/") {
@@ -49,10 +56,10 @@ func generateThumbnailFromImage(assetHash string, meta *metadata.JsonAssetMetaDa
 	imgWidth := img.Bounds().Dx()
 	var scaleToWidth int
 	switch {
-	case imgWidth < ThumbnailWidth:
+	case imgWidth < thumbnailWidth:
 		scaleToWidth = imgWidth
 	default:
-		scaleToWidth = ThumbnailWidth
+		scaleToWidth = thumbnailWidth
 	}
 
 	if imgWidth > scaleToWidth {
@@ -64,7 +71,7 @@ func generateThumbnailFromImage(assetHash string, meta *metadata.JsonAssetMetaDa
 		destSize := image.Rect(0, 0, scaleToWidth, scaleToHeight)
 		thumb := image.NewRGBA(destSize)
 
-		ThumbnailInterpolator.Scale(thumb, destSize, img, img.Bounds(), draw.Over, nil)
+		f.ThumbnailInterpolator.Scale(thumb, destSize, img, img.Bounds(), draw.Over, nil)
 
 		return encodePng(thumb)
 	} else {
@@ -85,5 +92,5 @@ func encodePng(img image.Image) ([]byte, string, error) {
 		return nil, "", fmt.Errorf("failed to encode png, no bytes written")
 	}
 
-	return outBuf.Bytes(), ThumbnailMimeType, nil
+	return outBuf.Bytes(), "image/png", nil
 }

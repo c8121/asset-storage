@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetFiltered is a rest-api handler to filter/convert an asset
+// GetFiltered is a rest-api handler to filterAsset/convert an asset
 func GetFiltered(c *gin.Context) {
 
 	hash := c.Param("hash")
@@ -19,9 +19,9 @@ func GetFiltered(c *gin.Context) {
 		return
 	}
 
-	filterName := c.Param("filter")
+	filterName := c.Param("filterAsset")
 	if len(filterName) < 1 {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("no filter name given")))
+		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("no filterAsset name given")))
 		return
 	}
 
@@ -39,7 +39,7 @@ func GetFiltered(c *gin.Context) {
 		return
 	}
 
-	if bytes, mimeType, err := filter(hash, meta, filterName, filterParams); err == nil {
+	if bytes, mimeType, err := filterAsset(hash, meta, filterName, filterParams); err == nil {
 		c.Data(http.StatusOK, mimeType, bytes)
 		return
 	} else {

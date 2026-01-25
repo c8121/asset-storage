@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/c8121/asset-storage/internal/thumbnails"
+	shell_command "github.com/c8121/asset-storage/internal/shell-command"
 )
 
 func TestFFMpeg(t *testing.T) {
@@ -14,7 +14,7 @@ func TestFFMpeg(t *testing.T) {
 
 	stat, err := os.Stat(in)
 	if err == nil && !stat.IsDir() {
-		err = thumbnails.FFmpegThumb(in, out, 150, 0)
+		err = shell_command.FFmpegThumb(in, out, 150, 0)
 		if err != nil {
 			t.Errorf("Thumbnails.FFmpegThumb(%q, %q, 150, 0): %s", in, out, err)
 		}

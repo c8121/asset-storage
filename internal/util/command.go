@@ -1,4 +1,4 @@
-package thumbnails
+package util
 
 import (
 	"fmt"
@@ -6,7 +6,8 @@ import (
 	"strings"
 )
 
-func run(name string, args ...string) error {
+// RunSilent is a convenience method to execute a command and capture its output, which will only be printed on errors.
+func RunSilent(name string, args ...string) error {
 
 	fmt.Printf("%s %v\n", name, args)
 	cmd := exec.Command(name, args...)

@@ -1,40 +1,55 @@
-package restapi
+package filter
 
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
-	_ "image/gif"
-	_ "image/jpeg"
-
-	_ "github.com/HugoSmits86/nativewebp"
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
+	shell_command "github.com/c8121/asset-storage/internal/shell-command"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/internal/thumbnails"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
-func generateThumbnailFromVideo(assetHash string, meta *metadata.JsonAssetMetaData) ([]byte, string, error) {
+type FFmpegFilter struct {
+	DefaultWidth           string
+	DefaultFileNamePattern string
+	DefaultMimeType        string
+}
+
+func NewFFmpegFilter() *FFmpegFilter {
+	f := &FFmpegFilter{}
+	f.DefaultWidth = "400"
+	f.DefaultFileNamePattern = "asset-thumb*.png"
+	f.DefaultMimeType = "image/png"
+	return f
+}
+
+func (f FFmpegFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
 	check := strings.ToLower(meta.MimeType)
 	if !strings.HasPrefix(check, "video/") {
 		return nil, "", fmt.Errorf("mime-type not supported: %s", meta.MimeType)
 	}
 
+	thumbnailWidth, _ := strconv.Atoi(util.GetOrDefault(params, "width", f.DefaultWidth))
+	tempFileNamePattern := util.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)
+	mimeType := util.GetOrDefault(params, "mimeType", f.DefaultMimeType)
+
 	in, err := storage.FindByHash(assetHash)
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot find asset: %w", err)
 	}
 
-	out, err := os.CreateTemp(config.AssetStorageTempDir, "asset-thumb*.png")
+	out, err := os.CreateTemp(config.AssetStorageTempDir, tempFileNamePattern)
 	if err != nil {
 		return nil, "", fmt.Errorf("Failed to create temp file: %w", err)
 	}
 	util.LogError(out.Close())
 
-	err = thumbnails.FFmpegThumb(in, out.Name(), ThumbnailWidth, -1)
+	err = shell_command.FFmpegThumb(in, out.Name(), thumbnailWidth, -1)
 	if err != nil {
 		util.LogError(os.Remove(out.Name()))
 		return nil, "", fmt.Errorf("Failed to create thumbnail: %w", err)
@@ -47,5 +62,5 @@ func generateThumbnailFromVideo(assetHash string, meta *metadata.JsonAssetMetaDa
 	}
 
 	util.LogError(os.Remove(out.Name()))
-	return bytes, ThumbnailMimeType, nil
+	return bytes, mimeType, nil
 }

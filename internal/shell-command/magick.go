@@ -1,4 +1,4 @@
-package thumbnails
+package shell_command
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ var (
 )
 
 // ImageMagickThumb executes ImageMagick for Image conversion ...
-func ImageMagickThumb(input string, output string, width int, height int) error {
+func ImageMagickThumb(inputFilePath string, outputFilePath string, width int, height int) error {
 
 	binary := FindImageMagickBin()
 	if binary == "" {
@@ -26,19 +26,25 @@ func ImageMagickThumb(input string, output string, width int, height int) error 
 
 	var args []string
 
-	args = append(args, input)
+	args = append(args, inputFilePath)
 
-	if width > 0 && height > 0 {
+	if width > 0 || height > 0 {
 		args = append(args, "-geometry")
-		args = append(args, fmt.Sprintf("%d:%d", util.Iif(width > 0, width, -1), util.Iif(height > 0, height, -1)))
+		if width > 0 && height > 0 {
+			args = append(args, fmt.Sprintf("%d:%d", width, height))
+		} else if width > 0 {
+			args = append(args, fmt.Sprintf("%d", width))
+		} else {
+			args = append(args, fmt.Sprintf("x%d", height))
+		}
 	}
 
 	args = append(args, "-flatten")
 	args = append(args, "-colorspace", "RGB")
 
-	args = append(args, output)
+	args = append(args, outputFilePath)
 
-	return run(binary, args...)
+	return util.RunSilent(binary, args...)
 }
 
 // ImageMagickThumbFromPdf executes ImageMagick for PDF to Image conversion ...
@@ -63,7 +69,7 @@ func ImageMagickThumbFromPdf(input string, output string, width int, height int)
 
 	args = append(args, output)
 
-	return run(binary, args...)
+	return util.RunSilent(binary, args...)
 }
 
 // FindImageMagickBin checks if one of FFmpegBinPaths exists
