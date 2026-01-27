@@ -72,6 +72,33 @@ func ImageMagickThumbFromPdf(input string, output string, width int, height int)
 	return util.RunSilent(binary, args...)
 }
 
+// ImageMagickThumbFromPdf executes ImageMagick for Text to Image conversion ...
+func ImageMagickThumbFromTxt(input string, output string, width int, height int) error {
+
+	binary := FindImageMagickBin()
+	if binary == "" {
+		return fmt.Errorf("ImageMagick not found (searching in %v)", ImageMagickBinPaths)
+	}
+
+	var args []string
+
+	if width > 0 || height > 0 {
+		args = append(args, "-size")
+		args = append(args, fmt.Sprintf("%sx%s", util.Iif(width > 0, strconv.Itoa(width), ""), util.Iif(height > 0, strconv.Itoa(height), strconv.Itoa(width))))
+	}
+
+	args = append(args, "xc:white")
+	args = append(args, "-font", "Courier")
+	args = append(args, "-pointsize", "8")
+	args = append(args, "-fill", "black")
+	args = append(args, "-annotate", "+15+15")
+	args = append(args, "@"+input) //TODO Not good, security policy
+
+	args = append(args, output)
+
+	return util.RunSilent(binary, args...)
+}
+
 // FindImageMagickBin checks if one of FFmpegBinPaths exists
 func FindImageMagickBin() string {
 

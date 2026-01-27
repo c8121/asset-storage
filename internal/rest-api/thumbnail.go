@@ -12,7 +12,7 @@ var (
 	ThumbnailWidth = 150
 )
 
-// generateThumbnail returns a thumbnail image generate from an asset.
+// generateThumbnail returns a thumbnail image generated from an asset.
 // Returns content, mimeType, error
 func generateThumbnail(assetHash string, meta *metadata.JsonAssetMetaData) ([]byte, string, error) {
 

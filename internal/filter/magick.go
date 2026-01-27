@@ -48,6 +48,8 @@ func (f ImageMagickFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaD
 	checkMimeType := strings.ToLower(meta.MimeType)
 	if strings.HasPrefix(checkMimeType, "application/pdf") {
 		err = shell_command.ImageMagickThumbFromPdf(in, out.Name(), width, height)
+	} else if strings.HasPrefix(checkMimeType, "text/plain") {
+		err = shell_command.ImageMagickThumbFromTxt(in, out.Name(), width, height)
 	} else {
 		err = shell_command.ImageMagickThumb(in, out.Name(), width, height)
 	}

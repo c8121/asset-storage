@@ -72,9 +72,10 @@ func loadAvailableFilters() {
 			MimeTypes: []string{
 				"(?i)^image/bmp$",
 				"(?i)^image/tiff$",
-				"(?i)^application/pdf$",
 				"(?i)^image/.*xcf$",
 				"(?i)photoshop",
+				"(?i)^application/pdf$",
+				"(?i)^text/plain",
 			},
 		},
 		{
