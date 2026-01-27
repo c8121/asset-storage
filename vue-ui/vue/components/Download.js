@@ -16,44 +16,26 @@
                         </div>
 
                         <div class="mt-3">
-                            <button class="btn btn-primary"
-                                @click="onFileClick()">
-                                {{ buttonCaption }}
-                            </button>
+                            <div class="input-group">
+                                <select class="form-select" v-model="filterName" @change="filterChange">
+                                    <option :value="null">Original</option>
+                                    <option value="image">Image</option>
+                                </select>
+                                <button class="btn btn-primary"
+                                    @click="onDownloadClick()">
+                                    {{ buttonCaption }}
+                                </button>
+                            </div>
                         </div>
-
                         <div class="mt-3">
-                            <a class="small" 
-                                data-bs-toggle="collapse"
-                                href="#downloadFiltered" role="button">Download filtered (not availabe yet)</a>
-                        </div>
-                        <div class="collapse" id="downloadFiltered">
                             <form method="post" ref="filterRequest" target="_blank">
-                                <div class="mt-5">
-                                    <select class="form-select" v-model="filterName">
-                                        <option :value="null"></option>
-                                        <option value="image">Image</option>
-                                    </select>
-                                </div>
-                               <div class="row mt-1">
-                                    <div class="col-auto">Width</div>
-                                    <div class="col-auto">
-                                        <input type="number" name="width" value="100" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="row mt-1">
-                                    <div class="col-auto">Height</div>
-                                    <div class="col-auto">
-                                        <input type="number" name="height" value="" class="form-control">
+                                <div v-if="filterParams" v-for="p in filterParams">
+                                    <div class="input-group mb-1">
+                                        <label class="input-group-text">{{p.label}}</label>
+                                        <input type="number" :name="p.name" :value="p.value" class="form-control">
                                     </div>
                                 </div>
                             </form>
-                            <div class="mt-1">
-                                <button class="btn btn-primary"
-                                    @click="onFilterClick()">
-                                    {{ filterButtonCaption }}
-                                </button>
-                            </div>
                         </div>
 
                         <!-- <pre>{{ value }}</pre> -->
@@ -68,11 +50,7 @@
             },
             buttonCaption: {
                 type: String,
-                default: "Download original"
-            },
-            filterButtonCaption: {
-                type: String,
-                default: "Download filtered"
+                default: "Download"
             },
             value: {
                 type: Object,
@@ -84,7 +62,15 @@
             return {
                 showToastCss: '',
 
-                filterName: null
+                filterName: null,
+                filterParams: null,
+
+                availableFilterParams: {
+                    image: [
+                        { name: 'width', label: 'Width', value: 100 },
+                        { name: 'height', label: 'Height', value: "" }
+                    ]
+                }
             }
         },
         methods: {
@@ -94,15 +80,24 @@
             hideToast() {
                 this.showToastCss = '';
             },
-            onFileClick() {
-                this.$emit('fileClick', this.value);
-            },
-            onFilterClick() {
+            filterChange() {
                 const self = this;
-                self.$refs.filterRequest.action =
-                    "/assets/filter/" + self.filterName +
-                    "/" + self.value.Hash;
-                self.$refs.filterRequest.submit();
+                self.filterParams = null;
+                if(!self.filterName || !self.availableFilterParams[self.filterName]) {
+                    self.filterParams = self.filterName;
+                }
+                self.filterParams = self.availableFilterParams[self.filterName];
+            },
+            onDownloadClick() {
+                const self = this;
+                if(!self.filterName) {
+                    this.$emit('fileClick', this.value);    
+                } else {
+                    self.$refs.filterRequest.action =
+                        "/assets/filter/" + self.filterName +
+                        "/" + self.value.Hash;
+                    self.$refs.filterRequest.submit();
+                }
             }
         },
         emits: [
