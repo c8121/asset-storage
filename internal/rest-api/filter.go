@@ -11,12 +11,9 @@ import (
 // Returns content, mimeType, error
 func filterAsset(assetHash string, meta *metadata.JsonAssetMetaData, filterName string, filterParams map[string]string) ([]byte, string, error) {
 
-	var f filter.Filter
-
-	if filterName == "image" {
-		f = filter.NewImageMagickFilter()
-	} else {
-		return nil, "", fmt.Errorf("filter not found: %s", filterName)
+	var f = filter.GetFirstFilterByNameAndMimeType(filterName, meta.MimeType)
+	if f == nil {
+		return nil, "", fmt.Errorf("no filter with name '%s' available for mime-type: %s", filterName, meta.MimeType)
 	}
 
 	return f.Apply(assetHash, meta, filterParams)
