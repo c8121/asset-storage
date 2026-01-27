@@ -1,11 +1,24 @@
 package restapi
 
-import "github.com/c8121/asset-storage/internal/metadata"
+import (
+	"fmt"
+
+	"github.com/c8121/asset-storage/internal/filter"
+	"github.com/c8121/asset-storage/internal/metadata"
+)
 
 // filterAsset converts/filters/modified an asset an returns the filtered content
 // Returns content, mimeType, error
-func filterAsset(assetHash string, meta *metadata.JsonAssetMetaData, filterName string, filterParams string) ([]byte, string, error) {
+func filterAsset(assetHash string, meta *metadata.JsonAssetMetaData, filterName string, filterParams map[string]string) ([]byte, string, error) {
 
-	b := []byte(assetHash + ": Not implemented yet: filters (name='" + filterName + "', params='" + filterParams + "')")
-	return b, "text/plain", nil
+	var f filter.Filter
+
+	if filterName == "image" {
+		f = filter.NewImageMagickFilter()
+	} else {
+		return nil, "", fmt.Errorf("filter not found: %s", filterName)
+	}
+
+	return f.Apply(assetHash, meta, filterParams)
+
 }

@@ -29,6 +29,8 @@ func generateThumbnail(assetHash string, meta *metadata.JsonAssetMetaData) ([]by
 		f = filter.NewImageMagickFilter()
 	} else if strings.HasPrefix(check, "application/pdf") {
 		f = filter.NewImageMagickFilter()
+	} else if strings.Contains(check, "photoshop") {
+		f = filter.NewImageMagickFilter()
 	} else if strings.HasPrefix(check, "image/") {
 		f = filter.NewImageFilter()
 	} else if strings.HasPrefix(check, "video/") {

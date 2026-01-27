@@ -35,7 +35,7 @@ func NewImageFilter() *ImageFilter {
 
 func (f ImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
-	thumbnailWidth, _ := strconv.Atoi(util.GetOrDefault(params, "width", f.DefaultWidth))
+	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", f.DefaultWidth))
 
 	check := strings.ToLower(meta.MimeType)
 	if !strings.HasPrefix(check, "image/") {
@@ -56,10 +56,10 @@ func (f ImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, p
 	imgWidth := img.Bounds().Dx()
 	var scaleToWidth int
 	switch {
-	case imgWidth < thumbnailWidth:
+	case imgWidth < width:
 		scaleToWidth = imgWidth
 	default:
-		scaleToWidth = thumbnailWidth
+		scaleToWidth = width
 	}
 
 	if imgWidth > scaleToWidth {

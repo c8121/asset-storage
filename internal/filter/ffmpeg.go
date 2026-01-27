@@ -15,6 +15,7 @@ import (
 
 type FFmpegFilter struct {
 	DefaultWidth           string
+	DefaultVideoPosition   string
 	DefaultFileNamePattern string
 	DefaultMimeType        string
 }
@@ -22,6 +23,7 @@ type FFmpegFilter struct {
 func NewFFmpegFilter() *FFmpegFilter {
 	f := &FFmpegFilter{}
 	f.DefaultWidth = "400"
+	f.DefaultVideoPosition = "00:00:01"
 	f.DefaultFileNamePattern = "asset-thumb*.png"
 	f.DefaultMimeType = "image/png"
 	return f
@@ -34,7 +36,8 @@ func (f FFmpegFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, 
 		return nil, "", fmt.Errorf("mime-type not supported: %s", meta.MimeType)
 	}
 
-	thumbnailWidth, _ := strconv.Atoi(util.GetOrDefault(params, "width", f.DefaultWidth))
+	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", f.DefaultWidth))
+	videoPosition := util.GetOrDefault(params, "videoPosition", f.DefaultVideoPosition)
 	tempFileNamePattern := util.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)
 	mimeType := util.GetOrDefault(params, "mimeType", f.DefaultMimeType)
 
@@ -49,7 +52,7 @@ func (f FFmpegFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, 
 	}
 	util.LogError(out.Close())
 
-	err = shell_command.FFmpegThumb(in, out.Name(), thumbnailWidth, -1)
+	err = shell_command.FFmpegThumb(in, out.Name(), width, -1, videoPosition)
 	if err != nil {
 		util.LogError(os.Remove(out.Name()))
 		return nil, "", fmt.Errorf("Failed to create thumbnail: %w", err)

@@ -29,7 +29,8 @@ func NewImageMagickFilter() *ImageMagickFilter {
 
 func (f ImageMagickFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
-	thumbnailWidth, _ := strconv.Atoi(util.GetOrDefault(params, "width", f.DefaultWidth))
+	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", f.DefaultWidth))
+	height, _ := strconv.Atoi(util.GetOrDefault(params, "height", "0"))
 	tempFileNamePattern := util.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)
 	mimeType := util.GetOrDefault(params, "mimeType", f.DefaultMimeType)
 
@@ -46,9 +47,9 @@ func (f ImageMagickFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaD
 
 	checkMimeType := strings.ToLower(meta.MimeType)
 	if strings.HasPrefix(checkMimeType, "application/pdf") {
-		err = shell_command.ImageMagickThumbFromPdf(in, out.Name(), thumbnailWidth, -1)
+		err = shell_command.ImageMagickThumbFromPdf(in, out.Name(), width, height)
 	} else {
-		err = shell_command.ImageMagickThumb(in, out.Name(), thumbnailWidth, -1)
+		err = shell_command.ImageMagickThumb(in, out.Name(), width, height)
 	}
 
 	if err != nil {

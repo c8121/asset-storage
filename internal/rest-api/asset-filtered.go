@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/util"
@@ -19,9 +21,9 @@ func GetFiltered(c *gin.Context) {
 		return
 	}
 
-	filterName := c.Param("filterAsset")
+	filterName := c.Param("filter")
 	if len(filterName) < 1 {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("no filterAsset name given")))
+		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("no filter name given")))
 		return
 	}
 
@@ -31,7 +33,7 @@ func GetFiltered(c *gin.Context) {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("Failed to read request body")))
 		return
 	}
-	filterParams := string(b)
+	filterParams := paramsToMap(string(b))
 
 	meta, err := metadata.LoadByHash(hash)
 	if err != nil {
@@ -46,4 +48,42 @@ func GetFiltered(c *gin.Context) {
 		util.LogError(err)
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 	}
+}
+
+func paramsToMap(s string) map[string]string {
+
+	m := make(map[string]string)
+
+	p := 0
+	for p > -1 {
+		nvp := ""
+		e := strings.Index(s[p:], "&")
+		if e > -1 {
+			nvp = s[p:e]
+			p = e + 1
+		} else {
+			nvp = s[p:]
+			p = -1
+		}
+
+		k := ""
+		v := ""
+		var err error
+		i := strings.Index(nvp, "=")
+		if i > -1 {
+			k, err = url.QueryUnescape(nvp[:i])
+			v, err = url.QueryUnescape(nvp[i+1:])
+		} else {
+			k = nvp
+			v = ""
+		}
+		if err == nil {
+			//fmt.Printf("%s %s: %s = '%s'\n", s, nvp, k, v)
+			m[k] = v
+		} else {
+			util.LogError(fmt.Errorf("failed to decode parameter: %s, %w\n", nvp, err))
+		}
+	}
+
+	return m
 }

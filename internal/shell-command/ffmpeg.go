@@ -11,12 +11,11 @@ var (
 		"/opt/ffmpeg*/bin/ffmpeg.exe",
 	}
 
-	FFmpegBinPath      = ""
-	ThumbVideoPosition = "00:00:01"
+	FFmpegBinPath = ""
 )
 
 // FFmpegThumb executes ffmpeg
-func FFmpegThumb(inputFilePath string, outputFilePath string, width int, height int) error {
+func FFmpegThumb(inputFilePath string, outputFilePath string, width int, height int, videoPosition string) error {
 
 	binary := FindFFmpegBin()
 	if binary == "" {
@@ -25,8 +24,8 @@ func FFmpegThumb(inputFilePath string, outputFilePath string, width int, height 
 
 	var args []string
 
-	if ThumbVideoPosition != "" {
-		args = append(args, "-ss", ThumbVideoPosition)
+	if videoPosition != "" {
+		args = append(args, "-ss", videoPosition)
 	}
 
 	args = append(args, "-y") //Overwrite

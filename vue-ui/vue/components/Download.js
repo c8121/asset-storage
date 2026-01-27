@@ -35,10 +35,16 @@
                                         <option value="image">Image</option>
                                     </select>
                                 </div>
-                                <div class="row mt-1">
-                                    <div class="col-auto">Params</div>
+                               <div class="row mt-1">
+                                    <div class="col-auto">Width</div>
                                     <div class="col-auto">
-                                        <textarea name="params" v-model="filterParams" class="form-control"></textarea>
+                                        <input type="number" name="width" value="100" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-auto">Height</div>
+                                    <div class="col-auto">
+                                        <input type="number" name="height" value="" class="form-control">
                                     </div>
                                 </div>
                             </form>
@@ -78,8 +84,7 @@
             return {
                 showToastCss: '',
 
-                filterName: null,
-                filterParams: ""
+                filterName: null
             }
         },
         methods: {

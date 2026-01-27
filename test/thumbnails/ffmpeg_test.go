@@ -14,7 +14,7 @@ func TestFFMpeg(t *testing.T) {
 
 	stat, err := os.Stat(in)
 	if err == nil && !stat.IsDir() {
-		err = shell_command.FFmpegThumb(in, out, 150, 0)
+		err = shell_command.FFmpegThumb(in, out, 150, 0, "00:00:01")
 		if err != nil {
 			t.Errorf("Thumbnails.FFmpegThumb(%q, %q, 150, 0): %s", in, out, err)
 		}
