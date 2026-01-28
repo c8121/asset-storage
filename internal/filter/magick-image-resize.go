@@ -4,30 +4,29 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/c8121/asset-storage/internal/config"
+	filter_commands "github.com/c8121/asset-storage/internal/filter-commands"
 	"github.com/c8121/asset-storage/internal/metadata"
-	shell_command "github.com/c8121/asset-storage/internal/shell-command"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
-type ImageMagickFilter struct {
+type ImageMagickResizeFilter struct {
 	DefaultWidth           string
 	DefaultFileNamePattern string
 	DefaultMimeType        string
 }
 
-func NewImageMagickFilter() *ImageMagickFilter {
-	f := &ImageMagickFilter{}
+func NewImageMagickResizeFilter() *ImageMagickResizeFilter {
+	f := &ImageMagickResizeFilter{}
 	f.DefaultWidth = "400"
 	f.DefaultFileNamePattern = "asset-thumb*.png"
 	f.DefaultMimeType = "image/png"
 	return f
 }
 
-func (f ImageMagickFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
+func (f ImageMagickResizeFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
 	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", f.DefaultWidth))
 	height, _ := strconv.Atoi(util.GetOrDefault(params, "height", "0"))
@@ -45,15 +44,7 @@ func (f ImageMagickFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaD
 	}
 	util.LogError(out.Close())
 
-	checkMimeType := strings.ToLower(meta.MimeType)
-	if strings.HasPrefix(checkMimeType, "application/pdf") {
-		err = shell_command.ImageMagickThumbFromPdf(in, out.Name(), width, height)
-	} else if strings.HasPrefix(checkMimeType, "text/plain") {
-		err = shell_command.ImageMagickThumbFromTxt(in, out.Name(), width, height)
-	} else {
-		err = shell_command.ImageMagickThumb(in, out.Name(), width, height)
-	}
-
+	err = imageMagickResize(in, out.Name(), width, height)
 	if err != nil {
 		util.LogError(os.Remove(out.Name()))
 		return nil, "", fmt.Errorf("Failed to create thumbnail: %w", err)
@@ -67,4 +58,35 @@ func (f ImageMagickFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaD
 
 	util.LogError(os.Remove(out.Name()))
 	return bytes, mimeType, nil
+}
+
+// imageMagickResize executes ImageMagick for Image conversion ...
+func imageMagickResize(inputFilePath string, outputFilePath string, width int, height int) error {
+
+	binary := filter_commands.FindImageMagickBin()
+	if binary == "" {
+		return fmt.Errorf("ImageMagick not found (searching in %v)", filter_commands.ImageMagickBinPaths)
+	}
+
+	var args []string
+
+	args = append(args, inputFilePath)
+
+	if width > 0 || height > 0 {
+		args = append(args, "-geometry")
+		if width > 0 && height > 0 {
+			args = append(args, fmt.Sprintf("%d:%d", width, height))
+		} else if width > 0 {
+			args = append(args, fmt.Sprintf("%d", width))
+		} else {
+			args = append(args, fmt.Sprintf("x%d", height))
+		}
+	}
+
+	args = append(args, "-flatten")
+	args = append(args, "-colorspace", "RGB")
+
+	args = append(args, outputFilePath)
+
+	return util.RunSilent(binary, args...)
 }

@@ -15,7 +15,7 @@
                         </div>
 
                         <div class="mt-3">
-                            <div v-for="origin in value.Origins" class="border border-light-subtle rounded p-1 mb-1">
+                            <div v-for="origin in value.Origins" class="border-top border-light-subtle p-1 mb-1">
                                 <a
                                         @click="onFileClick()"
                                         role="button">

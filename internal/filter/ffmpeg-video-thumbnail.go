@@ -7,21 +7,21 @@ import (
 	"strings"
 
 	"github.com/c8121/asset-storage/internal/config"
+	filter_commands "github.com/c8121/asset-storage/internal/filter-commands"
 	"github.com/c8121/asset-storage/internal/metadata"
-	shell_command "github.com/c8121/asset-storage/internal/shell-command"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
-type FFmpegFilter struct {
+type FFmpegVideoThumbnailFilter struct {
 	DefaultWidth           string
 	DefaultVideoPosition   string
 	DefaultFileNamePattern string
 	DefaultMimeType        string
 }
 
-func NewFFmpegFilter() *FFmpegFilter {
-	f := &FFmpegFilter{}
+func NewFFmpegVideoThumbnailFilter() *FFmpegVideoThumbnailFilter {
+	f := &FFmpegVideoThumbnailFilter{}
 	f.DefaultWidth = "400"
 	f.DefaultVideoPosition = "00:00:01"
 	f.DefaultFileNamePattern = "asset-thumb*.png"
@@ -29,7 +29,7 @@ func NewFFmpegFilter() *FFmpegFilter {
 	return f
 }
 
-func (f FFmpegFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
+func (f FFmpegVideoThumbnailFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
 	check := strings.ToLower(meta.MimeType)
 	if !strings.HasPrefix(check, "video/") {
@@ -52,7 +52,7 @@ func (f FFmpegFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, 
 	}
 	util.LogError(out.Close())
 
-	err = shell_command.FFmpegThumb(in, out.Name(), width, -1, videoPosition)
+	err = ffmpegThumb(in, out.Name(), width, -1, videoPosition)
 	if err != nil {
 		util.LogError(os.Remove(out.Name()))
 		return nil, "", fmt.Errorf("Failed to create thumbnail: %w", err)
@@ -66,4 +66,32 @@ func (f FFmpegFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, 
 
 	util.LogError(os.Remove(out.Name()))
 	return bytes, mimeType, nil
+}
+
+// ffmpegThumb executes ffmpeg
+func ffmpegThumb(inputFilePath string, outputFilePath string, width int, height int, videoPosition string) error {
+
+	binary := filter_commands.FindFFmpegBin()
+	if binary == "" {
+		return fmt.Errorf("FFmpeg not found (searching in %v)", filter_commands.FFmpegBinPaths)
+	}
+
+	var args []string
+
+	if videoPosition != "" {
+		args = append(args, "-ss", videoPosition)
+	}
+
+	args = append(args, "-y") //Overwrite
+	args = append(args, "-i", inputFilePath)
+
+	args = append(args, "-vf")
+	args = append(args, fmt.Sprintf("scale=%d:%d", util.Iif(width > 0, width, -1), util.Iif(height > 0, height, -1)))
+
+	args = append(args, "-frames:v", "1")
+	args = append(args, "-update", "true")
+
+	args = append(args, outputFilePath)
+
+	return util.RunSilent(binary, args...)
 }

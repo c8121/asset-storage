@@ -66,29 +66,44 @@ func loadAvailableFilters() {
 
 	AvailableFilters = []AssetFilter{
 		{
-			Name:   "ImageMagick",
+			Name:   "ImageMagickResizeFilter",
 			Alias:  "Image",
-			Filter: NewImageMagickFilter(),
+			Filter: NewImageMagickResizeFilter(),
 			MimeTypes: []string{
 				"(?i)^image/bmp$",
 				"(?i)^image/tiff$",
 				"(?i)^image/.*xcf$",
 				"(?i)photoshop",
+			},
+		},
+		{
+			Name:   "ImageMagickPdfToImageFilter",
+			Alias:  "Image",
+			Filter: NewImageMagickPdfToImageFilter(),
+			MimeTypes: []string{
 				"(?i)^application/pdf$",
+			},
+		},
+		{
+			Name:   "ImageMagickTextToImageFilter",
+			Alias:  "Image",
+			Filter: NewImageMagickTextToImageFilter(),
+			MimeTypes: []string{
 				"(?i)^text/plain",
 			},
 		},
 		{
 			Name:   "NativeImage",
+			Alias:  "Image",
 			Filter: NewImageFilter(),
 			MimeTypes: []string{
 				"(?i)^image/",
 			},
 		},
 		{
-			Name:   "FFmpegFilter",
-			Alias:  "VideoToImage",
-			Filter: NewFFmpegFilter(),
+			Name:   "FFmpegVideoThumbnailFilter",
+			Alias:  "Image",
+			Filter: NewFFmpegVideoThumbnailFilter(),
 			MimeTypes: []string{
 				"(?i)^video/",
 			},
