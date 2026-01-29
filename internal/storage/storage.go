@@ -64,6 +64,10 @@ func AddFile(path string) ([]AddedFileInfo, error) {
 	info.SourcePath = path
 	infos = append(infos, *info)
 
+	if !info.IsNewFile {
+		fmt.Printf("File already exists: '%s' '%s'\n", info.SourcePath, info.Hash)
+	}
+
 	if IsUnpackable(info.StoragePath, info.MimeType) {
 		unpacked, err := Unpack(info.StoragePath, info.MimeType)
 		if err == nil {
@@ -148,7 +152,6 @@ func moveToStorage(reader io.Reader, writer StorageWriter) (*AddedFileInfo, erro
 	info.StoragePath, err = FindByHash(info.Hash)
 	if err == nil {
 		info.IsNewFile = false
-		fmt.Printf("File already exists: '%s'\n", info.Hash)
 		util.LogError(writer.Remove())
 		return info, nil
 	} else {
