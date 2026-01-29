@@ -1,9 +1,11 @@
-package metadata_db
+package metadata_db_entity
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
+
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 type Owner struct {
@@ -35,14 +37,14 @@ func GetOwner(name string, createIfNotExists bool) (*Owner, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rollbackOrLog(tx)
+	defer util.RollbackOrLog(tx)
 
 	owner, err := GetOwnerTx(tx, name, createIfNotExists)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = commitOrLog(tx); err != nil {
+	if err = util.CommitOrLog(tx); err != nil {
 		return nil, err
 	}
 
@@ -105,6 +107,8 @@ func (o *Owner) SetId(id int64) {
 	o.Id = id
 }
 
-func dbInitOwner() {
-	dbInitExec("CREATE TABLE IF NOT EXISTS owner(id integer PRIMARY KEY, name TEXT(64));")
+func (a *Owner) GetCreateQueries() []string {
+	return []string{
+		"CREATE TABLE IF NOT EXISTS owner(id integer PRIMARY KEY, name TEXT(64));",
+	}
 }

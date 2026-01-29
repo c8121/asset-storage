@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/c8121/asset-storage/internal/metadata"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
@@ -15,25 +16,25 @@ func AddMetaData(jsonMeta *metadata.JsonAssetMetaData) error {
 	if err != nil {
 		return err
 	}
-	defer rollbackOrLog(tx)
+	defer util.RollbackOrLog(tx)
 
 	err = AddMetaDataTx(tx, jsonMeta)
 	if err != nil {
 		return err
 	}
 
-	return commitOrLog(tx)
+	return util.CommitOrLog(tx)
 }
 
 func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 
-	var asset = &Asset{Hash: jsonMeta.Hash}
-	err := LoadTx(tx, asset)
-	if !errors.Is(err, ErrNotFound) && err != nil {
+	var asset = &metadata_db_entity.Asset{Hash: jsonMeta.Hash}
+	err := metadata_db_entity.LoadTx(tx, asset)
+	if !errors.Is(err, metadata_db_entity.ErrNotFound) && err != nil {
 		return err
 	}
 
-	mimeType, err := GetMimeTypeTx(tx, jsonMeta.MimeType, true)
+	mimeType, err := metadata_db_entity.GetMimeTypeTx(tx, jsonMeta.MimeType, true)
 	if err != nil {
 		return err
 	}
@@ -43,10 +44,10 @@ func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 	latestOrigin := metadata.GetLatestOrigin(jsonMeta)
 	if latestOrigin != nil {
 		asset.FileTime = latestOrigin.FileTime
-		asset.Name = GetFileNameIdTx(tx, latestOrigin.Name, true)
+		asset.Name = metadata_db_entity.GetFileNameIdTx(tx, latestOrigin.Name, true)
 	}
 
-	err = SaveTx(tx, asset)
+	err = metadata_db_entity.SaveTx(tx, asset)
 	if err != nil {
 		return err
 	}
@@ -58,14 +59,14 @@ func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 
 	for _, jsonOrigin := range jsonMeta.Origins {
 
-		var origin = &Origin{
+		var origin = &metadata_db_entity.Origin{
 			Asset:    asset.Id,
-			Name:     GetFileNameIdTx(tx, jsonOrigin.Name, true),
-			Path:     GetPathItemIdTx(tx, jsonOrigin.Path, true),
-			Owner:    GetOwnerIdTx(tx, jsonOrigin.Owner, true),
+			Name:     metadata_db_entity.GetFileNameIdTx(tx, jsonOrigin.Name, true),
+			Path:     metadata_db_entity.GetPathItemIdTx(tx, jsonOrigin.Path, true),
+			Owner:    metadata_db_entity.GetOwnerIdTx(tx, jsonOrigin.Owner, true),
 			FileTime: jsonOrigin.FileTime,
 		}
-		err = SaveTx(tx, origin)
+		err = metadata_db_entity.SaveTx(tx, origin)
 		if err != nil {
 			return err
 		}
@@ -74,7 +75,7 @@ func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 	return nil
 }
 
-func removeOriginsTx(tx *sql.Tx, asset *Asset) error {
+func removeOriginsTx(tx *sql.Tx, asset *metadata_db_entity.Asset) error {
 
 	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ?;")
 	if err != nil {

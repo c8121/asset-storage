@@ -1,10 +1,11 @@
 package metadata_db
 
 import (
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
-func ListPathItems(parentId int) ([]PathItem, error) {
+func ListPathItems(parentId int) ([]metadata_db_entity.PathItem, error) {
 
 	var query = "SELECT id, parent, name " +
 		" FROM pathItem WHERE parent = ? ORDER BY name, id asc LIMIT 9999;"
@@ -15,12 +16,12 @@ func ListPathItems(parentId int) ([]PathItem, error) {
 	}
 	defer util.CloseOrLog(stmt)
 
-	var items []PathItem
+	var items []metadata_db_entity.PathItem
 
 	if rows, err := stmt.Query(parentId); err == nil {
 		defer util.CloseOrLog(rows)
 		for rows.Next() {
-			var item PathItem
+			var item metadata_db_entity.PathItem
 			if err := rows.Scan(&item.Id, &item.Parent, &item.Name); err != nil {
 				return items, err
 			}

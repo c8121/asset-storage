@@ -1,4 +1,4 @@
-package metadata_db
+package metadata_db_entity
 
 import (
 	"database/sql"
@@ -62,11 +62,13 @@ func (o *Origin) SetId(id int64) {
 	o.Id = id
 }
 
-func dbInitOrigin() {
-	dbInitExec("CREATE TABLE IF NOT EXISTS origin(id integer PRIMARY KEY, asset INTEGER, name INTEGER, path INTEGER, owner INTEGER, fileTime DATETIME);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_asset on origin(asset);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_name on origin(name);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_path on origin(path);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_owner on origin(owner);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_origin_fileTime on origin(fileTime);")
+func (a *Origin) GetCreateQueries() []string {
+	return []string{
+		"CREATE TABLE IF NOT EXISTS origin(id integer PRIMARY KEY, asset INTEGER, name INTEGER, path INTEGER, owner INTEGER, fileTime DATETIME);",
+		"CREATE INDEX IF NOT EXISTS idx_origin_asset on origin(asset);",
+		"CREATE INDEX IF NOT EXISTS idx_origin_name on origin(name);",
+		"CREATE INDEX IF NOT EXISTS idx_origin_path on origin(path);",
+		"CREATE INDEX IF NOT EXISTS idx_origin_owner on origin(owner);",
+		"CREATE INDEX IF NOT EXISTS idx_origin_fileTime on origin(fileTime);",
+	}
 }

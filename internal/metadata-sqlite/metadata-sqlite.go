@@ -8,6 +8,7 @@ import (
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	metadata_db "github.com/c8121/asset-storage/internal/metadata-db"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
 	"github.com/c8121/asset-storage/internal/util"
 	_ "modernc.org/sqlite"
 )
@@ -29,6 +30,7 @@ func Open() {
 	util.PanicOnError(err, "Failed to open sqlite database: "+config.AssetMetaDataDb)
 
 	metadata_db.SetDatabase(db)
+	metadata_db_entity.AutoCreateEntities()
 }
 
 // Close Disconnect from Database

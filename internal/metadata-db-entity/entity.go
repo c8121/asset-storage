@@ -1,4 +1,4 @@
-package metadata_db
+package metadata_db_entity
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 )
 
 var (
+	db *sql.DB
+
 	ErrNotIdentifyable = errors.New("not implementing WithId")
 	ErrNotFound        = errors.New("not found")
 	ErrNotSelectable   = errors.New("not a Selectable")
@@ -17,8 +19,16 @@ var (
 	ErrNotUpdateable   = errors.New("not a Updateable")
 )
 
+func SetDatabase(databse *sql.DB) {
+	db = databse
+}
+
 type WithId interface {
 	GetId() int64
+}
+
+type AutoCreatable interface {
+	GetCreateQueries() []string
 }
 
 type Selectable interface {
@@ -39,6 +49,15 @@ type Updateable interface {
 	Exec(stmt *sql.Stmt) (sql.Result, error)
 }
 
+// AutoCreate executed DDL to create entity if not exists
+func AutoCreate(o AutoCreatable) {
+	queries := o.GetCreateQueries()
+	for _, query := range queries {
+		_, err := db.Exec(query)
+		util.PanicOnError(err, "Failed to init entity")
+	}
+}
+
 // Get first tries to Load(...), then Insert(...) if insertIfNotExists = true
 func Get(insertIfNotExists bool, o Selectable) error {
 	ctx := context.Background()
@@ -46,7 +65,7 @@ func Get(insertIfNotExists bool, o Selectable) error {
 	if err != nil {
 		return err
 	}
-	defer rollbackOrLog(tx)
+	defer util.RollbackOrLog(tx)
 
 	err = GetTx(tx, insertIfNotExists, o)
 	if err != nil {
@@ -95,7 +114,7 @@ func Load(o Selectable) error {
 	if err != nil {
 		return err
 	}
-	defer commitOrLog(tx)
+	defer util.CommitOrLog(tx)
 
 	return LoadTx(tx, o)
 }
@@ -139,14 +158,14 @@ func Save(o any) error {
 	if err != nil {
 		return err
 	}
-	defer rollbackOrLog(tx)
+	defer util.RollbackOrLog(tx)
 
 	err = SaveTx(tx, o)
 	if err != nil {
 		return err
 	}
 
-	return commitOrLog(tx)
+	return util.CommitOrLog(tx)
 }
 
 // Save checks it object exists in database (GetId() != 0) and then does Insert or Update

@@ -22,14 +22,14 @@ import (
 )
 
 type ImageFilter struct {
-	DefaultWidth          string
-	ThumbnailInterpolator draw.Interpolator
+	DefaultWidth      string
+	ImageInterpolator draw.Interpolator
 }
 
 func NewImageFilter() *ImageFilter {
 	f := &ImageFilter{}
 	f.DefaultWidth = "400"
-	f.ThumbnailInterpolator = draw.BiLinear
+	f.ImageInterpolator = draw.BiLinear
 	return f
 }
 
@@ -65,13 +65,10 @@ func (f ImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, p
 	if imgWidth > scaleToWidth {
 
 		scaleToHeight := int(float64(img.Bounds().Dy()) * (float64(scaleToWidth) / float64(imgWidth)))
-		fmt.Printf("scale to width: %d, height: %d (%d * (%d / %d))\n", scaleToWidth, scaleToHeight,
-			img.Bounds().Dy(), scaleToWidth, imgWidth)
-
 		destSize := image.Rect(0, 0, scaleToWidth, scaleToHeight)
 		thumb := image.NewRGBA(destSize)
 
-		f.ThumbnailInterpolator.Scale(thumb, destSize, img, img.Bounds(), draw.Over, nil)
+		f.ImageInterpolator.Scale(thumb, destSize, img, img.Bounds(), draw.Over, nil)
 
 		return encodePng(thumb)
 	} else {

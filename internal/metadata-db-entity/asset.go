@@ -1,4 +1,4 @@
-package metadata_db
+package metadata_db_entity
 
 import (
 	"database/sql"
@@ -61,10 +61,12 @@ func (a *Asset) SetId(id int64) {
 	a.Id = id
 }
 
-func dbInitAsset() {
-	dbInitExec("CREATE TABLE IF NOT EXISTS asset(id integer PRIMARY KEY, hash TEXT(64), mimeType integer, fileTime DATETIME, name integer);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_asset_hash on asset(hash);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_asset_mimeType on asset(mimeType);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_asset_fileTime on asset(fileTime);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_asset_name on asset(name);")
+func (a *Asset) GetCreateQueries() []string {
+	return []string{
+		"CREATE TABLE IF NOT EXISTS asset(id integer PRIMARY KEY, hash TEXT(64), mimeType integer, fileTime DATETIME, name integer);",
+		"CREATE INDEX IF NOT EXISTS idx_asset_hash on asset(hash);",
+		"CREATE INDEX IF NOT EXISTS idx_asset_mimeType on asset(mimeType);",
+		"CREATE INDEX IF NOT EXISTS idx_asset_fileTime on asset(fileTime);",
+		"CREATE INDEX IF NOT EXISTS idx_asset_name on asset(name);",
+	}
 }

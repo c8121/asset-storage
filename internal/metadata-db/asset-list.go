@@ -31,6 +31,7 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 	//Asset.Id -> Score
 	var ids ScoredIdMap = nil
 
+	//Find value -> function to use
 	filterFunctions := map[any]interface{}{
 		filter.PathId:   findAssetIdsByPathId,
 		filter.MimeType: findAssetIdsByMimeType,
@@ -44,7 +45,7 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 			return nil, err
 		}
 		if foundIds != nil {
-			fmt.Printf("Found %d assets by: %v\n", len(ids), filterValue)
+			fmt.Printf("Found %d assets by: %v\n", len(foundIds), filterValue)
 			if ids != nil {
 				ids.Reduce(foundIds)
 			} else {

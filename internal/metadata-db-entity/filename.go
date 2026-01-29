@@ -1,10 +1,12 @@
-package metadata_db
+package metadata_db_entity
 
 import (
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 type FileName struct {
@@ -29,14 +31,14 @@ func GetFileName(name string, createIfNotExists bool) (*FileName, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rollbackOrLog(tx)
+	defer util.RollbackOrLog(tx)
 
 	fileName, err := GetFileNameTx(tx, name, createIfNotExists)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = commitOrLog(tx); err != nil {
+	if err = util.CommitOrLog(tx); err != nil {
 		return nil, err
 	}
 
@@ -98,7 +100,9 @@ func (n *FileName) SetId(id int64) {
 	n.Id = id
 }
 
-func dbInitFileName() {
-	dbInitExec("CREATE TABLE IF NOT EXISTS fileName(id integer PRIMARY KEY, name TEXT(1024));")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_fileName_name on fileName(name);")
+func (a *FileName) GetCreateQueries() []string {
+	return []string{
+		"CREATE TABLE IF NOT EXISTS fileName(id integer PRIMARY KEY, name TEXT(1024));",
+		"CREATE INDEX IF NOT EXISTS idx_fileName_name on fileName(name);",
+	}
 }

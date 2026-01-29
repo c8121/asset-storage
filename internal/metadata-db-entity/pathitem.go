@@ -1,4 +1,4 @@
-package metadata_db
+package metadata_db_entity
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 type PathItem struct {
@@ -72,14 +74,14 @@ func GetPathItem(path string, createIfNotExists bool) (*PathItem, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rollbackOrLog(tx)
+	defer util.RollbackOrLog(tx)
 
 	pathItem, err := GetPathItemTx(tx, path, createIfNotExists)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = commitOrLog(tx); err != nil {
+	if err = util.CommitOrLog(tx); err != nil {
 		return nil, err
 	}
 
@@ -158,8 +160,10 @@ func (p *PathItem) SetId(id int64) {
 	p.Id = id
 }
 
-func dbInitPathItem() {
-	dbInitExec("CREATE TABLE IF NOT EXISTS pathItem(id integer PRIMARY KEY, parent integer, name TEXT(1024));")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_pathItem_parent on pathItem(parent);")
-	dbInitExec("CREATE INDEX IF NOT EXISTS idx_pathItem_name on pathItem(name);")
+func (a *PathItem) GetCreateQueries() []string {
+	return []string{
+		"CREATE TABLE IF NOT EXISTS pathItem(id integer PRIMARY KEY, parent integer, name TEXT(1024));",
+		"CREATE INDEX IF NOT EXISTS idx_pathItem_parent on pathItem(parent);",
+		"CREATE INDEX IF NOT EXISTS idx_pathItem_name on pathItem(name);",
+	}
 }

@@ -1,4 +1,4 @@
-package metadata_db
+package metadata_db_entity
 
 import (
 	"context"
@@ -64,14 +64,14 @@ func GetMimeType(name string, createIfNotExists bool) (*MimeType, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rollbackOrLog(tx)
+	defer util.RollbackOrLog(tx)
 
 	mimeType, err := GetMimeTypeTx(tx, name, createIfNotExists)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = commitOrLog(tx); err != nil {
+	if err = util.CommitOrLog(tx); err != nil {
 		return nil, err
 	}
 
@@ -134,6 +134,8 @@ func (m *MimeType) SetId(id int64) {
 	m.Id = id
 }
 
-func dbInitMimeType() {
-	dbInitExec("CREATE TABLE IF NOT EXISTS mimeType(id integer PRIMARY KEY, name TEXT(32));")
+func (a *MimeType) GetCreateQueries() []string {
+	return []string{
+		"CREATE TABLE IF NOT EXISTS mimeType(id integer PRIMARY KEY, name TEXT(32));",
+	}
 }

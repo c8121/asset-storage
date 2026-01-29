@@ -70,7 +70,7 @@ func ListAssets(c *gin.Context) {
 			Count:  30,
 		}
 	}
-	fmt.Printf("Filter: %v\n", listFilter)
+	//fmt.Printf("Filter: %v\n", listFilter)
 
 	items, err := metadata_db.ListAssets(listFilter)
 	if err != nil {
