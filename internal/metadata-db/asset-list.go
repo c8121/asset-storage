@@ -2,7 +2,6 @@ package metadata_db
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -31,21 +30,21 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 	//Asset.Id -> Score
 	var ids ScoredIdMap = nil
 
-	//Find value -> function to use
-	filterFunctions := map[any]interface{}{
-		filter.PathId:   findAssetIdsByPathId,
-		filter.MimeType: findAssetIdsByMimeType,
-		filter.FileName: findAssetIdsByFileName,
-		filter.PathName: findAssetIdsByPathName,
+	//Finder -> value to use
+	finders := map[Finder]any{
+		FinderByPathId{}:   filter.PathId,
+		FinderByMimeType{}: filter.MimeType,
+		FinderByFileName{}: filter.FileName,
+		FinderByPathName{}: filter.PathName,
 	}
 
-	for filterValue, filterFunction := range filterFunctions {
-		foundIds, err := filterFunction.(func(any) (ScoredIdMap, error))(filterValue)
+	for finder, value := range finders {
+		foundIds, err := finder.Find(value)
 		if err != nil {
 			return nil, err
 		}
 		if foundIds != nil {
-			fmt.Printf("Found %d assets by: %v\n", len(foundIds), filterValue)
+			fmt.Printf("Found %d assets using %T with '%v'\n", len(foundIds), finder, value)
 			if ids != nil {
 				ids.Reduce(foundIds)
 			} else {
@@ -143,130 +142,4 @@ func loadList(query string, params ...any) ([]AssetListItem, error) {
 	}
 
 	return items, nil
-}
-
-func findAssetIdsByPathName(name any) (ScoredIdMap, error) {
-
-	var sName = name.(string)
-	if len(sName) == 0 {
-		return nil, nil
-	}
-
-	//TODO search parents
-
-	var query = "SELECT a.id, p.name FROM origin o " +
-		"INNER JOIN pathItem p ON p.id = o.path " +
-		"INNER JOIN asset a ON o.asset = a.id " +
-		"WHERE p.name like ?;"
-
-	var findName = sName
-	if strings.Contains(findName, "*") {
-		//If an asterisk was given explicitly, only use this, just replace to sql-asterisk
-		findName = strings.ReplaceAll(sName, "*", "%")
-	} else {
-		findName = "%" + strings.ReplaceAll(sName, " ", "%") + "%"
-	}
-	fmt.Printf("findAssetIdsByPathName: %s\n", findName)
-
-	return findAssetIds(query, findName, func(id int64, match any, idMap *ScoredIdMap) {
-		score := float32(len(sName)) / float32(len(match.(string)))
-		idMap.Add(id, score)
-	})
-}
-
-func findAssetIdsByFileName(name any) (ScoredIdMap, error) {
-
-	var sName = name.(string)
-	if len(sName) == 0 {
-		return nil, nil
-	}
-
-	var query = "SELECT a.id, f.name FROM origin o " +
-		"INNER JOIN fileName f ON f.id = o.name " +
-		"INNER JOIN asset a ON o.asset = a.id " +
-		"WHERE f.name like ?;"
-
-	var findName = sName
-	if strings.Contains(findName, "*") {
-		//If an asterisk was given explicitly, only use this, just replace to sql-asterisk
-		findName = strings.ReplaceAll(sName, "*", "%")
-	} else {
-		findName = "%" + strings.ReplaceAll(sName, " ", "%") + "%"
-	}
-	fmt.Printf("findAssetIdsByFileName: %s\n", findName)
-
-	return findAssetIds(query, findName, func(id int64, match any, idMap *ScoredIdMap) {
-		score := float32(len(sName)) / float32(len(match.(string)))
-		//fmt.Printf("Match: %s, Score: %f\n", match, score)
-		idMap.Add(id, score)
-	})
-}
-
-func findAssetIdsByMimeType(name any) (ScoredIdMap, error) {
-
-	if len(name.(string)) == 0 {
-		return nil, nil
-	}
-
-	var query = "SELECT a.id, a.fileTime FROM asset a " +
-		"INNER JOIN mimeType m ON m.id = a.mimeType WHERE "
-
-	mimeTypeId, err := strconv.Atoi(name.(string))
-	if err == nil {
-		name = mimeTypeId
-		query += "(m.id = ?)"
-	} else {
-		name = strings.ReplaceAll(name.(string), "*", "%")
-		query += "(m.name LIKE ?)"
-	}
-
-	return findAssetIds(query, name, func(id int64, match any, idMap *ScoredIdMap) {
-		dt := match.(time.Time)
-		score := float32(dt.Unix()) / float32(1000.0)
-		idMap.Set(id, score)
-	})
-}
-
-func findAssetIdsByPathId(pathId any) (ScoredIdMap, error) {
-
-	if pathId.(int64) == 0 {
-		return nil, nil
-	}
-
-	var query = "SELECT a.id, a.fileTime FROM origin o " +
-		"INNER JOIN asset a ON o.asset = a.id " +
-		"WHERE path = ?;"
-
-	return findAssetIds(query, pathId, func(id int64, match any, idMap *ScoredIdMap) {
-		dt := match.(time.Time)
-		score := float32(dt.Unix()) / float32(1000.0)
-		idMap.Set(id, score)
-	})
-}
-
-func findAssetIds(query string, name any, calcScore func(id int64, match any, idMap *ScoredIdMap)) (ScoredIdMap, error) {
-
-	stmt, err := db.Prepare(query)
-	if err != nil {
-		return nil, err
-	}
-	defer util.CloseOrLog(stmt)
-
-	if rows, err := stmt.Query(name); err == nil {
-		defer util.CloseOrLog(rows)
-
-		ids := make(ScoredIdMap)
-
-		for rows.Next() {
-			var id int64
-			var match any
-			if err := rows.Scan(&id, &match); err != nil {
-				return nil, err
-			}
-			calcScore(id, match, &ids)
-		}
-		return ids, nil
-	} else {
-		return nil, err
-	}
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/c8121/asset-storage/internal/util"
 )
 
+// AddMetaData adds/updates meta-data in database
 func AddMetaData(jsonMeta *metadata.JsonAssetMetaData) error {
 	ctx := context.Background()
 	tx, err := db.BeginTx(ctx, nil)
@@ -26,6 +27,7 @@ func AddMetaData(jsonMeta *metadata.JsonAssetMetaData) error {
 	return util.CommitOrLog(tx)
 }
 
+// AddMetaDataTx adds/updates meta-data in database
 func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 
 	var asset = &metadata_db_entity.Asset{Hash: jsonMeta.Hash}
