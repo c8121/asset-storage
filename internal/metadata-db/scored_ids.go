@@ -2,6 +2,7 @@ package metadata_db
 
 import (
 	"fmt"
+	"math"
 	"slices"
 )
 
@@ -43,6 +44,7 @@ func (m ScoredIdMap) Reduce(remains ScoredIdMap) {
 	fmt.Printf("Reduced to %d\n", len(m))
 }
 
+// Sort takes a ScoredIdMap and creates a sorted list of ScoredId's
 func (m ScoredIdMap) Sort() []ScoredId {
 
 	var items []ScoredId
@@ -50,9 +52,13 @@ func (m ScoredIdMap) Sort() []ScoredId {
 		items = append(items, ScoredId{k, v})
 	}
 	slices.SortFunc(items, func(a, b ScoredId) int {
-		if a.Score == b.Score {
+		//Take id into score in order to keep same result on later calls
+		aScoreWithId := (int64(math.Floor(float64(a.Score)*1_000_000)) * 1_000_000_000_000) + a.Id
+		bScoreWithId := (int64(math.Floor(float64(b.Score)*1_000_000)) * 1_000_000_000_000) + b.Id
+
+		if aScoreWithId == bScoreWithId {
 			return 0
-		} else if a.Score < b.Score {
+		} else if aScoreWithId < bScoreWithId {
 			return 1
 		} else {
 			return -1
