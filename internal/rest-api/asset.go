@@ -12,6 +12,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var (
+	DefaultListItemCount = 30
+)
+
 // GetAsset is a rest-api handler to send the asset content
 func GetAsset(c *gin.Context) {
 
@@ -67,7 +71,7 @@ func ListAssets(c *gin.Context) {
 		util.LogError(fmt.Errorf("failed to parse query: %w", err))
 		listFilter = &metadata_db.AssetListFilter{
 			Offset: 0,
-			Count:  30,
+			Count:  DefaultListItemCount,
 		}
 	}
 	//fmt.Printf("Filter: %v\n", listFilter)

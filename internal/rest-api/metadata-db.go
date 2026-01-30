@@ -3,6 +3,7 @@ package restapi
 import (
 	"net/http"
 
+	metadata_db "github.com/c8121/asset-storage/internal/metadata-db"
 	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
@@ -22,5 +23,21 @@ func ListMimeTypes(c *gin.Context) {
 		//https://github.com/gin-gonic/gin/issues/125 ?
 		c.Data(http.StatusOK, "application/json", []byte("[]"))
 	}
+}
 
+// ListPathItems is a rest-api handler
+func ListPathItems(c *gin.Context) {
+
+	items, err := metadata_db.ListPathItems(util.Atoi(c.Param("parent"), 0))
+	if err != nil {
+		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		return
+	}
+
+	if len(items) > 0 {
+		c.IndentedJSON(http.StatusOK, items)
+	} else {
+		//https://github.com/gin-gonic/gin/issues/125 ?
+		c.Data(http.StatusOK, "application/json", []byte("[]"))
+	}
 }

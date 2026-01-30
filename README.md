@@ -40,7 +40,8 @@ To add new files to the archive
 
 A HTTP Server which provides a Single-Page-Application to browse the storage
 
-*Note: This is work in progress, important features like TLS and authentication are missing at the moment*
+> [!NOTE]
+> This is work in progress, important features like TLS and authentication are missing at the moment*
 
     spa-server [-gzip] [-xor <key>] [-base <directory>] [-spa <http-root-directory of spa-app>]
 
@@ -83,4 +84,4 @@ I have used these libraries (many thanks to the authors)
 - Image scaling: https://pkg.go.dev/golang.org/x/image/draw
 - MIME type detection: https://pkg.go.dev/github.com/gabriel-vasile/mimetype
 - Web UI: https://vuejs.org/
-- CSS: https://getbootstrap.com/docs/5.0/getting-started/introduction/
+- CSS: https://getbootstrap.com/

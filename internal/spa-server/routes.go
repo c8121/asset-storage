@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// CreateRoutes looks for all files/directories in config.SpaHttpRoot and creates static routes.
 func CreateRoutes(router *gin.Engine) {
 
 	if len(config.SpaHttpRoot) == 0 {

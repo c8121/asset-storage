@@ -232,7 +232,7 @@
                     Count: self.count,
                     MimeType: self.type,
                     FileName: self.findName,
-                    //PathName: null,
+                    //PathName: self.findName,
                     PathId: self.pathItem
                 };
             },
