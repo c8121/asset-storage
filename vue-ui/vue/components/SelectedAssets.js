@@ -21,7 +21,26 @@
                             </div>
                         </div>
 
-                        <!-- <pre>{{ value }}</pre> -->
+                        <!-- pre>{{ value }}</pre -->
+                    </div>
+                    <div v-if="value">
+                        <button class="btn btn-sm btn-link"
+                            @click="collectionParamsVisible=!collectionParamsVisible"
+                            >{{ showCreateCollectionButtonCaption }}</button>
+
+                        <div v-if="collectionParamsVisible">
+                            <div class="input-group input-group-sm mt-1">
+                                <label class="input-group-text">Name</label>
+                                <input v-model="collectionName" class="form-control">
+                            </div>
+                            <div class="input-group input-group-sm mt-1">
+                                <label class="input-group-text">Description</label>
+                                <textarea v-model="collectionDescription" class="form-control"></textarea>
+                            </div>
+                            <button class="btn btn-sm btn-primary mt-1"
+                                @click="createCollection"
+                                >{{ createCollectionButtonCaption }}</button>
+                        </div>
                     </div>
                 </div>
             </div>`,
@@ -31,6 +50,14 @@
                 type: String,
                 default: "Selected Files"
             },
+            showCreateCollectionButtonCaption: {
+                type: String,
+                default: "Create Collection"
+            },
+            createCollectionButtonCaption: {
+                type: String,
+                default: "Create Collection"
+            },
             value: {
                 type: Object,
                 default: {}
@@ -39,7 +66,11 @@
 
         data() {
             return {
-                showToastCss: ''
+                showToastCss: '',
+
+                collectionParamsVisible: false,
+                collectionName: '',
+                collectionDescription: '',
             }
         },
         
@@ -58,6 +89,20 @@
             },
             onMetaDataClick(asset) {
                 this.$emit('metaDataClick', asset);
+            },
+            createCollection() {
+                const self = this;
+                const query = {
+                    Name: self.collectionName,
+                    Description: self.collectionDescription,
+                    AssetHashes: []
+                }
+                for(const hash in self.value)
+                    query.AssetHashes.push(hash);
+                
+                client.post('/collections/add', query).then((json) => {
+                    console.log(json);
+                });
             }
         },
         emits: [

@@ -18,6 +18,10 @@ func CreateRoutes(router *gin.Engine) {
 	router.POST("/assets/upload", ReceiveUpload)
 	router.POST("/assets/upload/add", AddUploadedFile)
 
+	router.GET("/collections/:hash", GetCollection)
+
+	router.POST("/collections/add", AddCollection)
+
 	router.GET("/mimetypes/list", ListMimeTypes)
 	router.GET("/pathitems/list", ListPathItems)
 	router.GET("/pathitems/list/:parent", ListPathItems)
