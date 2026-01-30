@@ -69,12 +69,12 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 		}
 		if filter.Offset < len(sorted) && endIdx > 0 {
 			slice := sorted[filter.Offset:endIdx]
-			fmt.Printf("Found %d (%d - %d) items\n", len(slice), filter.Offset, endIdx)
+			//fmt.Printf("Found %d (%d - %d) items\n", len(slice), filter.Offset, endIdx)
 			query += " WHERE a.id in(" +
 				strings.Repeat("?,", len(slice)-1) + "?" +
 				");"
 			for _, id := range slice {
-				//fmt.Printf("%d %f\n", id.Id, id.Score)
+				//fmt.Printf("Found %d %f\n", id.Id, id.Score)
 				params = append(params, id.Id)
 			}
 			items, err := loadList(query, params...)

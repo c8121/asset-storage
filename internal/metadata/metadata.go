@@ -104,6 +104,7 @@ func (assetMetaData *JsonAssetMetaData) AddOrigin(name string, path string, owne
 	})
 }
 
+// GetLatestOrigin finds the newest origin within given meta-data
 func GetLatestOrigin(assetMetaData *JsonAssetMetaData) *JsonAssetOrigin {
 	var latest *JsonAssetOrigin = nil
 	for _, origin := range assetMetaData.Origins {
@@ -127,7 +128,7 @@ func (assetMetaData *JsonAssetMetaData) Save(path string) error {
 	return os.WriteFile(path, jsonBytes, FilePermissions)
 }
 
-// LoadIfExists Load JSON-file, if exists. Returns hash, meta-data, error
+// LoadIfExists Load JSON-file, if exists.
 func LoadIfExists(path string) (*JsonAssetMetaData, error) {
 
 	buf, err := os.ReadFile(path)
