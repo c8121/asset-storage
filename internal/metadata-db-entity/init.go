@@ -9,6 +9,7 @@ func AutoCreateEntities() {
 		&Owner{},
 		&Asset{},
 		&Origin{},
+		&Collection{},
 	}
 	for _, autoCreateable := range autoCreateables {
 		AutoCreate(autoCreateable)

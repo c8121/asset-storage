@@ -76,7 +76,7 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 				//fmt.Printf("Found %d %f\n", id.Id, id.Score)
 				params = append(params, id.Id)
 			}
-			items, err := loadList(query, params...)
+			items, err := loadAssetList(query, params...)
 			if err != nil {
 				return nil, err
 			}
@@ -102,7 +102,7 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 		params = append(params, filter.Count)
 		params = append(params, filter.Offset)
 
-		return loadList(query, params...)
+		return loadAssetList(query, params...)
 	}
 }
 
@@ -115,8 +115,8 @@ func listToMap(items []AssetListItem) map[int64]AssetListItem {
 	return mapById
 }
 
-// loadList queries the database
-func loadList(query string, params ...any) ([]AssetListItem, error) {
+// loadAssetList queries the database
+func loadAssetList(query string, params ...any) ([]AssetListItem, error) {
 
 	fmt.Printf("Query: %s\n", query)
 	stmt, err := db.Prepare(query)

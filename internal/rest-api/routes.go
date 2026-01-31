@@ -20,6 +20,8 @@ func CreateRoutes(router *gin.Engine) {
 
 	router.GET("/collections/:hash", GetCollection)
 
+	router.POST("/collections/list", ListCollections)
+
 	router.POST("/collections/add", AddCollection)
 
 	router.GET("/mimetypes/list", ListMimeTypes)

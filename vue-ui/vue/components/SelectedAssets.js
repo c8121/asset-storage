@@ -25,7 +25,7 @@
                     </div>
                     <div v-if="value">
                         <button class="btn btn-sm btn-link"
-                            @click="collectionParamsVisible=!collectionParamsVisible"
+                            @click="collectionParamsVisible=!collectionParamsVisible; message = null"
                             >{{ showCreateCollectionButtonCaption }}</button>
 
                         <div v-if="collectionParamsVisible">
@@ -42,6 +42,9 @@
                                 >{{ createCollectionButtonCaption }}</button>
                         </div>
                     </div>
+                     <div v-if="message">
+                        <p class="alert alert-info mt-1">{{message}}</p>
+                     </div>
                 </div>
             </div>`,
 
@@ -71,6 +74,8 @@
                 collectionParamsVisible: false,
                 collectionName: '',
                 collectionDescription: '',
+
+                message: null,
             }
         },
         
@@ -101,7 +106,8 @@
                     query.AssetHashes.push(hash);
                 
                 client.post('/collections/add', query).then((json) => {
-                    console.log(json);
+                    self.message = "Collection created: " + json.Name;
+                    self.collectionParamsVisible = false;
                 });
             }
         },

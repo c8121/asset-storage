@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/c8121/asset-storage/internal/collections"
+	metadata_db "github.com/c8121/asset-storage/internal/metadata-db"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 )
@@ -57,5 +58,39 @@ func AddCollection(c *gin.Context) {
 		return
 	}
 
+	//Create/Update meta-data-database
+	err = metadata_db.AddCollection(collection)
+	if err != nil {
+		fmt.Printf("Error adding collecton-data to database: %s\n", err)
+	}
+
 	c.IndentedJSON(http.StatusOK, collection)
+}
+
+// ListCollections is a rest-api handler to send a list of collections
+func ListCollections(c *gin.Context) {
+
+	var listFilter *metadata_db.CollectionListFilter = nil
+	err := c.ShouldBind(&listFilter)
+	if err != nil || listFilter == nil {
+		util.LogError(fmt.Errorf("failed to parse request: %w", err))
+		listFilter = &metadata_db.CollectionListFilter{
+			Offset: 0,
+			Count:  DefaultListItemCount,
+		}
+	}
+	//fmt.Printf("Filter: %v\n", listFilter)
+
+	items, err := metadata_db.ListCollections(listFilter)
+	if err != nil {
+		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		return
+	}
+
+	if len(items) > 0 {
+		c.IndentedJSON(http.StatusOK, items)
+	} else {
+		//https://github.com/gin-gonic/gin/issues/125 ?
+		c.Data(http.StatusOK, "application/json", []byte("[]"))
+	}
 }

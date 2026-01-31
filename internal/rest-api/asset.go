@@ -68,7 +68,7 @@ func ListAssets(c *gin.Context) {
 	var listFilter *metadata_db.AssetListFilter = nil
 	err := c.ShouldBind(&listFilter)
 	if err != nil || listFilter == nil {
-		util.LogError(fmt.Errorf("failed to parse query: %w", err))
+		util.LogError(fmt.Errorf("failed to parse request: %w", err))
 		listFilter = &metadata_db.AssetListFilter{
 			Offset: 0,
 			Count:  DefaultListItemCount,
