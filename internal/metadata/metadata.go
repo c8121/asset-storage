@@ -143,7 +143,7 @@ func LoadIfExists(path string) (*JsonAssetMetaData, error) {
 	}
 
 	if assetMetadata.Hash == "" {
-		assetMetadata.Hash = storage.HashFromPath(path)
+		assetMetadata.Hash = storage.HashFromStoragePath(path)
 	}
 	return assetMetadata, err
 }

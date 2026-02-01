@@ -105,7 +105,6 @@ func copyToStorage(reader io.Reader, size int64) (*AddedFileInfo, error) {
 	defer util.CloseOrLog(outWriter)
 
 	buf := make([]byte, IoBufferSize)
-
 	hash := sha256.New()
 
 	for {
@@ -221,8 +220,8 @@ func FindByHash(hashHex string) (assetPath string, err error) {
 	return "", os.ErrNotExist
 }
 
-// HashFromPath Extract full hash from path (.../hash[:2]/hash[2:]...)
-func HashFromPath(path string) string {
+// HashFromStoragePath Extract full hash from path (.../hash[:2]/hash[2:]...)
+func HashFromStoragePath(path string) string {
 	dir, name := filepath.Split(path)
 	_, dir2 := filepath.Split(dir[:len(dir)-1])
 	hash := dir2 + name
@@ -232,6 +231,32 @@ func HashFromPath(path string) string {
 	}
 
 	return hash
+}
+
+// HashFromContent calculates the content hash
+func HashFromContent(path string) (string, error) {
+
+	reader, err := os.Open(path)
+	if err != nil {
+		fmt.Printf("Cannot open '%s': %s\n", path, err)
+		return "", os.ErrNotExist
+	}
+	defer util.CloseOrLog(reader)
+
+	buf := make([]byte, IoBufferSize)
+	hash := sha256.New()
+
+	for {
+		n, err := reader.Read(buf)
+		if n > 0 {
+			hash.Write(buf[:n])
+		}
+		if err != nil && err == io.EOF {
+			break
+		}
+	}
+
+	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
 // Open returns a reader to get asset content.

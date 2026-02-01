@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -103,6 +104,22 @@ func addPath(path string) error {
 }
 
 func addFileAndMetadata(path string, stat os.FileInfo) error {
+
+	//Check hash before adding
+	//Faster only if most of the files already exists as it only calculates the hash in memory.
+	//Slower if most of the files are new because file will be read twice.
+	if config.CheckHashBeforeAdd {
+		hash, err := storage.HashFromContent(path)
+		if err != nil {
+			fmt.Printf("Error adding '%s': %s\n", path, err)
+			return err
+		}
+		storagePath, err := storage.FindByHash(hash)
+		if !errors.Is(err, os.ErrNotExist) {
+			fmt.Printf("File already exists as '%s': %s\n", storagePath, path)
+			return nil
+		}
+	}
 
 	//Add file to storage
 	infos, err := storage.AddFile(path)

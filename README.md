@@ -34,7 +34,7 @@ Store files into an archive directory
 
 To add new files to the archive
 
-    add [-gzip] [-maxmem <bytes>] [-base <directory>] [-name <file-name-pattern>] [-r] <file or directory>
+    add [-skip-meta] [-check-hash] [-gzip] [-maxmem <bytes>] [-base <directory>] [-name <file-name-pattern>] [-r] <file or directory>
 
 ### spa-server
 
@@ -69,7 +69,8 @@ Not required if database is intact, because `add` also updates the database.
 | gzip              | Use gzip to compress data.<br/> **Important:** Cannot be mixed, use always or never for one storage.                                                                                                                                                                                                                                            |
 | maxmem <bytes&gt; | Max size in bytes when reading files while adding to storage. If a file is larger, it will not be read into memory and a temp-file will be used                                                                                                                                                                                                 |
 | name <patten&gt;  | Filter files matching file-name-pattern (*.jpeg for example)                                                                                                                                                                                                                                                                                    |
-| skip-meta         | When adding files: Skip updating meta-data if file exists.                                                                                                                                                                                                                                                                                      
+| skip-meta         | When adding files: Skip updating meta-data if file exists.
+| check-hash        | When adding files: Check content hash before adding. Faster only if most of the files already exists as it only calculates the hash in memory. Slower if most of the files are new because file will be read twice.
 | spa <dir&gt;      | HttpRoot-Directory which contains the SPA-files (HTML, JS, etc)                                                                                                                                                                                                                                                                                 |
 | xor <key&gt;      | Content will be XOR'ed to obfusicate. This is to avoid manual changes to files (when content is XOR'ed, files cannot be openend and modified directly from storage directory) <br/>**Important:** Cannot be mixed, use always with same key or never for one storage. <br/>**Important:** Use same key for all apps with same storage directory |
 

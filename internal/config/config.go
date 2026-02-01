@@ -22,6 +22,7 @@ var (
 	MaxMemFileSize int64 = 1000 * 1000 * 400
 
 	SkipMetaDataIfExists = false
+	CheckHashBeforeAdd   = false
 
 	SpaHttpRoot = filepath.Dir(os.Args[0]) + "/vue-ui" // Root directory to service SPA from
 
@@ -30,6 +31,7 @@ var (
 	cmdSpaHttpRoot          = flag.String("spa", "", "HTTP root directory of SPA app")
 	cmdMaxMemFileSize       = flag.Int64("maxmem", 0, "Max memory file size in bytes")
 	cmdSkipMetaDataIfExists = flag.Bool("skip-meta", false, "Skip meta data update if file exist")
+	cmdCheckHashBeforeAdd   = flag.Bool("check-hash", false, "Check hash before trying to add file.")
 
 	cmdXorKey = flag.String("xor", "", "XOR Key for content obfusication")
 )
@@ -71,6 +73,11 @@ func LoadDefault() {
 	SkipMetaDataIfExists = *cmdSkipMetaDataIfExists
 	if SkipMetaDataIfExists {
 		fmt.Printf("Will not update meta-data on existing files\n")
+	}
+
+	CheckHashBeforeAdd = *cmdCheckHashBeforeAdd
+	if CheckHashBeforeAdd {
+		fmt.Printf("Checking hash before adding file (this is faster only if most if files already exist.\n")
 	}
 
 	if *cmdSpaHttpRoot != "" {
