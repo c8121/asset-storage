@@ -85,6 +85,6 @@ func LoadDefault() {
 		} else {
 			XorKey = []byte(*cmdXorKey)
 		}
-		fmt.Printf("Xor obfusication enabled, key length: %d (%s)\n", len(XorKey), string(XorKey))
+		fmt.Printf("Xor obfusication enabled, key length: %d\n", len(XorKey))
 	}
 }

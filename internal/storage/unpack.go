@@ -8,6 +8,7 @@ import (
 	"github.com/c8121/asset-storage/internal/util"
 )
 
+// IsUnpackable checks if file can be unpacked.
 func IsUnpackable(path string, mimeType string) bool {
 	if strings.HasSuffix(strings.ToLower(mimeType), "zip") {
 		return true
@@ -15,7 +16,7 @@ func IsUnpackable(path string, mimeType string) bool {
 	return false
 }
 
-// Unpack deflates files directly to storage
+// Unpack deflates files directly to storage.
 func Unpack(path string, mimeType string) ([]AddedFileInfo, error) {
 
 	if !strings.HasSuffix(strings.ToLower(mimeType), "zip") {
@@ -43,13 +44,7 @@ func Unpack(path string, mimeType string) ([]AddedFileInfo, error) {
 			continue
 		}
 
-		writer, err := newTempWriter(file.FileInfo().Size())
-		if err != nil {
-			fmt.Printf("Error creating temp writer: %s\n", err)
-			continue
-		}
-
-		info, err := moveToStorage(reader, writer)
+		info, err := copyToStorage(reader, file.FileInfo().Size())
 		if err != nil {
 			fmt.Printf("Error copying file %s: %s\n", file.Name, err)
 		} else {
@@ -57,7 +52,6 @@ func Unpack(path string, mimeType string) ([]AddedFileInfo, error) {
 			unpacked = append(unpacked, *info)
 		}
 
-		util.CloseOrLog(writer)
 		util.CloseOrLog(reader)
 	}
 

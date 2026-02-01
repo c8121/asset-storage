@@ -41,11 +41,13 @@ func CreateDirectories() {
 // Returns content-hash, file-path, mime-type, error as AddedFileInfo (might be more than one if an archive was added)
 func AddFile(path string) ([]AddedFileInfo, error) {
 
-	writer, err := createTempWriter(path)
-	if err != nil {
-		return nil, err
-	}
 	fmt.Println("Add file:", path)
+
+	stat, err := os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		fmt.Printf("'%s' does not exist\n", path)
+		return nil, os.ErrNotExist
+	}
 
 	reader, err := os.Open(path)
 	if err != nil {
@@ -56,7 +58,7 @@ func AddFile(path string) ([]AddedFileInfo, error) {
 
 	infos := make([]AddedFileInfo, 0)
 
-	info, err := moveToStorage(reader, writer)
+	info, err := copyToStorage(reader, stat.Size())
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +70,8 @@ func AddFile(path string) ([]AddedFileInfo, error) {
 		fmt.Printf("File already exists: '%s' '%s'\n", info.SourcePath, info.Hash)
 	}
 
-	if IsUnpackable(info.StoragePath, info.MimeType) {
-		unpacked, err := Unpack(info.StoragePath, info.MimeType)
+	if IsUnpackable(path, info.MimeType) {
+		unpacked, err := Unpack(path, info.MimeType)
 		if err == nil {
 			for _, item := range unpacked {
 				item.SourcePath = path + "/" + item.SourcePath
@@ -84,33 +86,23 @@ func AddFile(path string) ([]AddedFileInfo, error) {
 	return infos, nil
 }
 
-// createTempWriter creates a new StorageWriter to a temp file
-func createTempWriter(sourcePath string) (StorageWriter, error) {
+func copyToStorage(reader io.Reader, size int64) (*AddedFileInfo, error) {
 
-	stat, err := os.Stat(sourcePath)
-	if errors.Is(err, os.ErrNotExist) {
-		fmt.Printf("'%s' does not exist\n", sourcePath)
-		return nil, os.ErrNotExist
-	}
+	var info = &AddedFileInfo{IsNewFile: false}
 
-	tempDest, err := newTempWriter(stat.Size())
+	writer, err := newTempWriter(size)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp-writer: %w", err)
 	}
+	defer util.CloseOrLog(writer)
 
 	var outWriter StorageWriter
 	if len(config.XorKey) > 0 {
-		outWriter = NewXorWriter(tempDest)
+		outWriter = NewXorWriter(writer)
 	} else {
-		outWriter = tempDest
+		outWriter = writer
 	}
-
-	return outWriter, nil
-}
-
-func moveToStorage(reader io.Reader, writer StorageWriter) (*AddedFileInfo, error) {
-
-	var info = &AddedFileInfo{IsNewFile: false}
+	defer util.CloseOrLog(outWriter)
 
 	buf := make([]byte, IoBufferSize)
 
@@ -126,7 +118,7 @@ func moveToStorage(reader io.Reader, writer StorageWriter) (*AddedFileInfo, erro
 
 			hash.Write(buf[:n]) //must be before outWriter.Write
 
-			n, err = writer.Write(buf[:n])
+			n, err = outWriter.Write(buf[:n])
 			if err != nil {
 				return info, fmt.Errorf("failed to write: %w", err)
 			}
@@ -141,22 +133,21 @@ func moveToStorage(reader io.Reader, writer StorageWriter) (*AddedFileInfo, erro
 		}
 	}
 
-	util.CloseOrLog(writer)
+	util.CloseOrLog(outWriter)
 
 	info.Hash = fmt.Sprintf("%x", hash.Sum(nil))
 	if len(info.Hash) < 2 {
 		return info, fmt.Errorf("invalid hash length: %d", len(info.Hash))
 	}
 
-	var err error
 	info.StoragePath, err = FindByHash(info.Hash)
 	if err == nil {
 		info.IsNewFile = false
-		util.LogError(writer.Remove())
+		util.LogError(outWriter.Remove())
 		return info, nil
-	} else {
-		info.IsNewFile = true
 	}
+
+	info.IsNewFile = true
 
 	destName := info.Hash[2:]
 	destDir := fmt.Sprintf("%s/%s/%s",
@@ -174,11 +165,11 @@ func moveToStorage(reader io.Reader, writer StorageWriter) (*AddedFileInfo, erro
 		destName)
 
 	if _, err := os.Stat(info.StoragePath); err == nil || os.IsExist(err) {
-		util.PanicOnError(os.Remove(writer.Name()), "Failed to remove temp file")
+		util.PanicOnError(os.Remove(outWriter.Name()), "Failed to remove temp file")
 		panic("File already exists") //Panic, because check was done above with FindByHash
 	}
 
-	err = writer.Move(info.StoragePath)
+	err = outWriter.Move(info.StoragePath)
 	if err != nil {
 		return info, fmt.Errorf("failed to move file: %w", err)
 	}
@@ -238,13 +229,12 @@ func HashFromPath(path string) string {
 	p := strings.Index(hash, ".")
 	if p > -1 {
 		return hash[:p]
-	} else {
-		return hash
 	}
 
+	return hash
 }
 
-// Open returns asset content
+// Open returns a reader to get asset content.
 func Open(assetHash string) (StorageReader, error) {
 	if path, err := FindByHash(assetHash); err == nil {
 
@@ -258,9 +248,8 @@ func Open(assetHash string) (StorageReader, error) {
 		if err == nil {
 			if len(config.XorKey) > 0 {
 				return NewXorReader(reader), nil
-			} else {
-				return reader, nil
 			}
+			return reader, nil
 		}
 	}
 
