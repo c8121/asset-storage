@@ -51,7 +51,9 @@ func RunSftpServer(
 			// Service the incoming Channel channel.
 			for newChannel := range chans {
 				if newChannel.ChannelType() != "session" {
-					newChannel.Reject(ssh.UnknownChannelType, "unknown channel type")
+					if err := newChannel.Reject(ssh.UnknownChannelType, "unknown channel type"); err != nil {
+						fmt.Printf("failed to reject channel %s\n", err)
+					}
 					fmt.Printf("Unknown channel type: %s\n", newChannel.ChannelType())
 					continue
 				}
@@ -66,6 +68,8 @@ func RunSftpServer(
 					for req := range in {
 						if req.Type == "subsystem" && len(req.Payload) >= 4 && string(req.Payload[4:]) == "sftp" {
 
+							fmt.Printf("Start SFTP server for %s.\n", sshConnection.RemoteAddr())
+
 							root := handlerCreator()
 							server := sftp.NewRequestServer(channel, root)
 							if err := server.Serve(); err != nil {
@@ -73,11 +77,15 @@ func RunSftpServer(
 									fmt.Printf("SFTP server completed with error: %s, %s\n", err, sshConnection.RemoteAddr())
 								}
 							}
-							server.Close()
+							if err := server.Close(); err != nil && err != io.EOF {
+								fmt.Printf("SFTP server close error: %s\n", err)
+							}
 							fmt.Printf("SFTP client exited session: %s.\n", sshConnection.RemoteAddr())
 
 						} else {
-							req.Reply(false, nil)
+							if err := req.Reply(false, nil); err != nil {
+								fmt.Printf("Could not reply to client: %s\n", err)
+							}
 							fmt.Printf("Decline request type for %s: %s\n", sshConnection.RemoteAddr(), req.Type)
 						}
 					}

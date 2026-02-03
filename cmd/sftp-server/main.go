@@ -23,13 +23,16 @@ func main() {
 	passwordCallback := func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
 		fmt.Printf("Login from %s: %s\n", c.RemoteAddr(), c.User())
 		/*if c.User() == "test" && string(pass) == "test" {
-			return nil, nil
+			perms := &ssh.Permissions{Extensions: map[string]string{"username": c.User()}}
+			return perms, nil
 		}
 		return nil, fmt.Errorf("password rejected for %q", c.User())*/
-		return nil, nil
+		perms := &ssh.Permissions{Extensions: map[string]string{"username": c.User()}}
+		return perms, nil
 	}
 
 	handlerCreator := func() sftp.Handlers {
+		//return sftp.InMemHandler()
 		return sftp_server.NewVirtualSftpHandler("/tmp")
 	}
 

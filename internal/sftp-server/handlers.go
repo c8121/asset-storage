@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/c8121/asset-storage/internal/util"
 	"github.com/pkg/sftp"
 )
 
@@ -18,6 +19,7 @@ var (
 func NewVirtualSftpHandler(rootDirectory string) sftp.Handlers {
 	handler := &VirtualSftpHandler{
 		rootDirectory: rootDirectory,
+		permissions:   0700,
 	}
 	return sftp.Handlers{
 		FileGet:  handler,
@@ -29,52 +31,76 @@ func NewVirtualSftpHandler(rootDirectory string) sftp.Handlers {
 
 type VirtualSftpHandler struct {
 	rootDirectory string
+	permissions   os.FileMode
 }
 
 func (h *VirtualSftpHandler) Fileread(r *sftp.Request) (io.ReaderAt, error) {
 	path, err := h.resolve(r.Filepath)
 	fmt.Printf("Fileread %s (%s)\n", path, err)
+
 	return nil, os.ErrPermission
 }
 
 func (h *VirtualSftpHandler) Filewrite(r *sftp.Request) (io.WriterAt, error) {
 	path, err := h.resolve(r.Filepath)
 	fmt.Printf("Filewrite %s (%s)\n", path, err)
-	return nil, os.ErrPermission
+
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, h.permissions)
+	if err != nil {
+		fmt.Printf("Error opening file for write: %v", err)
+		return nil, err
+	}
+	return file, nil
 }
 
 func (h *VirtualSftpHandler) Filecmd(r *sftp.Request) error {
 	path, err := h.resolve(r.Filepath)
 	fmt.Printf("Filecmd %s (%s)\n", path, err)
+
 	switch r.Method {
 	case "Mkdir":
-
-		break
+		if err = os.MkdirAll(path, h.permissions); err != nil {
+			fmt.Printf("Failed to create directory %s: %s\n", path, err)
+			return err
+		}
+		return nil
 	}
-	return os.ErrPermission
+
+	fmt.Printf("Ignored: Filecmd %s\n", r.Method)
+	return os.ErrInvalid
 }
 
 func (h *VirtualSftpHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
-	path, err := h.resolve(r.Filepath)
-	fmt.Printf("Filelist %s (%s)\n", path, err)
-	return nil, os.ErrPermission
-}
 
-func (h *VirtualSftpHandler) ListAt(ls []os.FileInfo, offset int64) (int, error) {
-	fmt.Printf("ListAt %d\n", offset)
-	return 0, io.EOF
-}
+	var err error
 
-func (h *VirtualSftpHandler) Lstat(r *sftp.Request) (sftp.ListerAt, error) {
 	path, err := h.resolve(r.Filepath)
-	fmt.Printf("Lstat %s (%s)\n", path, err)
-	return nil, os.ErrPermission
-}
+	fmt.Printf("Filelist %s %s (%s)\n", path, r.Method, err)
+	if err != nil {
+		fmt.Printf("Filelist: Resolve failed: %s (%s)\n", path, err)
+		return nil, err
+	}
 
-func (h *VirtualSftpHandler) Stat(r *sftp.Request) (sftp.ListerAt, error) {
-	path, err := h.resolve(r.Filepath)
-	fmt.Printf("Stat %s (%s)\n", path, err)
-	return nil, os.ErrPermission
+	var lister sftp.ListerAt
+
+	switch r.Method {
+	case "List":
+		lister, err = NewFileLister(path)
+		break
+
+	case "Stat":
+		lister, err = NewStatFileLister(path)
+		break
+	default:
+		return nil, errors.New("unsupported")
+	}
+
+	if err != nil {
+		fmt.Printf("Filelist: %s (%s)\n", path, err)
+		return nil, err
+	}
+	return lister, nil
+
 }
 
 func (h *VirtualSftpHandler) resolve(path string) (string, error) {
@@ -96,4 +122,57 @@ func (h *VirtualSftpHandler) resolve(path string) (string, error) {
 
 	fmt.Printf(" - Path resolved: '%s'\n", resolved)
 	return resolved, nil
+}
+
+type FileLister struct {
+	list []os.FileInfo
+}
+
+func NewFileLister(path string) (*FileLister, error) {
+	lister := &FileLister{}
+
+	fis, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer util.CloseOrLog(fis)
+
+	lister.list, err = fis.Readdir(-1)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf(" - Path lister opened: '%s' (%d entries)\n", path, len(lister.list))
+	return lister, nil
+}
+
+func NewStatFileLister(path string) (*FileLister, error) {
+	lister := &FileLister{}
+
+	f, err := os.Lstat(path)
+	if err != nil {
+		return nil, err
+	}
+
+	lister.list = []os.FileInfo{f}
+
+	fmt.Printf(" - Path lister opened: '%s' (%d entries)\n", path, len(lister.list))
+	return lister, nil
+}
+
+func (l *FileLister) ListAt(ls []os.FileInfo, offset int64) (int, error) {
+	// For empty directories, return (0, nil) on the first call so some clients
+	// (e.g., WinSCP) don't interpret immediate EOF as an error.
+	fmt.Printf(" - ListAt offset: %d\n", offset)
+	if len(l.list) == 0 && offset == 0 {
+		return 0, nil
+	}
+	if offset >= int64(len(l.list)) {
+		return 0, io.EOF
+	}
+	n := copy(ls, l.list[offset:])
+	if n < len(ls) {
+		return n, io.EOF
+	}
+	return n, nil
 }
