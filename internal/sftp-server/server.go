@@ -14,7 +14,7 @@ import (
 func RunSftpServer(
 	listenAddress string, hostKeyFile string,
 	passwordCallback func(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, error),
-	handlerCreator func() sftp.Handlers) {
+	handlerCreator func(username string) *VirtualSftpHandler) {
 
 	config := &ssh.ServerConfig{
 		PasswordCallback: passwordCallback,
@@ -76,8 +76,8 @@ func RunSftpServer(
 
 							fmt.Printf("Start SFTP server for %s.\n", sshConnection.RemoteAddr())
 
-							root := handlerCreator()
-							server := sftp.NewRequestServer(channel, root)
+							handler := handlerCreator(sshConnection.Permissions.Extensions["username"])
+							server := sftp.NewRequestServer(channel, handler.GetHandlers())
 							if err := server.Serve(); err != nil {
 								if err != io.EOF {
 									fmt.Printf("SFTP server completed with error: %s, %s\n", err, sshConnection.RemoteAddr())
@@ -87,6 +87,16 @@ func RunSftpServer(
 								fmt.Printf("SFTP server close error: %s\n", err)
 							}
 							fmt.Printf("SFTP client exited session: %s.\n", sshConnection.RemoteAddr())
+
+							// Add new files to storage
+							go func() {
+
+								files := handler.GetNewFiles()
+								for _, file := range files {
+									fmt.Printf("TODO: Add file from user %s: %s\n", handler.GetUsername(), file)
+								}
+
+							}()
 
 						} else {
 							if err := req.Reply(false, nil); err != nil {

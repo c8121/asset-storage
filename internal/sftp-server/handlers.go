@@ -6,7 +6,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"time"
 
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/pkg/sftp"
@@ -16,22 +18,49 @@ var (
 	ErrorInvalidPathRequest = errors.New("Invalid path request")
 )
 
-func NewVirtualSftpHandler(rootDirectory string) sftp.Handlers {
+func NewVirtualSftpHandler(rootDirectory string, username string) *VirtualSftpHandler {
 	handler := &VirtualSftpHandler{
 		rootDirectory: rootDirectory,
-		permissions:   0700,
+		username:      username,
+		permissions:   0700, //Create permissions
+		newFiles:      make([]string, 0),
 	}
-	return sftp.Handlers{
-		FileGet:  handler,
-		FilePut:  handler,
-		FileCmd:  handler,
-		FileList: handler,
-	}
+	return handler
 }
 
 type VirtualSftpHandler struct {
 	rootDirectory string
+	username      string
 	permissions   os.FileMode
+
+	newFiles []string
+}
+
+func (h *VirtualSftpHandler) GetHandlers() sftp.Handlers {
+	return sftp.Handlers{
+		FileGet:  h,
+		FilePut:  h,
+		FileCmd:  h,
+		FileList: h,
+	}
+}
+
+func (h *VirtualSftpHandler) GetUsername() string {
+	return h.username
+}
+
+func (h *VirtualSftpHandler) GetNewFiles() []string {
+	existingNewFiles := make([]string, 0)
+
+	for _, path := range h.newFiles {
+		if stat, err := os.Stat(path); err == nil {
+			if stat.Mode().IsRegular() {
+				existingNewFiles = append(existingNewFiles, path)
+			}
+		}
+	}
+
+	return existingNewFiles
 }
 
 func (h *VirtualSftpHandler) Fileread(r *sftp.Request) (io.ReaderAt, error) {
@@ -63,6 +92,9 @@ func (h *VirtualSftpHandler) Filewrite(r *sftp.Request) (io.WriterAt, error) {
 		fmt.Printf("Error opening file for write: %v", err)
 		return nil, err
 	}
+
+	h.newFiles = append(h.newFiles, path)
+
 	return file, nil
 }
 
@@ -102,6 +134,54 @@ func (h *VirtualSftpHandler) Filecmd(r *sftp.Request) error {
 		if err := os.Rename(path, newPath); err != nil {
 			fmt.Printf("Failed to rename file %s to %s: %s\n", path, newPath, err)
 			return err
+		}
+
+		h.newFiles = append(h.newFiles, newPath)
+
+		return nil
+	case "Setstat":
+		attr := r.Attributes()
+		if attr == nil {
+			fmt.Printf("Setstat failed, no attributed provided for %s: %s\n", path, err)
+			return err
+		}
+		if attr.Mode != 0 {
+			fileMode := os.FileMode(attr.Mode & 0o777)
+			if err := os.Chmod(path, fileMode); err != nil {
+				fmt.Printf("Setstat: Chmod failed for %s: %s\n", path, err)
+			}
+		}
+		if attr.Atime != 0 {
+			if err := os.Chtimes(path, time.Unix(int64(attr.Atime), 0), time.Time{}); err != nil {
+				fmt.Printf("Setstat: Chtimes (Atime) failed for %s: %s\n", path, err)
+			}
+		}
+		if attr.Mtime != 0 {
+			if err := os.Chtimes(path, time.Time{}, time.Unix(int64(attr.Mtime), 0)); err != nil {
+				fmt.Printf("Setstat: Chtimes (Mtime) failed for %s: %s\n", path, err)
+			}
+		}
+		if attr.UID != 0 || attr.GID != 0 {
+			if runtime.GOOS != "windows" {
+				if err := os.Chown(path, int(attr.UID), int(attr.GID)); err != nil {
+					fmt.Printf("Setstat: Chown failed for %s: %s\n", path, err)
+				}
+			} else {
+				fmt.Printf("Setstat: Chown not available for %s: %s\n", path, err)
+			}
+		}
+		if attr.Size > 0 {
+			if stat, err := os.Stat(path); err == nil {
+				if stat.Mode().IsRegular() {
+					if err := os.Truncate(path, int64(attr.Size)); err != nil {
+						fmt.Printf("Setstat: Set size failed for %s: %s\n", path, err)
+					}
+				} else {
+					fmt.Printf("Setstat: Set size not possible for non regular %s: %s\n", path, err)
+				}
+			} else {
+				fmt.Printf("Setstat: Set size not possible for %s: %s\n", path, err)
+			}
 		}
 		return nil
 	}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	sftp_server "github.com/c8121/asset-storage/internal/sftp-server"
-	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -31,9 +30,8 @@ func main() {
 		return perms, nil
 	}
 
-	handlerCreator := func() sftp.Handlers {
-		//return sftp.InMemHandler()
-		return sftp_server.NewVirtualSftpHandler("/tmp")
+	handlerCreator := func(username string) *sftp_server.VirtualSftpHandler {
+		return sftp_server.NewVirtualSftpHandler("/tmp", username)
 	}
 
 	sftp_server.RunSftpServer(ListenAddress, HostKeyFile, passwordCallback, handlerCreator)
