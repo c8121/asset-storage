@@ -36,14 +36,27 @@ type VirtualSftpHandler struct {
 
 func (h *VirtualSftpHandler) Fileread(r *sftp.Request) (io.ReaderAt, error) {
 	path, err := h.resolve(r.Filepath)
+	if err != nil {
+		fmt.Printf("Fileread: Resolve failed: %s (%s)\n", path, err)
+		return nil, err
+	}
 	fmt.Printf("Fileread %s (%s)\n", path, err)
 
-	return nil, os.ErrPermission
+	file, err := os.Open(path)
+	if err != nil {
+		fmt.Printf("Error opening file for read: %v", err)
+		return nil, err
+	}
+	return file, nil
 }
 
 func (h *VirtualSftpHandler) Filewrite(r *sftp.Request) (io.WriterAt, error) {
 	path, err := h.resolve(r.Filepath)
-	fmt.Printf("Filewrite %s (%s)\n", path, err)
+	if err != nil {
+		fmt.Printf("Filewrite: Resolve failed: %s (%s)\n", path, err)
+		return nil, err
+	}
+	//fmt.Printf("Filewrite %s (%s)\n", path, err)
 
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, h.permissions)
 	if err != nil {
@@ -55,12 +68,39 @@ func (h *VirtualSftpHandler) Filewrite(r *sftp.Request) (io.WriterAt, error) {
 
 func (h *VirtualSftpHandler) Filecmd(r *sftp.Request) error {
 	path, err := h.resolve(r.Filepath)
-	fmt.Printf("Filecmd %s (%s)\n", path, err)
+	if err != nil {
+		fmt.Printf("Filecmd: Resolve failed: %s (%s)\n", path, err)
+		return err
+	}
+	//fmt.Printf("Filecmd %s (%s)\n", path, err)
 
 	switch r.Method {
 	case "Mkdir":
 		if err = os.MkdirAll(path, h.permissions); err != nil {
 			fmt.Printf("Failed to create directory %s: %s\n", path, err)
+			return err
+		}
+		return nil
+	case "Remove":
+		if err := os.Remove(path); err != nil {
+			fmt.Printf("Failed to remove file %s: %s\n", path, err)
+			return err
+		}
+		return nil
+	case "Rmdir":
+		if err := os.RemoveAll(path); err != nil {
+			fmt.Printf("Failed to remove directory %s: %s\n", path, err)
+			return err
+		}
+		return nil
+	case "Rename":
+		newPath, err := h.resolve(r.Target)
+		if err != nil {
+			fmt.Printf("Failed to rename file %s to %s: %s\n", path, newPath, err)
+			return err
+		}
+		if err := os.Rename(path, newPath); err != nil {
+			fmt.Printf("Failed to rename file %s to %s: %s\n", path, newPath, err)
 			return err
 		}
 		return nil
@@ -75,22 +115,21 @@ func (h *VirtualSftpHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 	var err error
 
 	path, err := h.resolve(r.Filepath)
-	fmt.Printf("Filelist %s %s (%s)\n", path, r.Method, err)
 	if err != nil {
 		fmt.Printf("Filelist: Resolve failed: %s (%s)\n", path, err)
 		return nil, err
 	}
+	//fmt.Printf("Filelist %s %s (%s)\n", path, r.Method, err)
 
 	var lister sftp.ListerAt
 
 	switch r.Method {
 	case "List":
 		lister, err = NewFileLister(path)
-		break
 
-	case "Stat":
+	case "Stat", "Lstat", "Readlink":
 		lister, err = NewStatFileLister(path)
-		break
+
 	default:
 		return nil, errors.New("unsupported")
 	}
@@ -105,7 +144,7 @@ func (h *VirtualSftpHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 
 func (h *VirtualSftpHandler) resolve(path string) (string, error) {
 
-	fmt.Printf(" - Path requested: '%s'\n", path)
+	//fmt.Printf(" - Path requested: '%s'\n", path)
 	if strings.Contains(path, ":") {
 		return "", ErrorInvalidPathRequest
 	}
@@ -120,7 +159,7 @@ func (h *VirtualSftpHandler) resolve(path string) (string, error) {
 	resolved = strings.TrimPrefix(resolved, "/")
 	resolved = filepath.Join(h.rootDirectory, resolved)
 
-	fmt.Printf(" - Path resolved: '%s'\n", resolved)
+	//fmt.Printf(" - Path resolved: '%s'\n", resolved)
 	return resolved, nil
 }
 
@@ -129,6 +168,11 @@ type FileLister struct {
 }
 
 func NewFileLister(path string) (*FileLister, error) {
+
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return nil, os.ErrNotExist
+	}
+
 	lister := &FileLister{}
 
 	fis, err := os.Open(path)
@@ -142,11 +186,15 @@ func NewFileLister(path string) (*FileLister, error) {
 		return nil, err
 	}
 
-	fmt.Printf(" - Path lister opened: '%s' (%d entries)\n", path, len(lister.list))
 	return lister, nil
 }
 
 func NewStatFileLister(path string) (*FileLister, error) {
+
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return nil, os.ErrNotExist
+	}
+
 	lister := &FileLister{}
 
 	f, err := os.Lstat(path)
@@ -155,15 +203,12 @@ func NewStatFileLister(path string) (*FileLister, error) {
 	}
 
 	lister.list = []os.FileInfo{f}
-
-	fmt.Printf(" - Path lister opened: '%s' (%d entries)\n", path, len(lister.list))
 	return lister, nil
 }
 
 func (l *FileLister) ListAt(ls []os.FileInfo, offset int64) (int, error) {
 	// For empty directories, return (0, nil) on the first call so some clients
 	// (e.g., WinSCP) don't interpret immediate EOF as an error.
-	fmt.Printf(" - ListAt offset: %d\n", offset)
 	if len(l.list) == 0 && offset == 0 {
 		return 0, nil
 	}

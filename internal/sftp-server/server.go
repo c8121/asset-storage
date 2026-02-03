@@ -68,6 +68,12 @@ func RunSftpServer(
 					for req := range in {
 						if req.Type == "subsystem" && len(req.Payload) >= 4 && string(req.Payload[4:]) == "sftp" {
 
+							err := req.Reply(true, nil)
+							if err != nil {
+								fmt.Printf("Could not reply to client: %s\n", err)
+								return
+							}
+
 							fmt.Printf("Start SFTP server for %s.\n", sshConnection.RemoteAddr())
 
 							root := handlerCreator()
