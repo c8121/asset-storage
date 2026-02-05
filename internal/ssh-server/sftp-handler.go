@@ -1,13 +1,11 @@
-package sftp_server
+package ssh_server
 
 import (
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/c8121/asset-storage/internal/util"
@@ -223,24 +221,7 @@ func (h *VirtualSftpHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 }
 
 func (h *VirtualSftpHandler) resolve(path string) (string, error) {
-
-	//fmt.Printf(" - Path requested: '%s'\n", path)
-	if strings.Contains(path, ":") {
-		return "", ErrorInvalidPathRequest
-	}
-
-	resolved := path
-	if resolved == string(filepath.Separator) || resolved == "/" {
-		resolved = ""
-	}
-
-	resolved = filepath.FromSlash(resolved)
-	resolved = strings.TrimPrefix(resolved, string(filepath.Separator))
-	resolved = strings.TrimPrefix(resolved, "/")
-	resolved = filepath.Join(h.rootDirectory, resolved)
-
-	//fmt.Printf(" - Path resolved: '%s'\n", resolved)
-	return resolved, nil
+	return resolve(h.rootDirectory, path)
 }
 
 type FileLister struct {

@@ -10,7 +10,7 @@ to browse the storage content.
 
 **DAM**: Manage Pictures, Documents...
 
-**Portable**: Runs on Windows, Linux, Mac. No installation required, just copy. Can be copied to a external HD or Stick
+**Portable**: Runs on Linux, Windows, Mac. No installation required, just copy. Can be copied to a external HD or Stick
 which then can be used to store assets from different devices.
 
 **Server included**: Can be used on a NAS for example.
@@ -23,10 +23,11 @@ which then can be used to store assets from different devices.
 
 Store files into an archive directory
 
-- Deduplicated (same file only once, determined by content-hash)
+- Deduplicated (same file only once, determined by content-hash).
 - Organized in subdirectories, one per time period. Old directories will no be touched again to enable incremental backups.
-- Meta-data is stored separately and updated when new files are added or existing files with different origin/owner
-- A database is created to be able to find/browse data
+- Meta-data is stored separately and updated when new files are added or existing files with different origin/owner.
+- A database is created to be able to find/browse data.
+- SFTP/SCP/RSYNC-Server included to receive files from remote devices.
 
 ## Apps
 
@@ -60,6 +61,14 @@ Update meta-data-database by reading all meta-data files and writing contents to
 Not required if database is intact, because `add` also updates the database.
 
     metadata-db-create [-base <directory>]
+
+### ssh-server
+
+Accept files from remote computers via SFTP, SCP or RSYNC
+
+*Note: This is work in progress, important features like authentication are missing at the moment*
+
+    ssh-server [-host-key <files>] [-listen <ip:port>]
 
 ## App Commandline args
 

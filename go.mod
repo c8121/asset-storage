@@ -8,7 +8,10 @@ require (
 	modernc.org/sqlite v1.39.0
 )
 
-require github.com/kr/fs v0.1.0 // indirect
+require (
+	github.com/creack/pty v1.1.7 // indirect
+	github.com/kr/fs v0.1.0 // indirect
+)
 
 require (
 	github.com/HugoSmits86/nativewebp v1.2.0 // indirect
