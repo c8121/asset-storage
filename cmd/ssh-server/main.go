@@ -14,8 +14,7 @@ import (
 )
 
 var (
-	listenAddress = flag.String("listen", "127.0.0.1:2022", "Listen Address (ip:port)")
-	hostKeyFile   = flag.String("host-key", "id_rsa", "SSH-Host Key-File")
+	hostKeyFile = flag.String("host-key", "id_rsa", "SSH-Host Key-File")
 )
 
 func main() {
@@ -24,7 +23,7 @@ func main() {
 
 	config := &ssh_server.SshServerConfig{
 
-		ListenAddress: *listenAddress,
+		ListenAddress: config.ListenAddress,
 
 		HostKeyFile: *hostKeyFile,
 

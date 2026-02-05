@@ -27,14 +27,16 @@ var (
 
 	SpaHttpRoot = filepath.Dir(os.Args[0]) + "/vue-ui" // Root directory to service SPA from
 
+	ListenAddress = "127.0.0.1:9999" //Spa-/Rest-/Ssh-Server in format ip:port
+
 	cmdBaseDir              = flag.String("base", "", "Base directory for storage, meta-data, db...")
 	cmdUseGzip              = flag.Bool("gzip", false, "Use GZIP compression")
-	cmdSpaHttpRoot          = flag.String("spa", "", "HTTP root directory of SPA app")
+	cmdXorKey               = flag.String("xor", "", "XOR Key for content obfusication")
 	cmdMaxMemFileSize       = flag.Int64("maxmem", 0, "Max memory file size in bytes")
+	cmdSpaHttpRoot          = flag.String("spa", "", "HTTP root directory of SPA app")
 	cmdSkipMetaDataIfExists = flag.Bool("skip-meta", false, "Skip meta data update if file exist")
 	cmdCheckHashBeforeAdd   = flag.Bool("check-hash", false, "Check hash before trying to add file.")
-
-	cmdXorKey = flag.String("xor", "", "XOR Key for content obfusication")
+	cmdListen               = flag.String("listen", "", "Listen Address (ip:port)")
 )
 
 // LoadDefault initializes configuration with defaults,
@@ -95,5 +97,10 @@ func LoadDefault() {
 			XorKey = []byte(*cmdXorKey)
 		}
 		fmt.Printf("Xor obfusication enabled, key length: %d\n", len(XorKey))
+	}
+
+	if *cmdListen != "" {
+		ListenAddress = *cmdListen
+		fmt.Printf("Server address: %s\n", ListenAddress)
 	}
 }

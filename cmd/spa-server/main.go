@@ -20,10 +20,11 @@ func main() {
 	defer mdsqlite.Close()
 
 	router := gin.Default()
+	router.SetTrustedProxies(nil)
 
 	restapi.CreateRoutes(router)
 
 	spaserver.CreateRoutes(router)
 
-	util.PanicOnError(router.Run("localhost:8080"), "Failed to start server")
+	util.PanicOnError(router.Run(config.ListenAddress), "Failed to start server")
 }
