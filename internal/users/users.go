@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	UsersFile       = "users"
+	UserFile        = "users"
 	FilePermissions = 0700
 )
 
@@ -65,7 +65,7 @@ func readUsers() {
 	}
 	users = make(map[string]string)
 
-	file := filepath.Join(config.AssetStorageConfigDir, UsersFile)
+	file := filepath.Join(config.AssetStorageConfigDir, UserFile)
 	stat, err := os.Stat(file)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
@@ -116,11 +116,11 @@ func SaveUsers() {
 		return
 	}
 
-	file := filepath.Join(config.AssetStorageConfigDir, UsersFile)
+	file := filepath.Join(config.AssetStorageConfigDir, UserFile)
 	stat, err := os.Stat(file)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		panic(err)
-	} else if !stat.Mode().IsRegular() {
+	} else if stat != nil && !stat.Mode().IsRegular() {
 		panic("Cannot read users file: Not a file\n")
 	}
 

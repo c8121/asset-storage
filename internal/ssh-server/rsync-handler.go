@@ -75,6 +75,12 @@ func (h *VirtualRsyncHandler) parseCommand(payload string) (string, []string, er
 		return "", nil, errors.New("Invalid payload for rsync: " + payload)
 	} else {
 		cmd := parts[0]
+
+		//Does not work:
+		//if runtime.GOOS == "windows" {
+		//	cmd = "C:\\cygwin64\\bin\\" + cmd + ".exe"
+		//}
+
 		args := parts[1:]
 
 		destPath := args[len(args)-1]
@@ -84,6 +90,7 @@ func (h *VirtualRsyncHandler) parseCommand(payload string) (string, []string, er
 		}
 		args[len(args)-1] = destPath
 
+		fmt.Printf("Rsync command: %s %s\n", cmd, args)
 		return cmd, args, nil
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/c8121/asset-storage/internal/util"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 )
@@ -41,7 +42,7 @@ func RunSftpServer(config *SshServerConfig) {
 		}
 
 		go func(conn net.Conn) {
-			defer conn.Close()
+			defer util.CloseOrLog(conn)
 
 			//Handshake
 			sshConnection, chans, reqs, err := ssh.NewServerConn(clientConnection, serverConfig)
@@ -54,7 +55,7 @@ func RunSftpServer(config *SshServerConfig) {
 			// Discard global requests
 			go ssh.DiscardRequests(reqs)
 
-			// Service the incoming Channel channel.
+			// Service the incoming channel.
 			for newChannel := range chans {
 				if newChannel.ChannelType() != "session" {
 					if err := newChannel.Reject(ssh.UnknownChannelType, "unknown channel type"); err != nil {
@@ -148,12 +149,26 @@ func executeRsync(config *SshServerConfig, sshConnection ssh.ServerConn, channel
 		return err
 	}
 
-	go io.Copy(stdin, channel)
-	go io.Copy(channel, stdout)
+	go func() {
+		if _, err := io.Copy(stdin, channel); err != nil {
+			fmt.Printf("Error copying stdin to channel: %s\n", err)
+		}
+	}()
+	go func() {
+		if _, err := io.Copy(channel, stdout); err != nil {
+			fmt.Printf("Error copying stdout to channel: %s\n", err)
+		}
+	}()
 
-	cmd.Run()
-	channel.SendRequest("exit-status", false, []byte{0, 0, 0, 0})
-	channel.Close()
+	err = cmd.Run()
+	if err != nil {
+		util.CloseOrLog(channel)
+		return err
+	}
+	if _, err = channel.SendRequest("exit-status", false, []byte{0, 0, 0, 0}); err != nil {
+		fmt.Printf("Rsync send command exit-status failed: %s\n", err)
+	}
+	util.CloseOrLog(channel)
 
 	fmt.Printf("Command completed for %s: %s %v.\n", sshConnection.RemoteAddr(), cmdName, cmdArgs)
 

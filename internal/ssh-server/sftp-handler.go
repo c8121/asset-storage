@@ -213,7 +213,7 @@ func (h *VirtualSftpHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 	}
 
 	if err != nil {
-		fmt.Printf("Filelist: %s (%s)\n", path, err)
+		//fmt.Printf("Filelist: %s (%s)\n", path, err)
 		return nil, err
 	}
 	return lister, nil
