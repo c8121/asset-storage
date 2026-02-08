@@ -47,13 +47,17 @@ func (h *VirtualSftpHandler) GetUsername() string {
 	return h.username
 }
 
-func (h *VirtualSftpHandler) GetNewFiles() []string {
-	existingNewFiles := make([]string, 0)
+func (h *VirtualSftpHandler) GetNewFiles() []SshFileInfo {
+	existingNewFiles := make([]SshFileInfo, 0)
 
 	for _, path := range h.newFiles {
 		if stat, err := os.Stat(path); err == nil {
 			if stat.Mode().IsRegular() {
-				existingNewFiles = append(existingNewFiles, path)
+				info := SshFileInfo{
+					LocalPath: path,
+					UserPath:  path[len(h.rootDirectory):],
+				}
+				existingNewFiles = append(existingNewFiles, info)
 			}
 		}
 	}
