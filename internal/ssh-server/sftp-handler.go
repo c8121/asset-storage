@@ -71,7 +71,7 @@ func (h *VirtualSftpHandler) Fileread(r *sftp.Request) (io.ReaderAt, error) {
 		fmt.Printf("Fileread: Resolve failed: %s (%s)\n", path, err)
 		return nil, err
 	}
-	fmt.Printf("Fileread %s (%s)\n", path, err)
+	//fmt.Printf("Fileread %s (%s)\n", path, err)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -106,7 +106,7 @@ func (h *VirtualSftpHandler) Filecmd(r *sftp.Request) error {
 		fmt.Printf("Filecmd: Resolve failed: %s (%s)\n", path, err)
 		return err
 	}
-	//fmt.Printf("Filecmd %s (%s)\n", path, err)
+	//fmt.Printf("Filecmd %s %s (%s)\n", r.Method, path, err)
 
 	switch r.Method {
 	case "Mkdir":
@@ -213,11 +213,12 @@ func (h *VirtualSftpHandler) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 		lister, err = NewStatFileLister(path)
 
 	default:
+		fmt.Printf("Unsupported Filelist Method: Path=%s, Method=%s (%s)\n", path, r.Method, err)
 		return nil, errors.New("unsupported")
 	}
 
 	if err != nil {
-		//fmt.Printf("Filelist: %s (%s)\n", path, err)
+		fmt.Printf("Filelist error: %s (%s)\n", path, err)
 		return nil, err
 	}
 	return lister, nil
@@ -248,6 +249,7 @@ func NewFileLister(path string) (*FileLister, error) {
 
 	lister.list, err = fis.Readdir(-1)
 	if err != nil {
+		fmt.Printf("Error reading directory %s: %s\n", path, err)
 		return nil, err
 	}
 
@@ -274,9 +276,10 @@ func NewStatFileLister(path string) (*FileLister, error) {
 func (l *FileLister) ListAt(ls []os.FileInfo, offset int64) (int, error) {
 	// For empty directories, return (0, nil) on the first call so some clients
 	// (e.g., WinSCP) don't interpret immediate EOF as an error.
-	if len(l.list) == 0 && offset == 0 {
-		return 0, nil
-	}
+	//fmt.Printf("ListAt: offset=%d length=%d\n", offset, len(l.list))
+	//if len(l.list) == 0 && offset == 0 {
+	//	return 0, nil
+	//}
 	if offset >= int64(len(l.list)) {
 		return 0, io.EOF
 	}
