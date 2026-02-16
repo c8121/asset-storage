@@ -27,15 +27,15 @@ func (h *VirtualRsyncHandler) GetUsername() string {
 	return h.username
 }
 
-func (h *VirtualRsyncHandler) GetNewFiles() []string {
-	existingNewFiles := make([]string, 0)
+func (h *VirtualRsyncHandler) GetNewFiles() []SshFileInfo {
+	existingNewFiles := make([]SshFileInfo, 0)
 
-	readFiles(h.rootDirectory, &existingNewFiles)
+	h.readFiles(h.rootDirectory, &existingNewFiles)
 
 	return existingNewFiles
 }
 
-func readFiles(dirPath string, readInto *[]string) {
+func (h *VirtualRsyncHandler) readFiles(dirPath string, readInto *[]SshFileInfo) {
 	stat, err := os.Stat(dirPath)
 	if errors.Is(err, os.ErrNotExist) {
 		fmt.Println("Directory does in exists: " + dirPath)
@@ -62,9 +62,13 @@ func readFiles(dirPath string, readInto *[]string) {
 	for _, f := range list {
 		path := filepath.Join(dirPath, f.Name())
 		if f.IsDir() {
-			readFiles(path, readInto)
+			h.readFiles(path, readInto)
 		} else if f.Mode().IsRegular() {
-			*readInto = append(*readInto, path)
+			info := SshFileInfo{
+				LocalPath: path,
+				UserPath:  path[len(h.rootDirectory):],
+			}
+			*readInto = append(*readInto, info)
 		}
 	}
 }

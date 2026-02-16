@@ -54,6 +54,10 @@ func SplitPath(path string) []string {
 		names = append(names, path[s:])
 	}
 
+	if len(names) == 0 {
+		return []string{""}
+	}
+
 	return names
 }
 

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/c8121/asset-storage/internal/config"
+	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
 	ssh_server "github.com/c8121/asset-storage/internal/ssh-server"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/users"
@@ -20,8 +21,12 @@ var (
 func main() {
 
 	config.LoadDefault()
+	storage.CreateDirectories()
 
-	config := &ssh_server.SshServerConfig{
+	mdsqlite.Open()
+	defer mdsqlite.Close()
+
+	sshServerConfig := &ssh_server.SshServerConfig{
 
 		ListenAddress: config.ListenAddress,
 
@@ -58,9 +63,10 @@ func main() {
 		},
 	}
 
-	ssh_server.RunSftpServer(config)
+	ssh_server.RunSftpServer(sshServerConfig)
 }
 
+// create a home-/root-directory for the given user.
 func createVirutalRootDir(username string) (string, error) {
 	root := filepath.Join(config.AssetStorageTempDir, "virtual-users", username)
 	if err := os.MkdirAll(root, storage.FilePermissions); err != nil {
