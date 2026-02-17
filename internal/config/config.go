@@ -16,6 +16,7 @@ var (
 	AssetMetaDataBaseDir    = "/tmp/asset-storage/meta"                     // Base directory for all meta-data of assets.
 	AssetMetaDataDb         = "/tmp/asset-storage/db/asset-metadata.sqlite" // Data source name of database
 	AssetCollectionsBaseDir = "/tmp/asset-collections"                      // Base directory for collections.
+	AssetFacesBaseDir       = "/tmp/asset-storage/faces"                    // Base directory for all meta-data of assets.
 
 	UseGzip = false //Note: Cannot be changed after storage was created!
 	XorKey  []byte  //Note: Cannot be changed after storage was created!
@@ -63,6 +64,7 @@ func LoadDefault() {
 	AssetMetaDataBaseDir = useBaseDir + "/asset-storage/meta"
 	AssetMetaDataDb = useBaseDir + "/asset-storage/db/asset-metadata.sqlite"
 	AssetCollectionsBaseDir = useBaseDir + "/asset-storage/collections"
+	AssetFacesBaseDir = useBaseDir + "/asset-storage/faces"
 
 	UseGzip = *cmdUseGzip
 	if UseGzip {

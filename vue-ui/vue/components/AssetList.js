@@ -8,6 +8,7 @@
             'Upload': '/vue/components/Upload.js',
             'Download': '/vue/components/Download.js',
             'MetaData': '/vue/components/MetaData.js',
+            'Faces': '/vue/components/Faces.js',
             'SelectedAssets': '/vue/components/SelectedAssets.js',
         },
 
@@ -100,6 +101,7 @@
                                 </div>
                                 <div class="card-footer text-end p-0">
                                     <input type="checkbox" :checked="isSelected(asset)" @change="selectAssetClick(asset, $event)">
+                                    <button @click="showFaces(asset)" class="btn btn-sm"><i>F</i></button>
                                     <button @click="showMetaData(asset)" class="btn btn-sm"><i>M</i></button>
                                 </div>
                             </div>
@@ -122,6 +124,7 @@
                         @meta-data-click="showMetaData"></Upload>
                     <MetaData ref="metaDataToast" :value="selectedAssetMetaData" 
                         @file-click="downloadAsset(selectedAssetMetaData)"></MetaData>
+                    <Faces ref="facesToast" :value="selectedAssetMetaData"></Faces>
                     <SelectedAssets ref="selectionToast" :value="selectedAssets" 
                         @file-click="downloadAsset"
                         @remove-click="unselectAsset"
@@ -310,6 +313,14 @@
                 client.get('/assets/metadata/' + asset.Hash).then((json) => {
                     self.selectedAssetMetaData = json;
                     self.$refs.metaDataToast.showToast();
+                });
+            },
+
+            showFaces(asset) {
+                const self = this;
+                client.get('/assets/metadata/' + asset.Hash).then((json) => {
+                    self.selectedAssetMetaData = json;
+                    self.$refs.facesToast.showToast();
                 });
             },
 

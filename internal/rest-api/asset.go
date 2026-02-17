@@ -34,6 +34,7 @@ func GetAsset(c *gin.Context) {
 	reader, err := storage.Open(hash)
 	if err != nil {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		return
 	}
 	defer util.CloseOrLog(reader)
 
