@@ -19,6 +19,7 @@ import (
 var (
 	GetFaceRestServiceEndpoint = "http://localhost:8000/extract"
 	FaceImageExtension         = ".jpg"
+	FaceEmbeddingExtension     = ".json"
 )
 
 type (
@@ -45,12 +46,14 @@ func Init() {
 // GetFaceImage finds face in image, returns face image
 func GetFaceImage(sourceHash string, idx int) ([]byte, error) {
 
+	facesDir := getFacesDir(sourceHash, false)
+
 	existingFaces, err := loadFaces(sourceHash)
 	if err == nil {
 		if idx >= len(existingFaces) {
-			return nil, fmt.Errorf("Index out of bounds")
+			return nil, fmt.Errorf("index out of bounds")
 		}
-		fileName := filepath.Join(config.AssetFacesBaseDir, existingFaces[idx]+FaceImageExtension)
+		fileName := filepath.Join(facesDir, existingFaces[idx]+FaceImageExtension)
 		return os.ReadFile(fileName)
 	}
 
@@ -59,13 +62,13 @@ func GetFaceImage(sourceHash string, idx int) ([]byte, error) {
 		return nil, err
 	}
 	if idx >= len(faces) {
-		return nil, fmt.Errorf("Index out of bounds")
+		return nil, fmt.Errorf("index out of bounds")
 	}
-	fileName := filepath.Join(config.AssetFacesBaseDir, faces[idx]+FaceImageExtension)
+	fileName := filepath.Join(facesDir, faces[idx]+FaceImageExtension)
 	return os.ReadFile(fileName)
 }
 
-// GetFaces finds faces in image, returns ["hash/idx",...]
+// GetFaces finds faces in image, returns ["name",...]
 func GetFaces(sourceHash string) ([]string, error) {
 
 	existingFaces, err := loadFaces(sourceHash)
@@ -79,8 +82,7 @@ func GetFaces(sourceHash string) ([]string, error) {
 		return nil, err
 	}
 
-	facesDir := filepath.Join(config.AssetFacesBaseDir, sourceHash)
-	util.CreateDirIfNotExists(facesDir, FilePermissions)
+	facesDir := getFacesDir(sourceHash, true)
 
 	list := make([]string, 0)
 
@@ -98,7 +100,7 @@ func GetFaces(sourceHash string) ([]string, error) {
 			fmt.Printf("Failed to write: %s\n", err)
 		}
 
-		embeddingFileName := filepath.Join(facesDir, strconv.Itoa(idx)+".json")
+		embeddingFileName := filepath.Join(facesDir, strconv.Itoa(idx)+FaceEmbeddingExtension)
 		embeddingJson, err := json.Marshal(face.Embedding)
 		if err != nil {
 			fmt.Printf("Failed to create json: %s\n", err)
@@ -109,23 +111,23 @@ func GetFaces(sourceHash string) ([]string, error) {
 			}
 		}
 
-		list = append(list, sourceHash+"/"+strconv.Itoa(idx))
+		list = append(list, strconv.Itoa(idx))
 	}
 
 	return list, nil
 }
 
-// loadFaces loads previously created faces, if exist.
+// loadFaces loads previously created faces, if exists. Returns ["name",...]
 func loadFaces(sourceHash string) ([]string, error) {
 
-	facesDir := filepath.Join(config.AssetFacesBaseDir, sourceHash)
+	facesDir := getFacesDir(sourceHash, false)
 	stat, err := os.Stat(facesDir)
 	if err != nil {
 		return nil, err
 	}
 
 	if !stat.IsDir() {
-		return nil, fmt.Errorf("not a direcotry: %s\n", facesDir)
+		return nil, fmt.Errorf("not a directory: %s\n", facesDir)
 	}
 
 	entries, err := os.ReadDir(facesDir)
@@ -137,7 +139,7 @@ func loadFaces(sourceHash string) ([]string, error) {
 
 	for _, e := range entries {
 		if strings.HasSuffix(e.Name(), FaceImageExtension) {
-			list = append(list, sourceHash+"/"+e.Name()[0:len(e.Name())-len(FaceImageExtension)])
+			list = append(list, e.Name()[0:len(e.Name())-len(FaceImageExtension)])
 		}
 	}
 
@@ -173,4 +175,14 @@ func restExecGetFaces(sourceHash string) (*Faces, error) {
 	}
 
 	return result, nil
+}
+
+// Create dir: AssetFacesBaseDir/Hash[:2]/Hash[2:]
+func getFacesDir(sourceHash string, create bool) string {
+
+	dir := filepath.Join(config.AssetFacesBaseDir, sourceHash[0:2], sourceHash[2:])
+	if create {
+		util.CreateDirIfNotExists(dir, FilePermissions)
+	}
+	return dir
 }

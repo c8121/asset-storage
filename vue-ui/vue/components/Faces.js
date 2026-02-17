@@ -32,7 +32,7 @@
         data() {
             return {
                 showToastCss: '',
-                faces:[]
+                faces: []
             }
         },
         methods: {
@@ -43,9 +43,15 @@
                 this.showToastCss = '';
             },
             loadFaces(asset) {
+                if (!asset)
+                    return;
+                if (this.showToastCss !== 'show')
+                    return;
                 const self = this;
                 client.get('/faces/' + asset.Hash).then((json) => {
-                    self.faces = json
+                    self.faces.splice(0, self.faces.length)
+                    for (const face of json)
+                        self.faces.push(asset.Hash + '/' + face);
                 });
             }
         },

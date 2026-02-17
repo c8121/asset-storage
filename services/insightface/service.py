@@ -10,7 +10,7 @@ app = FastAPI(title="InsightFace Face Extractor API")
 
 # Initialize InsightFace model
 face_app = FaceAnalysis(name="buffalo_l")
-face_app.prepare(ctx_id=-1, det_size=(640, 640))  # ctx_id=0 for GPU, -1 for CPU
+face_app.prepare(ctx_id=0, det_size=(640, 640))  # ctx_id=0 for GPU, -1 for CPU
 
 
 def encode_image_to_base64(image: np.ndarray) -> str:
