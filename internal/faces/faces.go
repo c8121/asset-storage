@@ -23,9 +23,11 @@ var (
 )
 
 type (
+	Embedding []float64
+
 	Face struct {
 		Index     int
-		Embedding []float64
+		Embedding Embedding
 		Image     string
 	}
 

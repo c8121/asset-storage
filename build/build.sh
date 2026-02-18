@@ -15,3 +15,4 @@ go build -o $OUT_DIR/rest-server $CMD_DIR/rest-server/main.go
 go build -o $OUT_DIR/spa-server $CMD_DIR/spa-server/main.go
 go build -o $OUT_DIR/ssh-server $CMD_DIR/ssh-server/main.go
 go build -o $OUT_DIR/user-edit $CMD_DIR/user-edit/main.go
+go build -o $OUT_DIR/faces $CMD_DIR/faces/main.go
