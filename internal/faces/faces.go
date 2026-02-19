@@ -156,6 +156,11 @@ func restExecGetFaces(sourceHash string) (*Faces, error) {
 		return nil, err
 	}
 
+	check := strings.ToLower(meta.MimeType)
+	if !strings.HasPrefix(check, "image/") {
+		return nil, fmt.Errorf("mime-type not supported: %s", meta.MimeType)
+	}
+
 	reader, err := storage.Open(sourceHash)
 	if err != nil {
 		return nil, err

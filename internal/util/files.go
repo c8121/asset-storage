@@ -35,3 +35,23 @@ func FindFile(paths []string) string {
 	fmt.Printf("No files found in %s\n", paths)
 	return ""
 }
+
+func SplitPath(path string) []string {
+
+	items := make([]string, 0)
+
+	s := 0
+	p := 0
+	for p < len(path) {
+		if path[p] == '/' || path[p] == '\\' {
+			items = append(items, path[s:p])
+			s = p + 1
+		}
+		p++
+	}
+	if p > 0 {
+		items = append(items, path[s:p])
+	}
+
+	return items
+}

@@ -1,8 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"math"
+	"strings"
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/faces"
@@ -11,47 +12,37 @@ import (
 
 func main() {
 
+	command := flag.String("command", "indentify", "Command, either 'identify' or 'similarity'")
+	threshold := flag.Float64("threshold", 0.45, "Minimun similariy threshold")
+
 	config.LoadDefault()
 	storage.CreateDirectories()
 
-	embeddings := faces.ReadEmbeddings(config.AssetFacesBaseDir)
-	fmt.Printf("Found %d embeddings\n", len(embeddings))
+	fmt.Printf("Command: %s\n", *command)
 
-	CalculateSimilarity(embeddings, 0.45)
+	if strings.HasPrefix(*command, "i") {
 
-}
-
-func CalculateSimilarity(embeddings map[string]faces.Embedding, threshold float64) {
-
-	len := len(embeddings)
-	paths := make([]string, len)
-	embeds := make([]faces.Embedding, len)
-
-	i := 0
-	for path, emb := range embeddings {
-		paths[i] = path
-		embeds[i] = emb
-		i++
-	}
-
-	for i := range len {
-		for j := i + 1; j < len; j++ {
-			sim := CosineSimilarity(embeds[i], embeds[j])
-			if sim >= threshold {
-				fmt.Printf("Similarity %s <-> %s = %f\n", paths[i], paths[j], sim)
+		handler := func(path string) {
+			hash := storage.HashFromStoragePath(path)
+			faces, err := faces.GetFaces(hash)
+			if err != nil {
+				fmt.Printf("Cannot get faces from %s: %s\n", hash, err)
+			} else {
+				fmt.Printf("Found %d faces in %s\n", len(faces), hash)
 			}
 		}
+
+		storage.Walk(handler)
+
+	} else if strings.HasPrefix(*command, "s") {
+
+		embeddings := faces.ReadEmbeddings(config.AssetFacesBaseDir)
+
+		faces.CalculateSimilarity(embeddings, *threshold)
+		fmt.Printf("Checked %d embeddings\n", len(embeddings))
+
+	} else {
+		fmt.Printf("Unknown command: %s\n", *command)
 	}
-}
 
-func CosineSimilarity(a, b faces.Embedding) float64 {
-	var dot, normA, normB float64
-
-	for i := range a {
-		dot += a[i] * b[i]
-		normA += a[i] * a[i]
-		normB += b[i] * b[i]
-	}
-
-	return dot / (math.Sqrt(normA) * math.Sqrt(normB))
 }

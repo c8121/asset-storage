@@ -177,6 +177,34 @@ func copyToStorage(reader io.Reader, size int64) (*AddedFileInfo, error) {
 	return info, nil
 }
 
+func Walk(handler func(path string)) {
+
+	timePeriodDirs, err := os.ReadDir(config.AssetStorageBaseDir)
+	if errors.Is(err, os.ErrNotExist) {
+		return
+	}
+	util.PanicOnError(err, "Failed to read directory")
+
+	for _, timePeriodEntry := range timePeriodDirs {
+
+		path := filepath.Join(config.AssetStorageBaseDir, timePeriodEntry.Name())
+		children, err := os.ReadDir(path)
+		util.PanicOnError(err, "Failed to read directory")
+
+		for _, child := range children {
+			dir := filepath.Join(path, child.Name())
+			files, err := os.ReadDir(dir)
+			util.PanicOnError(err, "Failed to read directory")
+
+			for _, file := range files {
+				filePath := filepath.Join(dir, file.Name())
+				handler(filePath)
+			}
+		}
+
+	}
+}
+
 // FindByHash Check all time-periods if file exists
 func FindByHash(hashHex string) (assetPath string, err error) {
 

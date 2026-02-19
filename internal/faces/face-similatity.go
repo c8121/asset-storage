@@ -3,10 +3,48 @@ package faces
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/c8121/asset-storage/internal/util"
 )
+
+func CalculateSimilarity(embeddings map[string]Embedding, threshold float64) {
+
+	len := len(embeddings)
+	paths := make([]string, len)
+	embeds := make([]Embedding, len)
+
+	i := 0
+	for path, emb := range embeddings {
+		paths[i] = path
+		embeds[i] = emb
+		i++
+	}
+
+	for i := range len {
+		for j := i + 1; j < len; j++ {
+			sim := CosineSimilarity(embeds[i], embeds[j])
+			if sim >= threshold {
+				fmt.Printf("Similarity %s <-> %s = %f\n", paths[i], paths[j], sim)
+			}
+		}
+	}
+}
+
+func CosineSimilarity(a, b Embedding) float64 {
+	var dot, normA, normB float64
+
+	for i := range a {
+		dot += a[i] * b[i]
+		normA += a[i] * a[i]
+		normB += b[i] * b[i]
+	}
+
+	return dot / (math.Sqrt(normA) * math.Sqrt(normB))
+}
 
 func ReadEmbeddings(baseDir string) map[string]Embedding {
 
@@ -51,7 +89,26 @@ func doReadEmbeddings(dir string, into map[string]Embedding) {
 				continue
 			}
 
-			into[path] = embedding
+			key := keyFromFacePath(path)
+
+			into[key] = embedding
 		}
 	}
+}
+
+// Exctract hash from .../hash[:2]/hash[2:]/faceIdx.ext
+func keyFromFacePath(path string) string {
+	items := util.SplitPath(path)
+	l := len(items)
+	if l < 3 {
+		return "invalid-path"
+	}
+
+	faceIdx := items[l-1]
+	p := strings.Index(faceIdx, ".")
+	if p > -1 {
+		faceIdx = faceIdx[:p]
+	}
+
+	return items[l-3] + items[l-2] + "/" + faceIdx
 }
