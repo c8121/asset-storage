@@ -10,6 +10,7 @@ func AutoCreateEntities() {
 		&Asset{},
 		&Origin{},
 		&Collection{},
+		&FaceSimilarity{},
 	}
 	for _, autoCreateable := range autoCreateables {
 		AutoCreate(autoCreateable)
