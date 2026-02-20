@@ -61,15 +61,6 @@ func SplitPath(path string) []string {
 	return names
 }
 
-func GetPathItemIdTx(tx *sql.Tx, path string, createIfNotExists bool) int64 {
-	pathItem, err := GetPathItemTx(tx, path, createIfNotExists)
-	if err != nil {
-		fmt.Println(err)
-		return 0
-	}
-	return pathItem.Id
-}
-
 // GetPathItem gets PathItem from db, splits path and searches
 func GetPathItem(path string, createIfNotExists bool) (*PathItem, error) {
 
@@ -90,6 +81,16 @@ func GetPathItem(path string, createIfNotExists bool) (*PathItem, error) {
 	}
 
 	return pathItem, nil
+}
+
+// GetPathItemIdTx gets PathItem-ID from db, splits path and searches
+func GetPathItemIdTx(tx *sql.Tx, path string, createIfNotExists bool) int64 {
+	pathItem, err := GetPathItemTx(tx, path, createIfNotExists)
+	if err != nil {
+		fmt.Println(err)
+		return 0
+	}
+	return pathItem.Id
 }
 
 // GetPathItemTx gets PathItem from db, splits path and searches

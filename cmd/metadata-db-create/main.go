@@ -7,7 +7,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
-	metadata_db "github.com/c8121/asset-storage/internal/metadata-db"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
 	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
 	"github.com/c8121/asset-storage/internal/util"
 )
@@ -48,7 +48,7 @@ func readAllMetaData(path string) error {
 			}
 		} else {
 			if meta, err := metadata.LoadIfExists(filePath); err == nil {
-				if err = metadata_db.AddMetaData(meta); err != nil {
+				if err = metadata_db_entity.AddMetaData(meta); err != nil {
 					return err
 				} else {
 					fmt.Printf("Added '%s'\n", filePath)

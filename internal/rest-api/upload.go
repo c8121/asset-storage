@@ -10,7 +10,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
-	metadata_db "github.com/c8121/asset-storage/internal/metadata-db"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
@@ -95,7 +95,7 @@ func AddUploadedFile(c *gin.Context) {
 			list = append(list, *meta)
 
 			//Create/Update meta-data-database
-			err = metadata_db.AddMetaData(meta)
+			err = metadata_db_entity.AddMetaData(meta)
 			if err != nil {
 				fmt.Printf("Error adding meta-data to database '%s': %s\n", path, err)
 			}

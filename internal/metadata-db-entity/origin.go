@@ -3,6 +3,8 @@ package metadata_db_entity
 import (
 	"database/sql"
 	"time"
+
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 type Origin struct {
@@ -12,6 +14,18 @@ type Origin struct {
 	Path     int64
 	Owner    int64
 	FileTime time.Time
+}
+
+func RemoveOriginsTx(tx *sql.Tx, asset *Asset) error {
+
+	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ?;")
+	if err != nil {
+		return err
+	}
+	defer util.CloseOrLog(stmt)
+
+	_, err = stmt.Exec(asset.Id)
+	return err
 }
 
 func (o *Origin) GetId() int64 {

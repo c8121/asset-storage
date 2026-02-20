@@ -1,8 +1,13 @@
 package metadata_db_entity
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"time"
+
+	"github.com/c8121/asset-storage/internal/metadata"
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 type Asset struct {
@@ -11,6 +16,83 @@ type Asset struct {
 	MimeType int64
 	FileTime time.Time //Max of all origins
 	Name     int64     //Latest name
+}
+
+// AddMetaData adds/updates meta-data in database
+func AddMetaData(jsonMeta *metadata.JsonAssetMetaData) error {
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer util.RollbackOrLog(tx)
+
+	err = AddMetaDataTx(tx, jsonMeta)
+	if err != nil {
+		return err
+	}
+
+	return util.CommitOrLog(tx)
+}
+
+// AddMetaDataTx adds/updates meta-data in database
+func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
+
+	var asset = &Asset{Hash: jsonMeta.Hash}
+	err := LoadTx(tx, asset)
+	if !errors.Is(err, ErrNotFound) && err != nil {
+		return err
+	}
+
+	mimeType, err := GetMimeTypeTx(tx, jsonMeta.MimeType, true)
+	if err != nil {
+		return err
+	}
+
+	asset.MimeType = mimeType.Id
+
+	latestOrigin := metadata.GetLatestOrigin(jsonMeta)
+	if latestOrigin != nil {
+		asset.FileTime = latestOrigin.FileTime
+		asset.Name = GetFileNameIdTx(tx, latestOrigin.Name, true)
+	}
+
+	err = SaveTx(tx, asset)
+	if err != nil {
+		return err
+	}
+
+	err = RemoveOriginsTx(tx, asset)
+	if err != nil {
+		return err
+	}
+
+	for _, jsonOrigin := range jsonMeta.Origins {
+
+		var origin = &Origin{
+			Asset:    asset.Id,
+			Name:     GetFileNameIdTx(tx, jsonOrigin.Name, true),
+			Path:     GetPathItemIdTx(tx, jsonOrigin.Path, true),
+			Owner:    GetOwnerIdTx(tx, jsonOrigin.Owner, true),
+			FileTime: jsonOrigin.FileTime,
+		}
+		err = SaveTx(tx, origin)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// GetAssetIdTx gets Asset-ID from db
+func GetAssetIdTx(tx *sql.Tx, hash string) int64 {
+	var asset = &Asset{Hash: hash}
+	err := LoadTx(tx, asset)
+	if !errors.Is(err, ErrNotFound) && err != nil {
+		return 0
+	}
+	return asset.Id
 }
 
 func (a *Asset) GetId() int64 {
