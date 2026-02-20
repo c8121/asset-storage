@@ -16,10 +16,10 @@ func (f FinderByPathId) Find(pathId any) (ScoredIdMap, error) {
 		"INNER JOIN asset a ON o.asset = a.id " +
 		"WHERE path = ?;"
 
-	return findAssetIds(query, pathId, func(id int64, match any, idMap *ScoredIdMap) {
+	return findAssetIds(func(id int64, match any, idMap *ScoredIdMap) {
 		dt := match.(time.Time)
 		score := float32(dt.Unix()) / float32(1000.0)
 		idMap.Set(id, score)
-	})
+	}, query, pathId)
 
 }

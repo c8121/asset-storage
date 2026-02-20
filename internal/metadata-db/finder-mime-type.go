@@ -28,10 +28,10 @@ func (f FinderByMimeType) Find(name any) (ScoredIdMap, error) {
 		query += "(m.name LIKE ?)"
 	}
 
-	return findAssetIds(query, name, func(id int64, match any, idMap *ScoredIdMap) {
+	return findAssetIds(func(id int64, match any, idMap *ScoredIdMap) {
 		dt := match.(time.Time)
 		score := float32(dt.Unix()) / float32(1000.0)
 		idMap.Set(id, score)
-	})
+	}, query, name)
 
 }

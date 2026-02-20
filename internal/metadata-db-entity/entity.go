@@ -194,7 +194,7 @@ func SaveTx(tx *sql.Tx, o any) error {
 	return err
 }
 
-// InsertTx created new record in database with contents of given Insertable
+// InsertTx creates new record in database with contents of given Insertable
 func InsertTx(tx *sql.Tx, o Insertable) error {
 
 	if o == nil {

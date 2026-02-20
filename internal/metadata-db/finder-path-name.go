@@ -32,9 +32,9 @@ func (f FinderByPathName) Find(name any) (ScoredIdMap, error) {
 	}
 	fmt.Printf("findAssetIdsByPathName: %s\n", findName)
 
-	return findAssetIds(query, findName, func(id int64, match any, idMap *ScoredIdMap) {
+	return findAssetIds(func(id int64, match any, idMap *ScoredIdMap) {
 		score := float32(len(sName)) / float32(len(match.(string)))
 		idMap.Add(id, score)
-	})
+	}, query, findName)
 
 }

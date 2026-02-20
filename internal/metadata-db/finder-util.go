@@ -2,7 +2,7 @@ package metadata_db
 
 import "github.com/c8121/asset-storage/internal/util"
 
-func findAssetIds(query string, name any, calcScore func(id int64, match any, idMap *ScoredIdMap)) (ScoredIdMap, error) {
+func findAssetIds(calcScore func(id int64, match any, idMap *ScoredIdMap), query string, args ...any) (ScoredIdMap, error) {
 
 	stmt, err := db.Prepare(query)
 	if err != nil {
@@ -10,7 +10,7 @@ func findAssetIds(query string, name any, calcScore func(id int64, match any, id
 	}
 	defer util.CloseOrLog(stmt)
 
-	if rows, err := stmt.Query(name); err == nil {
+	if rows, err := stmt.Query(args...); err == nil {
 		defer util.CloseOrLog(rows)
 
 		ids := make(ScoredIdMap)
