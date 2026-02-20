@@ -7,6 +7,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/faces"
+	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
 )
 
@@ -35,6 +36,9 @@ func main() {
 		storage.Walk(handler)
 
 	} else if strings.HasPrefix(*command, "s") {
+
+		mdsqlite.Open()
+		defer mdsqlite.Close()
 
 		embeddings := faces.ReadEmbeddings(config.AssetFacesBaseDir)
 

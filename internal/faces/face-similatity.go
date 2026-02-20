@@ -6,16 +6,18 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
 func CalculateSimilarity(embeddings map[string]Embedding, threshold float64) {
 
-	len := len(embeddings)
-	paths := make([]string, len)
-	embeds := make([]Embedding, len)
+	cnt := len(embeddings)
+	paths := make([]string, cnt)
+	embeds := make([]Embedding, cnt)
 
 	i := 0
 	for path, emb := range embeddings {
@@ -24,11 +26,21 @@ func CalculateSimilarity(embeddings map[string]Embedding, threshold float64) {
 		i++
 	}
 
-	for i := range len {
-		for j := i + 1; j < len; j++ {
+	for i := range cnt {
+		for j := i + 1; j < cnt; j++ {
 			sim := CosineSimilarity(embeds[i], embeds[j])
 			if sim >= threshold {
 				fmt.Printf("Similarity %s <-> %s = %f\n", paths[i], paths[j], sim)
+				p := strings.Index(paths[i], "/")
+				hashA := paths[i][:p]
+				faceA, _ := strconv.Atoi(paths[i][p+1:])
+				hashB := paths[j][:p]
+				faceB, _ := strconv.Atoi(paths[j][p+1:])
+
+				err := metadata_db_entity.AddFaceSimilarity(hashA, faceA, hashB, faceB)
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 		}
 	}

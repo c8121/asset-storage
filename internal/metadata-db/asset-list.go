@@ -21,6 +21,7 @@ type AssetListFilter struct {
 	MimeType string
 	FileName string
 	PathName string
+	Face     string
 	Offset   int
 	Count    int
 }
@@ -36,6 +37,7 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 		FinderByMimeType{}: filter.MimeType,
 		FinderByFileName{}: filter.FileName,
 		FinderByPathName{}: filter.PathName,
+		FinderByFace{}:     filter.Face,
 	}
 
 	for finder, value := range finders {

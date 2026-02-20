@@ -124,7 +124,9 @@
                         @meta-data-click="showMetaData"></Upload>
                     <MetaData ref="metaDataToast" :value="selectedAssetMetaData" 
                         @file-click="downloadAsset(selectedAssetMetaData)"></MetaData>
-                    <Faces ref="facesToast" :value="selectedAssetMetaData"></Faces>
+                    <Faces ref="facesToast" :value="selectedAssetMetaData"
+                        @face-click="findFace"
+                        ></Faces>
                     <SelectedAssets ref="selectionToast" :value="selectedAssets" 
                         @file-click="downloadAsset"
                         @remove-click="unselectAsset"
@@ -144,6 +146,7 @@
                 type: null,
                 pathItem: null,
                 findName: null,
+                face: null,
 
                 mimeTypes: [],
 
@@ -236,7 +239,8 @@
                     MimeType: self.type,
                     FileName: self.findName,
                     //PathName: self.findName,
-                    PathId: self.pathItem
+                    PathId: self.pathItem,
+                    Face: self.face
                 };
             },
 
@@ -322,6 +326,12 @@
                     self.selectedAssetMetaData = json;
                     self.$refs.facesToast.showToast();
                 });
+            },
+
+            findFace(face) {
+                const self = this;
+                self.face = face;
+                self.reloadAssetList(0);
             },
 
             //Autoload more items when scrolling to bottom

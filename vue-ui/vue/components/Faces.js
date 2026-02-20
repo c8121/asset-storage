@@ -11,8 +11,10 @@
                     <div v-if="faces" class="d-flex flex-wrap justify-content-center">
                         <div class="p-1" v-for="face in faces">
                             <img :src="'/faces/' + face"
+                                @click="onFaceClick(face)"
+                                role="button"
                                 class="rounded-circle"
-                                style="min-width: 75px; max-width: 75px">
+                                style="width: 75px">
                         </div>
                     </div>
                 </div>
@@ -53,9 +55,14 @@
                     for (const face of json)
                         self.faces.push(asset.Hash + '/' + face);
                 });
+            },
+            onFaceClick(face) {
+                this.$emit('faceClick', face);
             }
         },
-        emits: [],
+        emits: [
+            'faceClick'
+        ],
 
         created() {
             const self = this;

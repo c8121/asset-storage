@@ -3,7 +3,6 @@ package metadata_db_entity
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/c8121/asset-storage/internal/util"
 )
@@ -26,7 +25,12 @@ func AddFaceSimilarity(hashA string, faceA int, hashB string, faceB int) error {
 	}
 	defer util.RollbackOrLog(tx)
 
-	return AddFaceSimilarityTx(tx, hashA, faceA, hashB, faceB)
+	err = AddFaceSimilarityTx(tx, hashA, faceA, hashB, faceB)
+	if err != nil {
+		return err
+	}
+
+	return util.CommitOrLog(tx)
 }
 
 // AddFaceSimilarityTx adds/updates face-similarity in database
@@ -39,7 +43,10 @@ func AddFaceSimilarityTx(tx *sql.Tx, hashA string, faceA int, hashB string, face
 		FaceB:  faceB,
 	}
 
-	fmt.Printf("TODO: Add %s\n", similarity)
+	err := InsertTx(tx, similarity)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -66,14 +73,6 @@ func (f *FaceSimilarity) Scan(rows *sql.Rows) error {
 
 func (f *FaceSimilarity) GetInsertQuery() string {
 	return "INSERT INTO faceSimilarity(asset_a, face_a, asset_b, face_b) VALUES(?,?,?,?);"
-}
-
-func (f *FaceSimilarity) GetUpdateQuery() string {
-	return "UPDATE faceSimilarity SET asset_a = ?, face_a = ?, asset_b = ?, face_b = ? WHERE id = ?;"
-}
-
-func (f *FaceSimilarity) GetUpdateQueryArgs() []any {
-	return []any{&f.AssetA, &f.FaceA, &f.AssetB, &f.FaceB}
 }
 
 func (f *FaceSimilarity) Exec(stmt *sql.Stmt) (sql.Result, error) {
