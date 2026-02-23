@@ -52,8 +52,8 @@
                 const self = this;
                 client.get('/faces/' + asset.Hash).then((json) => {
                     self.faces.splice(0, self.faces.length)
-                    for (const face of json)
-                        self.faces.push(asset.Hash + '/' + face);
+                    for (const face of json.Faces)
+                        self.faces.push(asset.Hash + '/' + face.Index);
                 });
             },
             onFaceClick(face) {

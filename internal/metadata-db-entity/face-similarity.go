@@ -13,10 +13,11 @@ type FaceSimilarity struct {
 	FaceA  int
 	AssetB int64
 	FaceB  int
+	Score  float64
 }
 
 // AddFaceSimilarity adds/updates face-similarity in database
-func AddFaceSimilarity(hashA string, faceA int, hashB string, faceB int) error {
+func AddFaceSimilarity(hashA string, faceA int, hashB string, faceB int, score float64) error {
 
 	ctx := context.Background()
 	tx, err := db.BeginTx(ctx, nil)
@@ -25,7 +26,7 @@ func AddFaceSimilarity(hashA string, faceA int, hashB string, faceB int) error {
 	}
 	defer util.RollbackOrLog(tx)
 
-	err = AddFaceSimilarityTx(tx, hashA, faceA, hashB, faceB)
+	err = AddFaceSimilarityTx(tx, hashA, faceA, hashB, faceB, score)
 	if err != nil {
 		return err
 	}
@@ -34,13 +35,14 @@ func AddFaceSimilarity(hashA string, faceA int, hashB string, faceB int) error {
 }
 
 // AddFaceSimilarityTx adds/updates face-similarity in database
-func AddFaceSimilarityTx(tx *sql.Tx, hashA string, faceA int, hashB string, faceB int) error {
+func AddFaceSimilarityTx(tx *sql.Tx, hashA string, faceA int, hashB string, faceB int, score float64) error {
 
 	var similarity = &FaceSimilarity{
 		AssetA: GetAssetIdTx(tx, hashA),
 		FaceA:  faceA,
 		AssetB: GetAssetIdTx(tx, hashB),
 		FaceB:  faceB,
+		Score:  score,
 	}
 
 	err := InsertTx(tx, similarity)
@@ -60,7 +62,7 @@ func (f *FaceSimilarity) Save() error {
 }
 
 func (f *FaceSimilarity) GetSelectQuery() string {
-	return "SELECT id, asset_a, face_a, asset_b, face_b FROM faceSimilarity WHERE asset_a = ? and face_a = ? and asset_b = ? and face_b = ?;"
+	return "SELECT id, asset_a, face_a, asset_b, face_b, score FROM faceSimilarity WHERE asset_a = ? and face_a = ? and asset_b = ? and face_b = ?;"
 }
 
 func (f *FaceSimilarity) GetSelectQueryArgs() []any {
@@ -72,11 +74,11 @@ func (f *FaceSimilarity) Scan(rows *sql.Rows) error {
 }
 
 func (f *FaceSimilarity) GetInsertQuery() string {
-	return "INSERT INTO faceSimilarity(asset_a, face_a, asset_b, face_b) VALUES(?,?,?,?);"
+	return "INSERT INTO faceSimilarity(asset_a, face_a, asset_b, face_b, score) VALUES(?,?,?,?,?);"
 }
 
 func (f *FaceSimilarity) Exec(stmt *sql.Stmt) (sql.Result, error) {
-	return stmt.Exec(&f.AssetA, &f.FaceA, &f.AssetB, &f.FaceB, &f.Id)
+	return stmt.Exec(&f.AssetA, &f.FaceA, &f.AssetB, &f.FaceB, &f.Score, &f.Id)
 }
 
 func (f *FaceSimilarity) SetId(id int64) {
@@ -85,7 +87,7 @@ func (f *FaceSimilarity) SetId(id int64) {
 
 func (a *FaceSimilarity) GetCreateQueries() []string {
 	return []string{
-		"CREATE TABLE IF NOT EXISTS faceSimilarity(id integer PRIMARY KEY, asset_a integer, face_a integer, asset_b integer, face_b integer);",
+		"CREATE TABLE IF NOT EXISTS faceSimilarity(id integer PRIMARY KEY, asset_a integer, face_a integer, asset_b integer, face_b integer, score real);",
 		"CREATE INDEX IF NOT EXISTS idx_faceSimilarity_asset_a on faceSimilarity(asset_a);",
 		"CREATE INDEX IF NOT EXISTS idx_faceSimilarity_face_a on faceSimilarity(face_a);",
 		"CREATE INDEX IF NOT EXISTS idx_faceSimilarity_asset_b on faceSimilarity(asset_b);",

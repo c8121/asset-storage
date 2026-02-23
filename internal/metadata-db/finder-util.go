@@ -1,6 +1,10 @@
 package metadata_db
 
-import "github.com/c8121/asset-storage/internal/util"
+import (
+	"fmt"
+
+	"github.com/c8121/asset-storage/internal/util"
+)
 
 func findAssetIds(calcScore func(id int64, match any, idMap *ScoredIdMap), query string, args ...any) (ScoredIdMap, error) {
 
@@ -23,6 +27,8 @@ func findAssetIds(calcScore func(id int64, match any, idMap *ScoredIdMap), query
 			}
 			calcScore(id, match, &ids)
 		}
+
+		fmt.Printf("Found %d items\n", len(ids))
 		return ids, nil
 	} else {
 		return nil, err

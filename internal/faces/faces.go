@@ -52,10 +52,11 @@ func GetFaceImage(sourceHash string, idx int) ([]byte, error) {
 
 	existingFaces, err := loadFaces(sourceHash)
 	if err == nil {
-		if idx >= len(existingFaces) {
+		face := existingFaces.getFace(idx)
+		if face == nil {
 			return nil, fmt.Errorf("index out of bounds")
 		}
-		fileName := filepath.Join(facesDir, existingFaces[idx]+FaceImageExtension)
+		fileName := filepath.Join(facesDir, strconv.Itoa(face.Index)+FaceImageExtension)
 		return os.ReadFile(fileName)
 	}
 
@@ -63,15 +64,16 @@ func GetFaceImage(sourceHash string, idx int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if idx >= len(faces) {
+	face := faces.getFace(idx)
+	if face == nil {
 		return nil, fmt.Errorf("index out of bounds")
 	}
-	fileName := filepath.Join(facesDir, faces[idx]+FaceImageExtension)
+	fileName := filepath.Join(facesDir, strconv.Itoa(face.Index)+FaceImageExtension)
 	return os.ReadFile(fileName)
 }
 
 // GetFaces finds faces in image, returns ["name",...]
-func GetFaces(sourceHash string) ([]string, error) {
+func GetFaces(sourceHash string) (*Faces, error) {
 
 	existingFaces, err := loadFaces(sourceHash)
 	if err == nil {
@@ -79,48 +81,28 @@ func GetFaces(sourceHash string) ([]string, error) {
 	}
 	fmt.Printf("Faces not found, will use REST-Service: %s\n", err)
 
-	faces, err := restExecGetFaces(sourceHash)
+	faces, err := restExecExtractFaces(sourceHash)
 	if err != nil {
 		return nil, err
 	}
 
-	facesDir := getFacesDir(sourceHash, true)
+	saveExtractedFaces(sourceHash, faces)
 
-	list := make([]string, 0)
+	return faces, nil
+}
 
-	for idx, face := range faces.Faces {
-
-		dec, err := base64.StdEncoding.DecodeString(face.Image)
-		if err != nil {
-			fmt.Printf("Failed to decode image\n")
-			continue
+// Find face by index
+func (faces *Faces) getFace(idx int) *Face {
+	for _, face := range faces.Faces {
+		if face.Index == idx {
+			return &face
 		}
-
-		imageFileName := filepath.Join(facesDir, strconv.Itoa(idx)+FaceImageExtension)
-		err = os.WriteFile(imageFileName, dec, FilePermissions)
-		if err != nil {
-			fmt.Printf("Failed to write: %s\n", err)
-		}
-
-		embeddingFileName := filepath.Join(facesDir, strconv.Itoa(idx)+FaceEmbeddingExtension)
-		embeddingJson, err := json.Marshal(face.Embedding)
-		if err != nil {
-			fmt.Printf("Failed to create json: %s\n", err)
-		} else {
-			err = os.WriteFile(embeddingFileName, embeddingJson, FilePermissions)
-			if err != nil {
-				fmt.Printf("Failed to write: %s\n", err)
-			}
-		}
-
-		list = append(list, strconv.Itoa(idx))
 	}
-
-	return list, nil
+	return nil
 }
 
 // loadFaces loads previously created faces, if exists. Returns ["name",...]
-func loadFaces(sourceHash string) ([]string, error) {
+func loadFaces(sourceHash string) (*Faces, error) {
 
 	facesDir := getFacesDir(sourceHash, false)
 	stat, err := os.Stat(facesDir)
@@ -137,19 +119,31 @@ func loadFaces(sourceHash string) ([]string, error) {
 		return nil, err
 	}
 
-	list := make([]string, 0)
+	faces := &Faces{
+		Faces: make([]Face, 0),
+	}
 
 	for _, e := range entries {
 		if strings.HasSuffix(e.Name(), FaceImageExtension) {
-			list = append(list, e.Name()[0:len(e.Name())-len(FaceImageExtension)])
+			idx, err := strconv.Atoi(e.Name()[0 : len(e.Name())-len(FaceImageExtension)])
+			if err != nil {
+				fmt.Printf("Failed to parse index: %s\n", err)
+				continue
+			}
+			face := &Face{
+				Index:     idx,
+				Embedding: nil,
+				Image:     "",
+			}
+			faces.Faces = append(faces.Faces, *face)
 		}
 	}
 
-	return list, nil
+	return faces, nil
 }
 
-// restExecGetFaces calls REST-Service, see services/insightface/service.py
-func restExecGetFaces(sourceHash string) (*Faces, error) {
+// restExecExtractFaces calls REST-Service, see services/insightface/service.py
+func restExecExtractFaces(sourceHash string) (*Faces, error) {
 
 	meta, err := metadata.LoadByHash(sourceHash)
 	if err != nil {
@@ -182,6 +176,42 @@ func restExecGetFaces(sourceHash string) (*Faces, error) {
 	}
 
 	return result, nil
+}
+
+// Save extracted faces to disk
+func saveExtractedFaces(sourceHash string, faces *Faces) {
+
+	if len(faces.Faces) == 0 {
+		return
+	}
+
+	facesDir := getFacesDir(sourceHash, true)
+
+	for idx, face := range faces.Faces {
+
+		dec, err := base64.StdEncoding.DecodeString(face.Image)
+		if err != nil {
+			fmt.Printf("Failed to decode image\n")
+			continue
+		}
+
+		imageFileName := filepath.Join(facesDir, strconv.Itoa(idx)+FaceImageExtension)
+		err = os.WriteFile(imageFileName, dec, FilePermissions)
+		if err != nil {
+			fmt.Printf("Failed to write: %s\n", err)
+		}
+
+		embeddingFileName := filepath.Join(facesDir, strconv.Itoa(idx)+FaceEmbeddingExtension)
+		embeddingJson, err := json.Marshal(face.Embedding)
+		if err != nil {
+			fmt.Printf("Failed to create json: %s\n", err)
+		} else {
+			err = os.WriteFile(embeddingFileName, embeddingJson, FilePermissions)
+			if err != nil {
+				fmt.Printf("Failed to write: %s\n", err)
+			}
+		}
+	}
 }
 
 // Create dir: AssetFacesBaseDir/Hash[:2]/Hash[2:]

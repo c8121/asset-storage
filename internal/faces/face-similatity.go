@@ -1,6 +1,7 @@
 package faces
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -27,22 +28,37 @@ func CalculateSimilarity(embeddings map[string]Embedding, threshold float64) {
 	}
 
 	for i := range cnt {
+
+		ctx := context.Background()
+		tx, err := metadata_db_entity.GetDatabase().BeginTx(ctx, nil)
+		if err != nil {
+			fmt.Printf("Begin tx err: %v\n", err)
+			return
+		}
+
 		for j := i + 1; j < cnt; j++ {
 			sim := CosineSimilarity(embeds[i], embeds[j])
 			if sim >= threshold {
-				fmt.Printf("Similarity %s <-> %s = %f\n", paths[i], paths[j], sim)
+				//fmt.Printf("Similarity %s <-> %s = %f\n", paths[i], paths[j], sim)
 				p := strings.Index(paths[i], "/")
 				hashA := paths[i][:p]
 				faceA, _ := strconv.Atoi(paths[i][p+1:])
 				hashB := paths[j][:p]
 				faceB, _ := strconv.Atoi(paths[j][p+1:])
 
-				err := metadata_db_entity.AddFaceSimilarity(hashA, faceA, hashB, faceB)
+				err := metadata_db_entity.AddFaceSimilarityTx(tx, hashA, faceA, hashB, faceB, sim)
 				if err != nil {
 					fmt.Println(err)
 				}
 			}
 		}
+
+		err = util.CommitOrLog(tx)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		fmt.Printf("%d/%d\n", i, cnt)
 	}
 }
 
@@ -108,7 +124,7 @@ func doReadEmbeddings(dir string, into map[string]Embedding) {
 	}
 }
 
-// Exctract hash from .../hash[:2]/hash[2:]/faceIdx.ext
+// Extract hash from .../hash[:2]/hash[2:]/faceIdx.ext
 func keyFromFacePath(path string) string {
 	items := util.SplitPath(path)
 	l := len(items)

@@ -23,6 +23,10 @@ func SetDatabase(databse *sql.DB) {
 	db = databse
 }
 
+func GetDatabase() *sql.DB {
+	return db
+}
+
 type WithId interface {
 	GetId() int64
 }

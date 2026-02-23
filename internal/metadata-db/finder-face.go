@@ -24,20 +24,21 @@ func (f FinderByFace) Find(face any) (ScoredIdMap, error) {
 	hash := sFace[:p]
 	faceIdx, _ := strconv.Atoi(sFace[p+1:])
 
-	var query = "SELECT a.id, 2 as score FROM asset a WHERE a.hash = ? " +
+	var query = "SELECT a.id, 2.0 as score FROM asset a WHERE a.hash = ? " +
 		"UNION " +
-		"SELECT asset_b, f.id as score FROM faceSimilarity f " +
+		"SELECT asset_b, score FROM faceSimilarity f " +
 		"INNER JOIN asset a ON f.asset_a = a.id " +
 		"WHERE a.hash = ? AND f.face_a = ? " +
 		"UNION " +
-		"SELECT asset_a, f.id as score FROM faceSimilarity f " +
+		"SELECT asset_a, score FROM faceSimilarity f " +
 		"INNER JOIN asset a ON f.asset_b = a.id " +
 		"WHERE a.hash = ? AND f.face_b = ?;"
 
 	fmt.Printf("findAssetIdsByFace: %s\n", sFace)
 
 	return findAssetIds(func(id int64, match any, idMap *ScoredIdMap) {
-		idMap.Add(id, 1)
+		score := float32(match.(float64))
+		idMap.Add(id, score)
 	}, query, hash, hash, faceIdx, hash, faceIdx)
 
 }

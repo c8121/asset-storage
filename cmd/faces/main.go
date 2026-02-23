@@ -29,7 +29,7 @@ func main() {
 			if err != nil {
 				fmt.Printf("Cannot get faces from %s: %s\n", hash, err)
 			} else {
-				fmt.Printf("Found %d faces in %s\n", len(faces), hash)
+				fmt.Printf("Found %d faces in %s\n", len(faces.Faces), hash)
 			}
 		}
 
@@ -41,6 +41,7 @@ func main() {
 		defer mdsqlite.Close()
 
 		embeddings := faces.ReadEmbeddings(config.AssetFacesBaseDir)
+		fmt.Printf("Found %d embeddings\n", len(embeddings))
 
 		faces.CalculateSimilarity(embeddings, *threshold)
 		fmt.Printf("Checked %d embeddings\n", len(embeddings))
