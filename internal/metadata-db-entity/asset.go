@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/c8121/asset-storage/internal/metadata"
@@ -83,6 +84,26 @@ func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 	}
 
 	return nil
+}
+
+// GetAssetId gets Asset-ID from db
+func GetAssetId(hash string) int64 {
+
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		fmt.Printf("Failed to begin transaction: %s\n", err)
+		return 0
+	}
+	defer util.RollbackOrLog(tx)
+
+	var asset = &Asset{Hash: hash}
+	err = LoadTx(tx, asset)
+	if !errors.Is(err, ErrNotFound) && err != nil {
+		fmt.Printf("Failed load asset id: %s\n", err)
+		return 0
+	}
+	return asset.Id
 }
 
 // GetAssetIdTx gets Asset-ID from db

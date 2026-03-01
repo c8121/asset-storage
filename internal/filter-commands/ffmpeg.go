@@ -6,6 +6,7 @@ import (
 
 var (
 	FFmpegBinPaths = []string{
+		"/usr/bin/ffmpeg",
 		"/opt/ffmpeg*/bin/ffmpeg.exe",
 	}
 

@@ -18,7 +18,7 @@ func (m ScoredIdMap) Set(id int64, score float32) {
 	m[id] = score
 }
 
-// Add one item with score or update by adding score.
+// Add one item with a score or update by adding a score.
 func (m ScoredIdMap) Add(id int64, score float32) {
 	existingScore, ok := m[id]
 	if ok {
@@ -52,9 +52,9 @@ func (m ScoredIdMap) Sort() []ScoredId {
 		items = append(items, ScoredId{k, v})
 	}
 	slices.SortFunc(items, func(a, b ScoredId) int {
-		//Take id into score in order to keep same result on later calls
-		aScoreWithId := (int64(math.Floor(float64(a.Score)*1_000_000)) * 1_000_000_000_000) + a.Id
-		bScoreWithId := (int64(math.Floor(float64(b.Score)*1_000_000)) * 1_000_000_000_000) + b.Id
+		//Take id into score to keep the same result on later calls
+		aScoreWithId := (int64(math.Floor(float64(a.Score))) * 1_000_000_000_000) + a.Id
+		bScoreWithId := (int64(math.Floor(float64(b.Score))) * 1_000_000_000_000) + b.Id
 
 		if aScoreWithId == bScoreWithId {
 			return 0

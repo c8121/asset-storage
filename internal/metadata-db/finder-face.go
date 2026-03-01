@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
 )
 
 type FinderByFace struct {
@@ -19,26 +21,25 @@ func (f FinderByFace) Find(face any) (ScoredIdMap, error) {
 
 	p := strings.Index(sFace, "/")
 	if p == -1 {
-		return nil, fmt.Errorf("Invalid Face query")
+		return nil, fmt.Errorf("invalid Face query")
 	}
 	hash := sFace[:p]
+	assetId := metadata_db_entity.GetAssetId(hash)
 	faceIdx, _ := strconv.Atoi(sFace[p+1:])
 
-	var query = "SELECT a.id, 2.0 as score FROM asset a WHERE a.hash = ? " +
+	var query = "SELECT a.id, 2.0 as score FROM asset a WHERE id = ? " +
 		"UNION " +
-		"SELECT asset_b, score FROM faceSimilarity f " +
-		"INNER JOIN asset a ON f.asset_a = a.id " +
-		"WHERE a.hash = ? AND f.face_a = ? " +
+		"SELECT asset_b, score FROM faceSimilarity " +
+		"WHERE asset_a = ? AND face_a = ? " +
 		"UNION " +
-		"SELECT asset_a, score FROM faceSimilarity f " +
-		"INNER JOIN asset a ON f.asset_b = a.id " +
-		"WHERE a.hash = ? AND f.face_b = ?;"
+		"SELECT asset_a, score FROM faceSimilarity " +
+		"WHERE asset_b = ? AND face_b = ?;"
 
 	fmt.Printf("findAssetIdsByFace: %s\n", sFace)
 
 	return findAssetIds(func(id int64, match any, idMap *ScoredIdMap) {
 		score := float32(match.(float64))
 		idMap.Add(id, score)
-	}, query, hash, hash, faceIdx, hash, faceIdx)
+	}, query, hash, assetId, faceIdx, assetId, faceIdx)
 
 }
