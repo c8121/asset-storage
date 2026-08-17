@@ -22,7 +22,7 @@ func main() {
 	users.CreateDirectories()
 
 	if len(*username) == 0 {
-		fmt.Printf("Missing: Usernamen (-u)")
+		fmt.Printf("Missing: Username (-u)\n")
 		return
 	}
 

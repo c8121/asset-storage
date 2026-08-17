@@ -26,7 +26,7 @@ var (
 	SkipMetaDataIfExists = false
 	CheckHashBeforeAdd   = false
 
-	SpaHttpRoot = filepath.Dir(os.Args[0]) + "/vue-ui" // Root directory to service SPA from
+	SpaHttpRoot = filepath.Dir(os.Args[0]) + "/../vue-ui" // Root directory to service SPA from
 
 	ListenAddress = "127.0.0.1:9999" //Spa-/Rest-/Ssh-Server in format ip:port
 
