@@ -3,7 +3,7 @@ package metadata_db
 import (
 	"database/sql"
 
-	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
+	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
 )
 

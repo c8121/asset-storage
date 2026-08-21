@@ -7,8 +7,8 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
-	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
-	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
+	"github.com/c8121/asset-storage/internal/metadata_db_entity"
+	"github.com/c8121/asset-storage/internal/metadata_sqlite"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
@@ -23,8 +23,8 @@ func main() {
 
 	config.LoadDefault()
 
-	mdsqlite.Open()
-	defer mdsqlite.Close()
+	metadata_sqlite.Open()
+	defer metadata_sqlite.Close()
 
 	util.PanicOnError(readAllMetaData(config.AssetMetaDataBaseDir), "Failed to read meta-data directory")
 }

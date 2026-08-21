@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/c8121/asset-storage/internal/config"
-	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
-	ssh_server "github.com/c8121/asset-storage/internal/ssh-server"
+	"github.com/c8121/asset-storage/internal/metadata_sqlite"
+	"github.com/c8121/asset-storage/internal/ssh_server"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/users"
 	"golang.org/x/crypto/ssh"
@@ -23,8 +23,8 @@ func main() {
 	config.LoadDefault()
 	storage.CreateDirectories()
 
-	mdsqlite.Open()
-	defer mdsqlite.Close()
+	metadata_sqlite.Open()
+	defer metadata_sqlite.Close()
 
 	sshServerConfig := &ssh_server.SshServerConfig{
 

@@ -1,4 +1,4 @@
-package spaserver
+package spa_server
 
 import (
 	"fmt"

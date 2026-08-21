@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/c8121/asset-storage/internal/config"
-	filter_commands "github.com/c8121/asset-storage/internal/filter-commands"
+	"github.com/c8121/asset-storage/internal/filter_commands"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"

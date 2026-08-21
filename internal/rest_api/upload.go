@@ -1,4 +1,4 @@
-package restapi
+package rest_api
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
-	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
+	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"

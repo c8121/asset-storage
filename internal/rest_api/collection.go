@@ -1,11 +1,11 @@
-package restapi
+package rest_api
 
 import (
 	"fmt"
 	"net/http"
 
 	"github.com/c8121/asset-storage/internal/collections"
-	metadata_db "github.com/c8121/asset-storage/internal/metadata-db"
+	"github.com/c8121/asset-storage/internal/metadata_db"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 )

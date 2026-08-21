@@ -1,10 +1,10 @@
-package restapi
+package rest_api
 
 import (
 	"net/http"
 
-	metadata_db "github.com/c8121/asset-storage/internal/metadata-db"
-	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
+	"github.com/c8121/asset-storage/internal/metadata_db"
+	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 )

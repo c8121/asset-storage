@@ -2,13 +2,13 @@ package main
 
 import (
 	"github.com/c8121/asset-storage/internal/config"
-	restapi "github.com/c8121/asset-storage/internal/rest-api"
-	spaserver "github.com/c8121/asset-storage/internal/spa-server"
+	"github.com/c8121/asset-storage/internal/rest_api"
+	"github.com/c8121/asset-storage/internal/spa_server"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 
-	mdsqlite "github.com/c8121/asset-storage/internal/metadata-sqlite"
+	"github.com/c8121/asset-storage/internal/metadata_sqlite"
 )
 
 func main() {
@@ -16,15 +16,15 @@ func main() {
 	config.LoadDefault()
 	storage.CreateDirectories()
 
-	mdsqlite.Open()
-	defer mdsqlite.Close()
+	metadata_sqlite.Open()
+	defer metadata_sqlite.Close()
 
 	router := gin.Default()
 	router.SetTrustedProxies(nil)
 
-	restapi.CreateRoutes(router)
+	rest_api.CreateRoutes(router)
 
-	spaserver.CreateRoutes(router)
+	spa_server.CreateRoutes(router)
 
 	util.PanicOnError(router.Run(config.ListenAddress), "Failed to start server")
 }

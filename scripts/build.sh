@@ -10,9 +10,9 @@ echo Sources from $CMD_DIR
 mkdir -p $OUT_DIR
 
 go build -o $OUT_DIR/add $CMD_DIR/add/main.go
-go build -o $OUT_DIR/metadata-db-create $CMD_DIR/metadata-db-create/main.go
-go build -o $OUT_DIR/rest-server $CMD_DIR/rest-server/main.go
-go build -o $OUT_DIR/spa-server $CMD_DIR/spa-server/main.go
-go build -o $OUT_DIR/ssh-server $CMD_DIR/ssh-server/main.go
-go build -o $OUT_DIR/user-edit $CMD_DIR/user-edit/main.go
+go build -o $OUT_DIR/metadata-db-create $CMD_DIR/metadata_db_create/main.go
+go build -o $OUT_DIR/rest-server $CMD_DIR/rest_server/main.go
+go build -o $OUT_DIR/spa-server $CMD_DIR/spa_server/main.go
+go build -o $OUT_DIR/ssh-server $CMD_DIR/ssh_server/main.go
+go build -o $OUT_DIR/user-edit $CMD_DIR/user_edit/main.go
 go build -o $OUT_DIR/faces $CMD_DIR/faces/main.go

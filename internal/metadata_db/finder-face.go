@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
+	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 )
 
 type FinderByFace struct {

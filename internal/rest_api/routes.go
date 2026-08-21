@@ -1,4 +1,4 @@
-package restapi
+package rest_api
 
 import (
 	"github.com/c8121/asset-storage/internal/users"

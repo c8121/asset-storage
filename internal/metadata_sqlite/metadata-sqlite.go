@@ -1,4 +1,4 @@
-package mdsqlite
+package metadata_sqlite
 
 import (
 	"database/sql"
@@ -7,8 +7,8 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
-	metadata_db "github.com/c8121/asset-storage/internal/metadata-db"
-	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
+	"github.com/c8121/asset-storage/internal/metadata_db"
+	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
 	_ "modernc.org/sqlite"
 )
