@@ -24,6 +24,21 @@ func AuthRequiredHandler(handlerFunc func(c *gin.Context)) func(c *gin.Context) 
 	return f
 }
 
+func AuthRequiredStaticFileHandler(filepath string) func(c *gin.Context) {
+
+	f := func(c *gin.Context) {
+		if err := CheckBasicAuth(c); err != nil {
+			fmt.Printf("Auth error: %s\n", err)
+			RespondBasicAuthRequired(c)
+			return
+		}
+		c.File(filepath)
+	}
+
+	return f
+
+}
+
 func CheckBasicAuth(c *gin.Context) error {
 	header := c.GetHeader("Authorization")
 	if len(header) == 0 {
