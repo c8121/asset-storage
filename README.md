@@ -40,19 +40,14 @@ To add new files to the archive
 
 ### spa-server
 
-A HTTP Server which provides a Single-Page-Application to browse the storage
-
-> [!NOTE]
-> This is work in progress, important features like TLS is missing at the moment
+A HTTP Server which provides a Single-Page-Application to browse the storage.
+The `rest-server`, which is the app backend, is included.
 
     spa-server [-gzip] [-xor <key>] [-base <directory>] [-spa <http-root-directory of spa-app>] [-listen <ip:port>]
 
 ### rest-server
 
 A HTTP Server which provides a REST-API to access the storage. This server is included in `spa-server`.
-
-> [!NOTE]
-> This is work in progress, important features like TLS is missing at the moment
 
     rest-server [-gzip] [-xor <key>] [-base <directory>] [-listen <ip:port>]
 
@@ -84,17 +79,19 @@ Use `-a` flag to add a new user.
 
 Commonly used commandline arguments for asset-storage apps:
 
-| Parameter         | Description                                                                                                                                                                                                                                                                                                                                     |
-|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| base <dir&gt;      | Asset-storage base dir containing all data (file, meta-data, database). Default is `$HOME/asset-storage`                                                                                                                                                                                                                                        |
-| gzip               | Use gzip to compress data.<br/> **Important:** Cannot be mixed, use always or never for one storage.                                                                                                                                                                                                                                            |
-| maxmem <bytes&gt;  | Max size in bytes when reading files while adding to storage. If a file is larger, it will not be read into memory and a temp-file will be used                                                                                                                                                                                                 |
-| name <patten&gt;   | Filter files matching file-name-pattern (*.jpeg for example)                                                                                                                                                                                                                                                                                    |
-| skip-meta          | When adding files: Skip updating meta-data if file exists.
-| check-hash         | When adding files: Check content hash before adding. Faster only if most of the files already exists as it only calculates the hash in memory. Slower if most of the files are new because file will be read twice.
-| spa <dir&gt;       | HttpRoot-Directory which contains the SPA-files (HTML, JS, etc) |
-| xor <key&gt;       | Content will be XOR'ed to obfusicate. This is to avoid manual changes to files (when content is XOR'ed, files cannot be openend and modified directly from storage directory) <br/>**Important:** Cannot be mixed, use always with same key or never for one storage. <br/>**Important:** Use same key for all apps with same storage directory |
-| listen <ip:port&gt;| IP and Port to listen to (Web-Server, Ssh-Server). |
+| Parameter           | Description                                                                                                                                                                                                                                                                                                                                     |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| base <dir&gt;       | Asset-storage base dir containing all data (file, meta-data, database). Default is `$HOME/asset-storage`                                                                                                                                                                                                                                        |
+| gzip                | Use gzip to compress data.<br/> **Important:** Cannot be mixed, use always or never for one storage.                                                                                                                                                                                                                                            |
+| maxmem <bytes&gt;   | Max size in bytes when reading files while adding to storage. If a file is larger, it will not be read into memory and a temp-file will be used                                                                                                                                                                                                 |
+| name <patten&gt;    | Filter files matching file-name-pattern (*.jpeg for example)                                                                                                                                                                                                                                                                                    |
+| skip-meta           | When adding files: Skip updating meta-data if file exists.                                                                                                                                                                                                                                                                                      
+| check-hash          | When adding files: Check content hash before adding. Faster only if most of the files already exists as it only calculates the hash in memory. Slower if most of the files are new because file will be read twice.                                                                                                                             
+| spa <dir&gt;        | HttpRoot-Directory which contains the SPA-files (HTML, JS, etc)                                                                                                                                                                                                                                                                                 |
+| xor <key&gt;        | Content will be XOR'ed to obfusicate. This is to avoid manual changes to files (when content is XOR'ed, files cannot be openend and modified directly from storage directory) <br/>**Important:** Cannot be mixed, use always with same key or never for one storage. <br/>**Important:** Use same key for all apps with same storage directory |
+| listen <ip:port&gt; | IP and Port to listen to (Web-Server, Ssh-Server).                                                                                                                                                                                                                                                                                              |
+| cert <path&gt;      | Path to SSL/TLS-Certificate                                                                                                                                                                                                                                                                                                                     |
+| key <path&gt;       | Path to SSL/TLS-Key                                                                                                                                                                                                                                                                                                                             |
 
 
 ## Libraries used

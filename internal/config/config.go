@@ -29,6 +29,8 @@ var (
 	SpaHttpRoot = filepath.Dir(os.Args[0]) + "/../vue-ui" // Root directory to service SPA from
 
 	ListenAddress = "127.0.0.1:9999" //Spa-/Rest-/Ssh-Server in format ip:port
+	CertFile      = ""
+	KeyFile       = ""
 
 	cmdBaseDir              = flag.String("base", "", "Base directory for storage, meta-data, db...")
 	cmdUseGzip              = flag.Bool("gzip", false, "Use GZIP compression")
@@ -38,6 +40,8 @@ var (
 	cmdSkipMetaDataIfExists = flag.Bool("skip-meta", false, "Skip meta data update if file exist")
 	cmdCheckHashBeforeAdd   = flag.Bool("check-hash", false, "Check hash before trying to add file.")
 	cmdListen               = flag.String("listen", "", "Listen Address (ip:port)")
+	cmdCertFile             = flag.String("cert", "", "Certificate file")
+	cmdKeyFile              = flag.String("key", "", "Key file")
 )
 
 // LoadDefault initializes configuration with defaults,
@@ -104,5 +108,15 @@ func LoadDefault() {
 	if *cmdListen != "" {
 		ListenAddress = *cmdListen
 		fmt.Printf("Server address: %s\n", ListenAddress)
+	}
+
+	if *cmdCertFile != "" {
+		CertFile = *cmdCertFile
+		fmt.Printf("Certificate file: %s\n", CertFile)
+	}
+
+	if *cmdKeyFile != "" {
+		KeyFile = *cmdKeyFile
+		fmt.Printf("Key file: %s\n", KeyFile)
 	}
 }

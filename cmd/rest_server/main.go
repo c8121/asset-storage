@@ -23,5 +23,9 @@ func main() {
 
 	rest_api.CreateRoutes(router)
 
-	util.PanicOnError(router.Run(config.ListenAddress), "Failed to start server")
+	if config.CertFile != "" {
+		util.PanicOnError(router.RunTLS(config.ListenAddress, config.CertFile, config.KeyFile), "Failed to start server")
+	} else {
+		util.PanicOnError(router.Run(config.ListenAddress), "Failed to start server")
+	}
 }
