@@ -1,6 +1,7 @@
 export default {
     template: `
         <div>
+        
             <div class="row asset-list">
                 <div v-for="asset in list" class="asset col pb-3">
                     <div class="card bg-light">
@@ -16,13 +17,28 @@ export default {
                                     :alt="asset.Name" :title="asset.Name" />
                             </div>
                         </div>
-                        <div class="card-footer text-end">
-                            <div class="form-check form-switch">
-                                <input type="checkbox"  class="form-check-input" role="switch" @change="assetSelect(asset, $event)">
+                        <div class="card-footer">
+                            <div class="row">
+                                <div class="col">
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox"  class="form-check-input" role="switch" @change="assetSelect(asset, $event)">
+                                    </div>
+                                </div>
+                                <div class="col text-end">
+                                    <button class="btn btn-sm btn-outline-secondary" @click="downloadClick(asset)"><i class="bi bi-download"></i></button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <div class="row m-2">
+                <div class="col text-start"></div>
+                <div class="col text-center">
+                    <button v-if="showLoadMore" @click="loadMore" class="btn btn-light" id="loadMore">Load more...</button>
+                </div>
+                <div class="col text-end"></div>
             </div>
         </div>
     `,
@@ -30,6 +46,11 @@ export default {
     data() {
         return {
             list: [],
+
+            offset: 0,
+            count: 30,
+
+            showLoadMore: true
         }
     },
 
@@ -37,38 +58,58 @@ export default {
 
         loadAssets() {
             const self = this;
-
-            const requestOptions = {
-                method: 'POST',
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    Offset: 0,
-                    Count: 30,
-                    MimeType: null,
-                    FileName: null,
-                    //PathName: null,
-                    PathId: null,
-                    Face: null
-                })
-            }
-            fetch('/assets/list', requestOptions)
+            fetch('/assets/list', self.createRequestOptions())
                 .then(res => res.json())
                 .then(json => {
                     self.list = json;
                 });
         },
 
+        loadMore() {
+            const self = this;
+
+            self.offset += self.count
+            fetch('/assets/list', self.createRequestOptions())
+                .then(res => res.json())
+                .then(json => {
+                    for(const item of json) {
+                        self.list.push(item);
+                    }
+                });
+        },
+
+        createRequestOptions() {
+            const self = this;
+            return {
+                method: 'POST',
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    Offset: self.offset,
+                    Count: self.count,
+                    MimeType: 'image/*',
+                    //FileName: 'toxic',
+                    //PathName: null,
+                    //PathId: null,
+                    //Face: null
+                })
+            };
+        },
+
         assetSelect(asset, e) {
             const self = this;
             if (e.target.checked) {
-                this.$emit('componentEvent', 'assetSelect', asset);
+                this.$emit('componentEvent', 'assetSelect', 'asset-list', asset);
             } else {
-                this.$emit('componentEvent', 'assetUnselect', asset);
+                this.$emit('componentEvent', 'assetUnselect', 'asset-list', asset);
             }
         },
 
         assetClick(asset) {
             this.$emit('componentEvent', 'assetClick', 'asset-list', asset);
+        },
+
+        downloadClick(asset) {
+            this.$emit('componentEvent', 'assetDownloadClick', 'asset-list', asset);
         }
     },
 

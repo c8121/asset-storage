@@ -120,8 +120,6 @@
                 methods: {
 
                     componentEvent(eventName, sender) {
-                        console.log(arguments);
-                        console.log(sender);
                         switch (eventName) {
                             case 'assetClick': {
                                 this.activeAsset = arguments[2];
@@ -142,6 +140,15 @@
                                 delete this.selectedAssets[asset.Hash];
                                 this.setToastVisible(this.selectedAssetsToast, Object.keys(this.selectedAssets).length > 0);
                                 break;
+                            }
+                            case 'assetDownloadClick': {
+                                const asset = arguments[2];
+                                window.open('/assets/' + asset.Hash);
+                                break;
+                            }
+                            default : {
+                                console.log("Event not handled (" + arguments.length + " arguments), sender: " + sender);
+                                console.log(arguments);
                             }
                         }
                     },

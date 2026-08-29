@@ -1,3 +1,7 @@
+.asset-list .asset .card {
+    min-width: 125px;
+}
+
 .asset-list .asset img {
     max-width: 150px;
 }
