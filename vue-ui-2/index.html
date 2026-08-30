@@ -28,38 +28,49 @@
 
 <body id="page-top">
 
-<!-- Menu-->
-<nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav">
-    <a class="navbar-brand" href="#page-top">
-        <span class="d-block">:) Asset Storage</span>
-    </a>
-    <form class="d-flex mt-lg-3">
-        <div class="input-group ms-lg-2 me-lg-2 mb-lg-2">
-            <input class="form-control border-secondary" type="search" placeholder="Search" aria-label="Search">
-            <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+<div id="app">
+
+    <!-- Menu-->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav">
+        <a class="navbar-brand" href="#page-top">
+            <span class="d-block">:) Asset Storage</span>
+        </a>
+        <div class="d-flex mt-lg-3">
+            <div class="input-group ms-lg-2 me-lg-2 mb-lg-2">
+                <input v-model="listFilter.FileName" class="form-control border-secondary" type="search" placeholder="Search" aria-label="Search" @keyup.enter="$refs.listView.loadAssets()">
+                <button class="btn btn-outline-secondary" type="submit" @click="$refs.listView.loadAssets()"><i class="bi bi-search"></i></button>
+            </div>
         </div>
-    </form>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavMenu"
-            aria-controls="mainNavMenu" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="mainNavMenu">
-        <ul class="navbar-nav">
-            <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
-        </ul>
-    </div>
-</nav>
+        <div class="d-flex mt-lg-3">
+            <div class="ms-lg-2 me-lg-2 mb-lg-2">
+                <select v-model="listFilter.MimeType" class="form-select" @change="$refs.listView.loadAssets()">
+                    <option :value="null">All</option>
+                    <option value="image/*">Images</option>
+                    <option value="video/*">Videos</option>
+                    <option :value="null"> - </option>
+                    <option v-for="t in mimeTypes" :value="t.Id.toString()">{{t.Name}}</option>
+                </select>
+            </div>
+        </div>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavMenu"
+                aria-controls="mainNavMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNavMenu">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+            </ul>
+        </div>
+    </nav>
 
 
-<!-- Content-->
-<div class="container-fluid p-0" id="mainContent">
+    <!-- Content-->
+    <div class="container-fluid p-0" id="mainContent">
 
-    <section>
-
-        <div id="app">
+        <section>
 
             <router-view v-slot="{ Component }">
-                <component :is="Component" @component-event="componentEvent"/>
+                <component ref="listView" :is="Component" @component-event="componentEvent" :filter="listFilter"/>
             </router-view>
 
             <div id="toasts" class="position-fixed toast-container top-0 end-0 p-3 mt-5">
@@ -86,105 +97,129 @@
                 </div>
             </div>
 
-        </div>
+        </section>
 
-        <script type="module">
-
-            import {createApp, ref} from 'vue'
-            import {createWebHashHistory, createRouter} from 'vue-router'
-
-            import AssetListView from './js/vue-components/asset-list.vue.js'
-            import AssetView from './js/vue-components/asset-view.vue.js'
-            import AssetSelectionListView from "./js/vue-components/asset-selection-list.vue.js";
-
-            const routes = [
-                {path: '/', component: AssetListView},
-            ];
-
-            export const router = createRouter({
-                history: createWebHashHistory(),
-                routes
-            });
-
-            createApp({
-
-                data() {
-                    return {
-                        activeAsset: null,
-                        activeAssetToast: null,
-                        selectedAssets: {},
-                        selectedAssetsToast: null,
-                    }
-                },
-
-                methods: {
-
-                    componentEvent(eventName, sender) {
-                        switch (eventName) {
-                            case 'assetClick': {
-                                this.activeAsset = arguments[2];
-                                this.setToastVisible(this.activeAssetToast, this.activeAsset !== null);
-                                if(sender === 'asset-view') {
-                                    window.open('/assets/' + this.activeAsset.Hash);
-                                }
-                                break;
-                            }
-                            case 'assetSelect': {
-                                const asset = arguments[2];
-                                this.selectedAssets[asset.Hash] = asset;
-                                this.setToastVisible(this.selectedAssetsToast, Object.keys(this.selectedAssets).length > 0);
-                                break;
-                            }
-                            case 'assetUnselect': {
-                                const asset = arguments[2];
-                                delete this.selectedAssets[asset.Hash];
-                                this.setToastVisible(this.selectedAssetsToast, Object.keys(this.selectedAssets).length > 0);
-                                break;
-                            }
-                            case 'assetDownloadClick': {
-                                const asset = arguments[2];
-                                window.open('/assets/' + asset.Hash);
-                                break;
-                            }
-                            default : {
-                                console.log("Event not handled (" + arguments.length + " arguments), sender: " + sender);
-                                console.log(arguments);
-                            }
-                        }
-                    },
-
-                    setToastVisible(el, visible) {
-                        if (!el) return;
-                        if (visible) {
-                            el.classList.add('show');
-                            el.classList.remove('hide');
-                        } else {
-                            el.classList.add('hide');
-                            el.classList.remove('show');
-                        }
-                    }
-                },
-
-                mounted() {
-                    this.activeAssetToast = this.$refs["activeAssetToast"];
-                    this.setToastVisible(this.activeAssetToast, false);
-                    this.selectedAssetsToast = this.$refs["selectedAssetsToast"];
-                    this.setToastVisible(this.selectedAssetsToast, false);
-                }
-            })
-                .component('asset-view', AssetView)
-                .component('asset-selection-list', AssetSelectionListView)
-                .use(router)
-                .mount('#app');
-
-        </script>
-
-    </section>
+    </div>
 
 </div>
 
+<!-- Main App -->
+<script type="module">
 
-<!-- Scripts -->
+    import {createApp, ref} from 'vue'
+    import {createWebHashHistory, createRouter} from 'vue-router'
+
+    import AssetListView from './js/vue-components/asset-list.vue.js'
+    import AssetView from './js/vue-components/asset-view.vue.js'
+    import AssetSelectionListView from "./js/vue-components/asset-selection-list.vue.js";
+
+    const routes = [
+        {path: '/', component: AssetListView},
+    ];
+
+    export const router = createRouter({
+        history: createWebHashHistory(),
+        routes
+    });
+
+    createApp({
+
+        data() {
+            return {
+                listFilter: {
+                    MimeType: null,
+                    FileName: null
+                },
+
+                activeAsset: null,
+                activeAssetToast: null,
+                selectedAssets: {},
+                selectedAssetsToast: null,
+
+                mimeTypes: [],
+            }
+        },
+
+        methods: {
+
+            componentEvent(eventName, sender) {
+                switch (eventName) {
+                    case 'assetClick': {
+                        this.activeAsset = arguments[2];
+                        this.setToastVisible(this.activeAssetToast, this.activeAsset !== null);
+                        if(sender === 'asset-view') {
+                            window.open('/assets/' + this.activeAsset.Hash);
+                        }
+                        break;
+                    }
+                    case 'assetSelect': {
+                        const asset = arguments[2];
+                        this.selectedAssets[asset.Hash] = asset;
+                        this.setToastVisible(this.selectedAssetsToast, Object.keys(this.selectedAssets).length > 0);
+                        break;
+                    }
+                    case 'assetUnselect': {
+                        const asset = arguments[2];
+                        delete this.selectedAssets[asset.Hash];
+                        this.setToastVisible(this.selectedAssetsToast, Object.keys(this.selectedAssets).length > 0);
+                        break;
+                    }
+                    case 'assetDownloadClick': {
+                        const asset = arguments[2];
+                        window.open('/assets/' + asset.Hash);
+                        break;
+                    }
+                    default : {
+                        console.log("Event not handled (" + arguments.length + " arguments), sender: " + sender);
+                        console.log(arguments);
+                    }
+                }
+            },
+
+            setToastVisible(el, visible) {
+                if (!el) return;
+                if (visible) {
+                    el.classList.add('show');
+                    el.classList.remove('hide');
+                } else {
+                    el.classList.add('hide');
+                    el.classList.remove('show');
+                }
+            },
+
+            loadMimeTypes() {
+                const self = this;
+                const requestOptions = {
+                    method: 'GET'
+                }
+                fetch('/mimetypes/list', requestOptions)
+                    .then(res => res.json())
+                    .then(json => {
+                        self.mimeTypes.splice(0, self.mimeTypes.length);
+                        for (const item of json) {
+                            self.mimeTypes.push(item);
+                        }
+                    });
+            }
+        },
+
+        mounted() {
+            this.activeAssetToast = this.$refs["activeAssetToast"];
+            this.setToastVisible(this.activeAssetToast, false);
+            this.selectedAssetsToast = this.$refs["selectedAssetsToast"];
+            this.setToastVisible(this.selectedAssetsToast, false);
+
+            this.loadMimeTypes();
+        }
+    })
+        .component('asset-view', AssetView)
+        .component('asset-selection-list', AssetSelectionListView)
+        .use(router)
+        .mount('#app');
+
+</script>
+
+<!-- UI Scripts -->
 <script src="css/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
 
 </body>

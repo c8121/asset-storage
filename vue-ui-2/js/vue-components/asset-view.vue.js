@@ -10,7 +10,7 @@ export default {
             </div>
             <div v-if="asset && asset.Origins">
                 <div v-for="origin in asset.Origins">
-                    <div class="text-primary mt-3 text-truncate">{{ origin.Path }}</div>
+                    <div class="text-primary mt-3 text-truncate" data-toggle="tooltip" data-placement="top" :title="origin.Path">{{ origin.Path }}</div>
                     <div class="text-secondary">{{ origin.Owner }}</div>
                 </div>
             </div>
