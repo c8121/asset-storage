@@ -31,4 +31,5 @@ func CreateRoutes(router *gin.Engine) {
 	router.GET("/mimetypes/list", users.AuthRequiredHandler(ListMimeTypes))
 	router.GET("/pathitems/list", users.AuthRequiredHandler(ListPathItems))
 	router.GET("/pathitems/list/:parent", users.AuthRequiredHandler(ListPathItems))
+	router.POST("/pathitem/", users.AuthRequiredHandler(FindPathItem))
 }

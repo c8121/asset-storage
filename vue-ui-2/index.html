@@ -52,6 +52,10 @@
                 </select>
             </div>
         </div>
+        <div v-if="listFilter.PathId" class="d-flex mt-lg-3 w-100">
+            <button @click="listFilter.PathId = null; $refs.listView.loadAssets()" class="btn btn-sm btn-secondary text-wrap text-truncate m-2" title="click to reset">
+                {{ pathIdFilter }}</button>
+        </div>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavMenu"
                 aria-controls="mainNavMenu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -137,6 +141,8 @@
                 selectedAssetsToast: null,
 
                 mimeTypes: [],
+
+                pathIdFilter: ''
             }
         },
 
@@ -169,8 +175,13 @@
                         window.open('/assets/' + asset.Hash);
                         break;
                     }
+                    case 'assetPathClick': {
+                        const path = arguments[2];
+                        this.filterPath(path);
+                        break;
+                    }
                     default : {
-                        console.log("Event not handled (" + arguments.length + " arguments), sender: " + sender);
+                        console.log("Event not handled: '" + eventName + "', " + arguments.length + " arguments, sender: " + sender);
                         console.log(arguments);
                     }
                 }
@@ -199,6 +210,24 @@
                         for (const item of json) {
                             self.mimeTypes.push(item);
                         }
+                    });
+            },
+
+            filterPath(path) {
+                const self = this;
+                const requestOptions = {
+                    method: 'POST',
+                    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                    body: "path=" + encodeURI(path)
+                }
+                fetch('/pathitem/', requestOptions)
+                    .then(res => res.json())
+                    .then(json => {
+                        self.listFilter.FileName = null;
+                        self.listFilter.MimeType = null;
+                        self.listFilter.PathId = json.Id;
+                        self.pathIdFilter = path;
+                        self.$refs.listView.loadAssets();
                     });
             }
         },

@@ -10,7 +10,7 @@ export default {
             </div>
             <div v-if="asset && asset.Origins">
                 <div v-for="origin in asset.Origins">
-                    <div class="text-primary mt-3 text-truncate" data-toggle="tooltip" data-placement="top" :title="origin.Path">{{ origin.Path }}</div>
+                    <div class="text-primary mt-3 text-truncate" role="button" data-toggle="tooltip" data-placement="top" :title="origin.Path" @click="pathClick(origin.Path)">{{ origin.Path }}</div>
                     <div class="text-secondary">{{ origin.Owner }}</div>
                 </div>
             </div>
@@ -109,6 +109,10 @@ export default {
                     "/" + self.value.Hash;
                 self.$refs.filterRequest.submit();
             }
+        },
+
+        pathClick(path) {
+            this.$emit('componentEvent', 'assetPathClick', 'asset-view', path);
         }
     },
 

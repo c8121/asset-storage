@@ -41,3 +41,20 @@ func ListPathItems(c *gin.Context) {
 		c.Data(http.StatusOK, "application/json", []byte("[]"))
 	}
 }
+
+// FindPathItem is a rest-api handler
+func FindPathItem(c *gin.Context) {
+
+	item, err := metadata_db.FindPathItem(c.PostForm("path"))
+	if err != nil {
+		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		return
+	}
+
+	if item != nil {
+		c.IndentedJSON(http.StatusOK, item)
+	} else {
+		//https://github.com/gin-gonic/gin/issues/125 ?
+		c.Data(http.StatusOK, "application/json", []byte("[]"))
+	}
+}
