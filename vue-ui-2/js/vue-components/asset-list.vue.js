@@ -6,7 +6,7 @@ export default {
                 <div v-for="asset in list" class="asset col pb-3">
                     <div class="card bg-light">
                         <div class="card-body">
-                            <div class="text-center p-1 small">
+                            <div class="text-center p-1 small text-truncate" :title="asset.Name">
                                 {{ asset.Name }}
                             </div>
                             <div>
