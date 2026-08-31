@@ -19,7 +19,8 @@ func CreateDirIfNotExists(path string, perm fs.FileMode) {
 	}
 }
 
-// FindFile takes path that might contain wildcards and return the first that exists
+// FindFile takes path that might contain wildcards and return the first that exists.
+// Returns an empty string "", if no existing path found
 func FindFile(paths []string) string {
 
 	for _, path := range paths {
@@ -36,6 +37,7 @@ func FindFile(paths []string) string {
 	return ""
 }
 
+// SplitPath splits a path at '/' or '\'
 func SplitPath(path string) []string {
 
 	items := make([]string, 0)

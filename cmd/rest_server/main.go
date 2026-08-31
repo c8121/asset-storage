@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/c8121/asset-storage/internal/config"
+	"github.com/c8121/asset-storage/internal/filter_commands"
 	"github.com/c8121/asset-storage/internal/rest_api"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
@@ -14,6 +15,7 @@ func main() {
 
 	config.LoadDefault()
 	storage.CreateDirectories()
+	filter_commands.CheckAndNotify()
 
 	metadata_sqlite.Open()
 	defer metadata_sqlite.Close()
