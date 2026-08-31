@@ -3,7 +3,7 @@ import { nextTick } from 'vue'
 export default {
     template: `
         <div>
-            <div v-for="item in list" class="text-nowrap" class="text-start">
+            <div v-for="item in list" class="text-nowrap text-start">
                 
                 <div>
                     <button @click="item.showChildren = !item.showChildren" class="btn m-0 p-0">
@@ -36,7 +36,7 @@ export default {
 
     watch: {
         value() {
-            this.loadAsset();
+            this.loadItems();
         }
     },
 

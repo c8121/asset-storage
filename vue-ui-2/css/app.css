@@ -7,15 +7,13 @@
     --main-nav-bg: #ccc;
 }
 
-body {
-    padding-top: 3.375rem;
-}
 
 #mainNav {
     padding-left: 1rem;
     padding-right: 1rem;
     color: var(--main-nav-color);
     background-color: var(--main-nav-bg);
+    z-index: 999;
 }
 
 #mainNav .nav-link{
