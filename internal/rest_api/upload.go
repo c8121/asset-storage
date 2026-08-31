@@ -20,6 +20,7 @@ type (
 	AddUploadedFileRequest struct {
 		TempName string
 		Name     string
+		Path     string
 		Owner    string
 		FileTime time.Time
 	}
@@ -79,12 +80,20 @@ func AddUploadedFile(c *gin.Context) {
 	for _, info := range infos {
 		if info.IsNewFile || !config.SkipMetaDataIfExists {
 
+			addedFileName := filepath.Base(info.SourcePath)
+			if addedFileName == req.TempName {
+				addedFileName = req.Name
+			} else {
+				//Added file was unpackable and contained multiple other files
+				fmt.Printf("Unpacked %s from %s\n", addedFileName, req.Name)
+			}
+
 			//Create/Update meta-data
 			meta, err := metadata.AddMetaData(
 				info.Hash,
 				info.MimeType,
-				req.Name,
-				"",
+				addedFileName,
+				req.Path,
 				req.Owner,
 				req.FileTime)
 			if err != nil {
