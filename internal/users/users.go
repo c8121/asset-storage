@@ -28,6 +28,15 @@ func CreateDirectories() {
 	util.CreateDirIfNotExists(config.AssetStorageConfigDir, FilePermissions)
 }
 
+func HasUsers() bool {
+	readUsers()
+	if len(users) == 0 {
+		return false
+	}
+
+	return true
+}
+
 func UserExists(name string) bool {
 	readUsers()
 

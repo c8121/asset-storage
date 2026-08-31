@@ -12,6 +12,14 @@ import (
 
 func AuthRequiredHandler(handlerFunc func(c *gin.Context)) func(c *gin.Context) {
 
+	if !HasUsers() {
+		fmt.Println("***WARN*** No users configured, granting all access")
+		f := func(c *gin.Context) {
+			handlerFunc(c)
+		}
+		return f
+	}
+
 	f := func(c *gin.Context) {
 		if err := CheckBasicAuth(c); err != nil {
 			fmt.Printf("Auth error: %s\n", err)
@@ -25,6 +33,14 @@ func AuthRequiredHandler(handlerFunc func(c *gin.Context)) func(c *gin.Context) 
 }
 
 func AuthRequiredStaticFileHandler(filepath string) func(c *gin.Context) {
+
+	if !HasUsers() {
+		fmt.Printf("***WARN*** No users configured, granting all access to %s\n", filepath)
+		f := func(c *gin.Context) {
+			c.File(filepath)
+		}
+		return f
+	}
 
 	f := func(c *gin.Context) {
 		if err := CheckBasicAuth(c); err != nil {
