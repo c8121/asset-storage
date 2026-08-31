@@ -36,20 +36,20 @@ Store files into an archive directory
 
 To add new files to the archive
 
-    add [-skip-meta] [-check-hash] [-gzip] [-maxmem <bytes>] [-base <directory>] [-name <file-name-pattern>] [-r] <file or directory>
+    add [-skip-meta] [-check-hash] [-gzip] [-maxmem <bytes>] [-data <directory>] [-name <file-name-pattern>] [-r] <file or directory>
 
 ### spa-server
 
 A HTTP Server which provides a Single-Page-Application to browse the storage.
 The `rest-server`, which is the app backend, is included.
 
-    spa-server [-gzip] [-xor <key>] [-base <directory>] [-spa <http-root-directory of spa-app>] [-listen <ip:port>]
+    spa-server [-gzip] [-xor <key>] [-data <directory>] [-spa <http-root-directory of spa-app>] [-listen <ip:port>]
 
 ### rest-server
 
 A HTTP Server which provides a REST-API to access the storage. This server is included in `spa-server`.
 
-    rest-server [-gzip] [-xor <key>] [-base <directory>] [-listen <ip:port>]
+    rest-server [-gzip] [-xor <key>] [-data <directory>] [-listen <ip:port>]
 
 ### metadata-db-create
 
@@ -57,7 +57,7 @@ Update meta-data-database by reading all meta-data files and writing contents to
 
 Not required if database is intact, because `add` also updates the database.
 
-    metadata-db-create [-base <directory>]
+    metadata-db-create [-data <directory>]
 
 ### ssh-server
 
@@ -65,13 +65,13 @@ Accept files from remote computers via SFTP, SCP or RSYNC
 
 *Note: This is work in progress, important features at the moment*
 
-    ssh-server [-host-key <files>] [-listen <ip:port>]
+    ssh-server [-data <directory>] [-host-key <files>] [-listen <ip:port>]
 
 ### user-edit
 
 Add users, set/update passwords. These users will have access to Servers (Web, SFTP, SCP, RSYNC)
 
-    user-edit [-a] -u username
+    user-edit [-data <directory>] [-a] -u username
 
 Use `-a` flag to add a new user.
 
@@ -81,7 +81,7 @@ Commonly used commandline arguments for asset-storage apps:
 
 | Parameter           | Description                                                                                                                                                                                                                                                                                                                                     |
 |---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| base <dir&gt;       | Asset-storage base dir containing all data (file, meta-data, database). Default is `$HOME/asset-storage`                                                                                                                                                                                                                                        |
+| data <dir&gt;       | Asset-storage data dir containing all data (file, meta-data, database). Default is `$HOME/asset-storage`                                                                                                                                                                                                                                        |
 | gzip                | Use gzip to compress data.<br/> **Important:** Cannot be mixed, use always or never for one storage.                                                                                                                                                                                                                                            |
 | maxmem <bytes&gt;   | Max size in bytes when reading files while adding to storage. If a file is larger, it will not be read into memory and a temp-file will be used                                                                                                                                                                                                 |
 | name <patten&gt;    | Filter files matching file-name-pattern (*.jpeg for example)                                                                                                                                                                                                                                                                                    |

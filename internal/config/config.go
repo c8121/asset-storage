@@ -2,10 +2,12 @@ package config
 
 import (
 	"crypto/sha256"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 )
 
 var (
@@ -32,7 +34,7 @@ var (
 	CertFile      = ""
 	KeyFile       = ""
 
-	cmdBaseDir              = flag.String("base", "", "Base directory for storage, meta-data, db...")
+	cmdDataDir              = flag.String("data", "", "Data directory for storage, meta-data, db...")
 	cmdUseGzip              = flag.Bool("gzip", false, "Use GZIP compression")
 	cmdXorKey               = flag.String("xor", "", "XOR Key for content obfusication")
 	cmdMaxMemFileSize       = flag.Int64("maxmem", 0, "Max memory file size in bytes")
@@ -49,26 +51,30 @@ var (
 // or in user-home
 func LoadDefault() {
 
+	checkObsoleteCmdArgs()
+
 	flag.Parse()
 
-	useBaseDir := *cmdBaseDir
-	if useBaseDir == "" {
+	useDataDir := *cmdDataDir
+	if useDataDir == "" {
 		if userHome, err := os.UserHomeDir(); err != nil {
 			panic("failed to get user home directory")
 		} else {
-			useBaseDir = userHome
+			useDataDir = filepath.Join(userHome, "asset-storage")
 		}
 	}
 
-	fmt.Printf("Using base directory: %s\n", useBaseDir)
+	validateDataDir(useDataDir)
 
-	AssetStorageConfigDir = useBaseDir + "/asset-storage/config"
-	AssetStorageBaseDir = useBaseDir + "/asset-storage/files"
-	AssetStorageTempDir = useBaseDir + "/asset-storage/tmp"
-	AssetMetaDataBaseDir = useBaseDir + "/asset-storage/meta"
-	AssetMetaDataDb = useBaseDir + "/asset-storage/db/asset-metadata.sqlite"
-	AssetCollectionsBaseDir = useBaseDir + "/asset-storage/collections"
-	AssetFacesBaseDir = useBaseDir + "/asset-storage/faces"
+	fmt.Printf("Using data directory: %s\n", useDataDir)
+
+	AssetStorageConfigDir = filepath.Join(useDataDir, "config")
+	AssetStorageBaseDir = filepath.Join(useDataDir, "files")
+	AssetStorageTempDir = filepath.Join(useDataDir, "tmp")
+	AssetMetaDataBaseDir = filepath.Join(useDataDir, "meta")
+	AssetMetaDataDb = filepath.Join(useDataDir, "db/asset-metadata.sqlite")
+	AssetCollectionsBaseDir = filepath.Join(useDataDir, "collections")
+	AssetFacesBaseDir = filepath.Join(useDataDir, "faces")
 
 	UseGzip = *cmdUseGzip
 	if UseGzip {
@@ -102,7 +108,7 @@ func LoadDefault() {
 		} else {
 			XorKey = []byte(*cmdXorKey)
 		}
-		fmt.Printf("Xor obfusication enabled, key length: %d\n", len(XorKey))
+		fmt.Printf("Xor obfuscation enabled, key length: %d\n", len(XorKey))
 	}
 
 	if *cmdListen != "" {
@@ -118,5 +124,47 @@ func LoadDefault() {
 	if *cmdKeyFile != "" {
 		KeyFile = *cmdKeyFile
 		fmt.Printf("Key file: %s\n", KeyFile)
+	}
+}
+
+// validateDataDir checks is given path is a asset-storage directory.
+// A non-existing path is considered valid so it can be created later.
+func validateDataDir(path string) {
+
+	stat, err := os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return
+	}
+	if stat == nil || !stat.IsDir() {
+		fmt.Printf("%s is not a directory\n", path)
+		os.Exit(1)
+	}
+
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		panic(err)
+	}
+
+	validNames := []string{"config", "files", "tmp", "meta", "db", "collections", "faces", "bin", "vue-ui"}
+
+	for _, entry := range entries {
+		if !slices.Contains(validNames, entry.Name()) {
+			fmt.Printf("Invalid data dir: %s (invalid item \"%s\")\n", path, entry.Name())
+			os.Exit(1)
+		}
+	}
+
+}
+
+// checkObsoleteCmdArgs looks for command-line arguments which are not supported anymore.
+func checkObsoleteCmdArgs() {
+
+	obsoleteBase := flag.String("base", "", "")
+
+	flag.Parse()
+
+	if *obsoleteBase != "" {
+		fmt.Println("Argument 'base' is obsolete. Use 'data' instead, pointing directly to the data directory")
+		os.Exit(1)
 	}
 }
