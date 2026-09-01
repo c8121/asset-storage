@@ -57,6 +57,7 @@ export default {
             offset: 0,
             count: 30,
 
+            loading: false,
             showLoadMore: true
         }
     },
@@ -66,16 +67,20 @@ export default {
         loadAssets() {
 
             const self = this;
+            self.loading = true;
+
             self.offset = 0;
             fetch('/assets/list', self.createRequestOptions())
                 .then(res => res.json())
                 .then(json => {
                     self.list = json;
+                    self.loading = false;
                 });
         },
 
         loadMore() {
             const self = this;
+            self.loading = true;
 
             self.offset += self.count
             fetch('/assets/list', self.createRequestOptions())
@@ -84,6 +89,7 @@ export default {
                     for(const item of json) {
                         self.list.push(item);
                     }
+                    self.loading = false;
                 });
         },
 
@@ -128,12 +134,40 @@ export default {
 
         downloadClick(asset) {
             this.$emit('componentEvent', 'assetDownloadClick', 'asset-list', asset);
-        }
+        },
+
+        //Autoload more items when scrolling to bottom
+        enableAutoLoadMore() {
+            const self = this;
+            if (!self.scrollListener) {
+
+                self.scrollListener = (e) => {
+
+                    if (self.loading || !self.showLoadMore)
+                        return;
+
+                    const loadMoreButton = document.getElementById("loadMore");
+                    const rect = loadMoreButton.getBoundingClientRect();
+                    const elemTop = rect.top;
+                    const elemBottom = rect.bottom;
+
+                    // Only completely visible elements return true:
+                    const isVisible = (elemTop > 0) && (elemBottom <= window.innerHeight);
+                    // Partially visible elements return true:
+                    //const isVisible = elemTop < window.innerHeight && elemBottom >= 0;
+                    if (isVisible) {
+                        self.loadMore();
+                    }
+                }
+                document.addEventListener('scroll', self.scrollListener);
+            }
+        },
     },
 
     emits: ['componentEvent'],
 
     created() {
         this.loadAssets();
+        this.enableAutoLoadMore()
     }
 }
