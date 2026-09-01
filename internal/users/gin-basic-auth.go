@@ -7,12 +7,21 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 )
+
+var notifiedNoUsers = false
 
 func AuthRequiredHandler(handlerFunc func(c *gin.Context)) func(c *gin.Context) {
 
 	if !HasUsers() {
+
+		if !notifiedNoUsers {
+			notifiedNoUsers = true
+			util.AppNotifications.AddNotification("No users configured, granting all access")
+		}
+
 		fmt.Println("***WARN*** No users configured, granting all access")
 		f := func(c *gin.Context) {
 			handlerFunc(c)
@@ -33,6 +42,11 @@ func AuthRequiredHandler(handlerFunc func(c *gin.Context)) func(c *gin.Context) 
 }
 
 func AuthRequiredStaticFileHandler(filepath string) func(c *gin.Context) {
+
+	if !notifiedNoUsers {
+		notifiedNoUsers = true
+		util.AppNotifications.AddNotification("No users configured, granting all access")
+	}
 
 	if !HasUsers() {
 		fmt.Printf("***WARN*** No users configured, granting all access to %s\n", filepath)

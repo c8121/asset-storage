@@ -1,19 +1,28 @@
 package filter_commands
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/c8121/asset-storage/internal/util"
+)
 
 func CheckAndNotify() {
+
 	path := FindFFmpegBin()
 	if path == "" {
-		fmt.Println("FFmpeg is not installed. To generate video-thumbs and images, please install FFmpeg")
+		util.AppNotifications.AddNotification("FFmpeg is not installed. To generate video-thumbs and images, please install FFmpeg")
 	} else {
-		fmt.Printf("Using FFmpeg from %s\n", path)
+		util.AppNotifications.AddNotification("Using FFmpeg from " + path)
 	}
 
 	path = FindImageMagickBin()
 	if path == "" {
-		fmt.Println("ImageMagick is not installed. To support more image formats, please install ImageMagick")
+		util.AppNotifications.AddNotification("ImageMagick is not installed. To support more image formats, please install ImageMagick")
 	} else {
-		fmt.Printf("Using ImageMagick from %s\n", path)
+		util.AppNotifications.AddNotification("Using ImageMagick from " + path)
+	}
+
+	for _, msg := range util.AppNotifications.Messages {
+		fmt.Println(msg)
 	}
 }

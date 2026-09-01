@@ -32,4 +32,6 @@ func CreateRoutes(router *gin.Engine) {
 	router.GET("/pathitems/list", users.AuthRequiredHandler(ListPathItems))
 	router.GET("/pathitems/list/:parent", users.AuthRequiredHandler(ListPathItems))
 	router.POST("/pathitem/", users.AuthRequiredHandler(FindPathItem))
+
+	router.GET("/notifications", users.AuthRequiredHandler(GetNotifications))
 }
