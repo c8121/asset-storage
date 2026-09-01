@@ -31,71 +31,66 @@
 <div id="app">
 
     <!-- Menu-->
-    <nav class="navbar navbar-expand-lg navbar-dark" id="mainNav">
+    <nav id="mainNav">
         <a class="navbar-brand" href="#">
             <span class="d-block">:) Asset Storage</span>
         </a>
 
-        <div class="d-flex mt-lg-3">
-            <div class="input-group ms-lg-2 me-lg-2 mb-2">
+        <div class="container mt-4">
+            <div class="input-group">
                 <input v-model="listFilter.FileName" class="form-control border-secondary" type="search" placeholder="Search" aria-label="Search" @keyup.enter="$refs.listView.loadAssets()">
                 <button class="btn btn-outline-secondary" type="submit" @click="$refs.listView.loadAssets()"><i class="bi bi-search"></i></button>
             </div>
         </div>
 
-        <div class="d-flex mt-lg-3">
-            <div class="ms-lg-2 me-lg-2 mb-2">
-                <select v-model="listFilter.MimeType" class="form-select" @change="$refs.listView.loadAssets()">
-                    <option :value="null">All</option>
-                    <option value="image/*">Images</option>
-                    <option value="video/*">Videos</option>
-                    <option :value="null"> - </option>
-                    <option v-for="t in mimeTypes" :value="t.Id.toString()">{{t.Name}}</option>
-                </select>
-            </div>
+        <div class="container mt-2">
+            <select v-model="listFilter.MimeType" class="form-select" @change="$refs.listView.loadAssets()">
+                <option :value="null">All</option>
+                <option value="image/*">Images</option>
+                <option value="video/*">Videos</option>
+                <option :value="null"> - </option>
+                <option v-for="t in mimeTypes" :value="t.Id.toString()">{{t.Name}}</option>
+            </select>
         </div>
 
-        <div class="d-flex mt-lg-3">
-            <div class="ms-lg-2 me-lg-2 mb-2">
-                <div class="btn-group dropend">
-                    <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                        <span v-if="pathIdFilter"><i class="bi bi-funnel"></i> {{ pathIdFilter }}</span>
-                        <span v-else>Filter Path</span>
+        <div class="container mt-2">
+            <div class="btn-group dropend w-100">
+                <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <span v-if="pathIdFilter"><i class="bi bi-funnel"></i> {{ pathIdFilter }}</span>
+                    <span v-else>Filter Path</span>
+                </button>
+                <div class="dropdown-menu overflow-scroll p-2" style="max-height: 75vh;">
+                    <button v-if="listFilter.PathId" class="btn btn-sm btn-secondary m-2" @click="listFilter.PathId = null; pathIdFilter = null; $refs.listView.loadAssets()">
+                        <i class="bi bi-funnel text-decoration-line-through"></i>
+                        Clear Filter
                     </button>
-                    <div class="dropdown-menu overflow-scroll p-2" style="max-height: 75vh;">
-                        <button v-if="listFilter.PathId" class="btn btn-sm btn-secondary m-2" @click="listFilter.PathId = null; pathIdFilter = null; $refs.listView.loadAssets()">
-                            <i class="bi bi-funnel text-decoration-line-through"></i>
-                            Clear Filter
-                        </button>
-                        <path-tree @component-event="componentEvent" />
-                    </div>
+                    <path-tree @component-event="componentEvent" />
                 </div>
             </div>
         </div>
 
-        <div class="d-flex mt-lg-3">
-            <div class="ms-lg-2 me-lg-2 mb-2">
-                <div class="btn-group dropend">
-                    <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                        Upload
-                    </button>
-                    <div class="dropdown-menu p-2">
-                        <upload @component-event="componentEvent" />
-                    </div>
+        <div class="container mt-2">
+            <div class="btn-group dropend w-100">
+                <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    Upload
+                </button>
+                <div class="dropdown-menu p-2">
+                    <upload @component-event="componentEvent" />
                 </div>
             </div>
         </div>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavMenu"
-                aria-controls="mainNavMenu" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="mainNavMenu">
-            <ul class="navbar-nav">
-                <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
-            </ul>
+        <div v-if="notifications.length > 0" class="container mt-2">
+            <div class="btn-group dropend w-100">
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <i class="bi bi-bell"></i>
+                </button>
+                <div class="dropdown-menu">
+                    <div v-for="msg in notifications" class="m-2 small">{{ msg }}</div>
+                </div>
+            </div>
         </div>
+
     </nav>
 
 
@@ -175,7 +170,9 @@
 
                 mimeTypes: [],
 
-                pathIdFilter: ''
+                pathIdFilter: '',
+
+                notifications: []
             }
         },
 
@@ -271,7 +268,22 @@
                         self.pathIdFilter = path;
                         self.$refs.listView.loadAssets();
                     });
-            }
+            },
+
+            loadNotifications() {
+                const self = this;
+                const requestOptions = {
+                    method: 'GET'
+                }
+                fetch('/notifications', requestOptions)
+                    .then(res => res.json())
+                    .then(json => {
+                        self.notifications.splice(0, self.notifications.length);
+                        for (const msg of json) {
+                            self.notifications.push(msg);
+                        }
+                    });
+            },
         },
 
         mounted() {
@@ -281,6 +293,7 @@
             this.setToastVisible(this.selectedAssetsToast, false);
 
             this.loadMimeTypes();
+            this.loadNotifications();
         }
     })
         .component('asset-view', AssetView)
