@@ -38,10 +38,23 @@ export default {
                 </form>
             </div>
             
-            <div class="mt-3" v-if="faces && faces.length">
-                <div v-for="face in faces">
-                    <div role="button" class="text-primary mt-3" @click="faceClick(face.Id)">{{ face.Id }}</div>
+            <div class="mt-3" v-if="asset && faces.length">
+                <div v-for="face in faces" class="d-inline-flex">
+                    <div role="button" class="text-primary mt-3" @click="faceClick(face.Id)">
+                        <img class="border border-2 rounded-5"
+                            :src="'/assets/cropped/' + asset.Hash + '/75/' 
+                            + face.X1 + '/'
+                            + face.Y1 + '/'
+                            + face.X2 + '/'
+                            + face.Y2" />
+                    </div>
                 </div>
+            </div>
+            
+            <div v-if="!faces.length">
+                <button @click="detectFaces" class="btn btn-sm btn-outline-secondary">
+                    {{ detectFacesButtonCaption }}
+                </button>
             </div>
         </div>
     `,
@@ -67,7 +80,9 @@ export default {
                 ]
             },
 
-            faces: []
+            faces: [],
+
+            detectFacesButtonCaption: "Detect Faces"
         }
     },
 
@@ -107,6 +122,27 @@ export default {
                 .then(res => res.json())
                 .then(json => {
                     self.faces = json;
+                });
+        },
+
+        detectFaces() {
+            const self = this;
+            if(!self.value || !self.value.Hash)
+                return;
+
+            const btnCaption = self.detectFacesButtonCaption;
+            self.detectFacesButtonCaption = "wait...";
+
+            const requestOptions = {
+                method: 'GET'
+            }
+            fetch('/faces/detect/' + self.value.Hash, requestOptions)
+                .then(res => res.json())
+                .then(json => {
+                    self.faces = json;
+                })
+                .finally(() =>{
+                    self.detectFacesButtonCaption = btnCaption;
                 });
         },
 

@@ -14,13 +14,74 @@ import (
 )
 
 type FaceEmbedding struct {
-	Id        int64
-	AssetId   int64
-	Embedding []float32
+	Id             int64
+	AssetId        int64
+	X1, Y1, X2, Y2 int
+	Embedding      []float32
 }
 
 // AddFace
-func AddFace(assetId int64, face *faces.Face) error {
+func AddFace(assetId int64, face *faces.RestApiFace) (*FaceEmbedding, error) {
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer util.RollbackOrLog(tx)
+
+	faceEmbedding, err := AddFaceTx(tx, assetId, face)
+	if err != nil {
+		return nil, err
+	}
+
+	return faceEmbedding, util.CommitOrLog(tx)
+}
+
+// AddFaces
+func AddFaces(assetId int64, faces *[]faces.RestApiFace) (*[]FaceEmbedding, error) {
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer util.RollbackOrLog(tx)
+
+	list := &[]FaceEmbedding{}
+
+	for _, face := range *faces {
+		faceEmbedding, err := AddFaceTx(tx, assetId, &face)
+		if err != nil {
+			util.LogError(err)
+		} else {
+			*list = append(*list, *faceEmbedding)
+		}
+	}
+
+	return list, util.CommitOrLog(tx)
+}
+
+// AddFaceTx
+func AddFaceTx(tx *sql.Tx, assetId int64, face *faces.RestApiFace) (*FaceEmbedding, error) {
+
+	var faceEmbedding = &FaceEmbedding{
+		AssetId:   assetId,
+		X1:        face.Image[0],
+		Y1:        face.Image[1],
+		X2:        face.Image[2],
+		Y2:        face.Image[3],
+		Embedding: face.Embedding,
+	}
+
+	err := InsertTx(tx, faceEmbedding)
+	if err != nil {
+		return nil, err
+	}
+
+	return faceEmbedding, nil
+}
+
+func RemoveFaces(assetId int64) error {
+
 	ctx := context.Background()
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -28,7 +89,13 @@ func AddFace(assetId int64, face *faces.Face) error {
 	}
 	defer util.RollbackOrLog(tx)
 
-	err = AddFaceTx(tx, assetId, face)
+	stmt, err := tx.Prepare("DELETE FROM faces WHERE assetId=?;")
+	if err != nil {
+		return err
+	}
+	defer util.CloseOrLog(stmt)
+
+	_, err = stmt.Exec(assetId)
 	if err != nil {
 		return err
 	}
@@ -36,23 +103,8 @@ func AddFace(assetId int64, face *faces.Face) error {
 	return util.CommitOrLog(tx)
 }
 
-// AddFaceTx
-func AddFaceTx(tx *sql.Tx, assetId int64, face *faces.Face) error {
-
-	var faceEmbedding = &FaceEmbedding{
-		AssetId:   assetId,
-		Embedding: face.Embedding,
-	}
-
-	err := InsertTx(tx, faceEmbedding)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // GetFaces finds all faces that where detected in the given asset by face-api
+// Loads FaceEmbedding-Struct without FaceEmbedding.Embedding (use GetFaceEmbedding to load that)
 func GetFaces(hash string) (*[]FaceEmbedding, error) {
 
 	assetId := GetAssetId(hash)
@@ -64,7 +116,7 @@ func GetFaces(hash string) (*[]FaceEmbedding, error) {
 	}
 	defer util.RollbackOrLog(tx)
 
-	query := "SELECT id, assetId FROM faces WHERE assetId=?"
+	query := "SELECT id, assetId, x1, y1, x2, y2 FROM faces WHERE assetId=?"
 	rows, err := db.Query(query, assetId)
 	if err != nil {
 		log.Fatal("Query failed:", err)
@@ -75,7 +127,7 @@ func GetFaces(hash string) (*[]FaceEmbedding, error) {
 
 	for rows.Next() {
 		faceEmbedding := FaceEmbedding{}
-		if err := rows.Scan(&faceEmbedding.Id, &faceEmbedding.AssetId); err != nil {
+		if err := rows.Scan(&faceEmbedding.Id, &faceEmbedding.AssetId, &faceEmbedding.X1, &faceEmbedding.Y1, &faceEmbedding.X2, &faceEmbedding.Y2); err != nil {
 			util.LogError(err)
 		} else {
 			*list = append(*list, faceEmbedding)
@@ -85,6 +137,7 @@ func GetFaces(hash string) (*[]FaceEmbedding, error) {
 	return list, nil
 }
 
+// GetFaceEmbedding loads the stored embedding
 func GetFaceEmbedding(faceId int64) (*FaceEmbedding, error) {
 
 	ctx := context.Background()
@@ -117,7 +170,7 @@ func GetFaceEmbedding(faceId int64) (*FaceEmbedding, error) {
 	return nil, nil
 }
 
-func FindSimilarFaces(faceId int64) (*[]FaceEmbedding, error) {
+func FindSimilarFaces(faceId int64, max int) (*[]FaceEmbedding, error) {
 
 	faceEmbedding, err := GetFaceEmbedding(faceId)
 	if err != nil {
@@ -128,10 +181,10 @@ func FindSimilarFaces(faceId int64) (*[]FaceEmbedding, error) {
 		return nil, nil
 	}
 
-	return FindSimilarFacesByEmbedding(&faceEmbedding.Embedding)
+	return FindSimilarFacesByEmbedding(&faceEmbedding.Embedding, max)
 }
 
-func FindSimilarFacesByEmbedding(embedding *[]float32) (*[]FaceEmbedding, error) {
+func FindSimilarFacesByEmbedding(embedding *[]float32, max int) (*[]FaceEmbedding, error) {
 	ctx := context.Background()
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -143,9 +196,9 @@ func FindSimilarFacesByEmbedding(embedding *[]float32) (*[]FaceEmbedding, error)
 	if err != nil {
 		return nil, err
 	}
-	query := "WITH knn_matches AS (SELECT id, assetId, distance FROM faces WHERE embedding MATCH vec_f32(?) AND k = 20)" +
-		"SELECT id, assetId, distance FROM knn_matches ORDER BY distance;"
-	rows, err := db.Query(query, string(embeddingJson))
+	query := "WITH knn_matches AS (SELECT id, assetId, distance FROM faces WHERE embedding MATCH vec_f32(?) AND k = 99)" +
+		"SELECT id, assetId, distance FROM knn_matches WHERE distance <= 20.0 ORDER BY distance;"
+	rows, err := db.Query(query, string(embeddingJson), max)
 	if err != nil {
 		log.Fatal("Query failed:", err)
 	}
@@ -188,7 +241,7 @@ func (f *FaceEmbedding) Scan(rows *sql.Rows) error {
 }
 
 func (f *FaceEmbedding) GetInsertQuery() string {
-	return "INSERT INTO faces(assetId, embedding) VALUES(?,vec_f32(?));"
+	return "INSERT INTO faces(assetId, x1, y1, x2, y2, embedding) VALUES(?,?,?,?,?,vec_f32(?));"
 }
 
 func (f *FaceEmbedding) Exec(stmt *sql.Stmt) (sql.Result, error) {
@@ -196,7 +249,7 @@ func (f *FaceEmbedding) Exec(stmt *sql.Stmt) (sql.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	return stmt.Exec(&f.AssetId, string(embeddingJson))
+	return stmt.Exec(&f.AssetId, &f.X1, &f.Y1, &f.X2, &f.Y2, string(embeddingJson))
 }
 
 func (f *FaceEmbedding) SetId(id int64) {
@@ -206,6 +259,8 @@ func (f *FaceEmbedding) SetId(id int64) {
 func (a *FaceEmbedding) GetCreateQueries() []string {
 	return []string{
 		//"DROP TABLE IF EXISTS faces",
-		"CREATE VIRTUAL TABLE IF NOT EXISTS faces USING vec0(id integer PRIMARY KEY, assetId integer, embedding FLOAT[512]);",
+		"CREATE VIRTUAL TABLE IF NOT EXISTS faces USING vec0(id integer PRIMARY KEY, assetId integer, " +
+			"x1 integer, y1 integer, x2 integer, y2 integer, " +
+			"embedding FLOAT[512]);",
 	}
 }

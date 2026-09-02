@@ -8,6 +8,7 @@ import (
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/metadata_sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 func main() {
@@ -26,16 +27,14 @@ func main() {
 		if err != nil {
 			fmt.Printf("Cannot get faces from %s: %s\n", hash, err)
 		} else {
-			fmt.Printf("Found %d faces in %s\n", len(facesFound.Faces), hash)
+			fmt.Printf("Found %d faces in %s\n", len(*facesFound), hash)
 
-			for _, face := range facesFound.Faces {
+			if err = metadata_db_entity.RemoveFaces(assetId); err != nil {
+				util.LogError(err)
+			}
 
-				fmt.Printf("  %s\n", face.Image)
-
-				err := metadata_db_entity.AddFace(assetId, &face)
-				if err != nil {
-					fmt.Printf("Cannot add face %s: %s\n", hash, err)
-				}
+			if _, err = metadata_db_entity.AddFaces(assetId, facesFound); err != nil {
+				util.LogError(err)
 			}
 		}
 	}

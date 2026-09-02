@@ -11,6 +11,7 @@ func CreateRoutes(router *gin.Engine) {
 	router.POST("/assets/list", users.AuthRequiredHandler(ListAssets))
 
 	router.GET("/assets/thumbnail/:hash", users.AuthRequiredHandler(GetPreview))
+	router.GET("/assets/cropped/:hash/:width/:x1/:y1/:x2/:y2", users.AuthRequiredHandler(GetCoppedPreview))
 	router.GET("/assets/metadata/:hash", users.AuthRequiredHandler(GetMetaData))
 
 	router.GET("/assets/filter/:filter/:hash", users.AuthRequiredHandler(GetFiltered))
@@ -33,4 +34,5 @@ func CreateRoutes(router *gin.Engine) {
 	router.GET("/notifications", users.AuthRequiredHandler(GetNotifications))
 
 	router.GET("/faces/:hash", users.AuthRequiredHandler(GetFaces))
+	router.GET("/faces/detect/:hash", users.AuthRequiredHandler(DetectFaces))
 }

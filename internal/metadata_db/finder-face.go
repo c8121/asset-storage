@@ -14,7 +14,7 @@ func (f FinderByFace) Find(faceId any) (ScoredIdMap, error) {
 		return nil, nil
 	}
 
-	similarFaces, err := metadata_db_entity.FindSimilarFaces(faceId.(int64))
+	similarFaces, err := metadata_db_entity.FindSimilarFaces(faceId.(int64), 5)
 	if err != nil {
 		return nil, err
 	}

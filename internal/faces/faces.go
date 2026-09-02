@@ -18,16 +18,14 @@ var (
 )
 
 type (
-	Embedding []float32
-
-	Face struct {
+	RestApiFace struct {
 		Index     int
-		Embedding Embedding
+		Embedding []float32
 		Image     []int
 	}
 
-	Faces struct {
-		Faces []Face
+	RestApiFacesResponse struct {
+		Faces []RestApiFace
 	}
 )
 
@@ -41,7 +39,7 @@ func Init() {
 }
 
 // GetFaces finds faces in image, returns ["name",...]
-func GetFaces(sourceHash string) (*Faces, error) {
+func GetFaces(sourceHash string) (*[]RestApiFace, error) {
 
 	faces, err := restExecExtractFaces(sourceHash)
 	if err != nil {
@@ -52,7 +50,7 @@ func GetFaces(sourceHash string) (*Faces, error) {
 }
 
 // restExecExtractFaces calls REST-Service, see services/insightface/service.py
-func restExecExtractFaces(sourceHash string) (*Faces, error) {
+func restExecExtractFaces(sourceHash string) (*[]RestApiFace, error) {
 
 	meta, err := metadata.LoadByHash(sourceHash)
 	if err != nil {
@@ -78,11 +76,11 @@ func restExecExtractFaces(sourceHash string) (*Faces, error) {
 		return nil, err
 	}
 
-	result := &Faces{}
+	result := &RestApiFacesResponse{}
 	err = json.Unmarshal(response.Body(), result)
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	return &result.Faces, nil
 }

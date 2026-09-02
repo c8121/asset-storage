@@ -67,3 +67,34 @@ func generateThumbnail(assetHash string, meta *metadata.JsonAssetMetaData) ([]by
 
 	return f.Apply(assetHash, meta, params)
 }
+
+// GetCoppedPreview is a rest-api handler to generate a cropped image
+func GetCoppedPreview(c *gin.Context) {
+
+	hash := c.Param("hash")
+	if len(hash) < 32 {
+		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash")))
+		return
+	}
+
+	meta, err := metadata.LoadByHash(hash)
+	if err != nil {
+		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash (not found)")))
+		return
+	}
+
+	imageFilter := filter.NewImageFilter()
+	params := map[string]string{}
+	params["width"] = c.Param("width")
+	params["x1"] = c.Param("x1")
+	params["y1"] = c.Param("y1")
+	params["x2"] = c.Param("x2")
+	params["y2"] = c.Param("y2")
+
+	if bytes, mimeType, err := imageFilter.Apply(hash, meta, params); err != nil {
+		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+	} else {
+		c.Data(http.StatusOK, mimeType, bytes)
+	}
+
+}

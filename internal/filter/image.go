@@ -37,6 +37,11 @@ func (f ImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, p
 
 	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", f.DefaultWidth))
 
+	cropX1, _ := strconv.Atoi(util.GetOrDefault(params, "x1", "0"))
+	cropY1, _ := strconv.Atoi(util.GetOrDefault(params, "y1", "0"))
+	cropX2, _ := strconv.Atoi(util.GetOrDefault(params, "x2", "0"))
+	cropY2, _ := strconv.Atoi(util.GetOrDefault(params, "y2", "0"))
+
 	check := strings.ToLower(meta.MimeType)
 	if !strings.HasPrefix(check, "image/") {
 		return nil, "", fmt.Errorf("mime-type not supported: %s", meta.MimeType)
@@ -46,11 +51,18 @@ func (f ImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, p
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to load asset: %w", err)
 	}
-	defer reader.Close()
+	defer util.CloseOrLog(reader)
 
 	img, _, err := image.Decode(reader)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to decode asset: %w", err)
+	}
+
+	if cropX1 > 0 || cropY1 > 0 || cropX2 > 0 || cropY2 > 0 {
+		img, err = cropImage(img, image.Rect(cropX1, cropY1, cropX2, cropY2))
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to crop image: %w", err)
+		}
 	}
 
 	imgWidth := img.Bounds().Dx()
@@ -71,9 +83,26 @@ func (f ImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, p
 		f.ImageInterpolator.Scale(thumb, destSize, img, img.Bounds(), draw.Over, nil)
 
 		return encodePng(thumb)
-	} else {
-		return encodePng(img)
 	}
+
+	return encodePng(img)
+}
+
+// cropImage takes an image and crops it to the specified rectangle.
+func cropImage(img image.Image, crop image.Rectangle) (image.Image, error) {
+	type subImager interface {
+		SubImage(r image.Rectangle) image.Image
+	}
+
+	// img is an Image interface. This checks if the underlying value has a
+	// method called SubImage. If it does, then we can use SubImage to crop the
+	// image.
+	subImage, ok := img.(subImager)
+	if !ok {
+		return nil, fmt.Errorf("image does not support cropping")
+	}
+
+	return subImage.SubImage(crop), nil
 }
 
 func encodePng(img image.Image) ([]byte, string, error) {

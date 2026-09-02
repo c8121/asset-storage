@@ -35,7 +35,7 @@ func GetFirstFilterByMimeType(mimetype string) Filter {
 	return nil
 }
 
-// GetFirstFilterByMimeType returns the first filter out of AvailableFilters
+// GetFirstFilterByNameAndMimeType returns the first filter out of AvailableFilters
 // which has a matching name or alias and mime-type
 func GetFirstFilterByNameAndMimeType(name string, mimetype string) Filter {
 
