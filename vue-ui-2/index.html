@@ -109,6 +109,7 @@
                      data-bs-delay="15000">
                     <div class="toast-header">
                         <strong class="me-auto">Asset</strong>
+                        <button type="button" class="btn" @click="toggleToastPosition"><i class="bi bi-arrow-left-right"></i></button>
                         <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
                     </div>
                     <div class="toast-body">
@@ -297,6 +298,19 @@
                         }
                     });
             },
+
+            toggleToastPosition() {
+                const el = document.getElementById("toasts");
+                if(el) {
+                    if(el.classList.contains("end-0")) {
+                        el.classList.remove("end-0");
+                        el.classList.add("start-0")
+                    } else {
+                        el.classList.remove("start-0")
+                        el.classList.add("end-0");
+                    }
+                }
+            }
         },
 
         mounted() {
