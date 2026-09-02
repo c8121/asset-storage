@@ -37,6 +37,12 @@ export default {
                     </div>
                 </form>
             </div>
+            
+            <div class="mt-3" v-if="faces && faces.length">
+                <div v-for="face in faces">
+                    <div role="button" class="text-primary mt-3" @click="faceClick(face.Id)">{{ face.Id }}</div>
+                </div>
+            </div>
         </div>
     `,
 
@@ -59,13 +65,16 @@ export default {
                     { name: 'width', label: 'Width', value: 100 },
                     { name: 'height', label: 'Height', value: "" }
                 ]
-            }
+            },
+
+            faces: []
         }
     },
 
     watch: {
         value() {
             this.loadAsset();
+            this.loadFaces();
         }
     },
 
@@ -83,6 +92,21 @@ export default {
                 .then(res => res.json())
                 .then(json => {
                     self.asset = json;
+                });
+        },
+
+        loadFaces() {
+            const self = this;
+            if(!self.value || !self.value.Hash)
+                return;
+
+            const requestOptions = {
+                method: 'GET'
+            }
+            fetch('/faces/' + self.value.Hash, requestOptions)
+                .then(res => res.json())
+                .then(json => {
+                    self.faces = json;
                 });
         },
 
@@ -113,6 +137,10 @@ export default {
 
         pathClick(path) {
             this.$emit('componentEvent', 'assetPathClick', 'asset-view', path);
+        },
+
+        faceClick(faceId) {
+            this.$emit('componentEvent', 'assetFaceClick', 'asset-view', faceId);
         }
     },
 

@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/c8121/asset-storage/internal/config"
-	metadata_db "github.com/c8121/asset-storage/internal/metadata-db"
-	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata-db-entity"
+	"github.com/c8121/asset-storage/internal/metadata_db"
+	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
-	_ "modernc.org/sqlite"
+	_ "gosqlite.org" // Bundles modernc + sqlite-vec
 )
 
 func TestDb(t *testing.T) {

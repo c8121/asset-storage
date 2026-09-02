@@ -58,7 +58,7 @@ func AutoCreate(o AutoCreatable) {
 	queries := o.GetCreateQueries()
 	for _, query := range queries {
 		_, err := db.Exec(query)
-		util.PanicOnError(err, "Failed to init entity")
+		util.PanicOnError(err, "Failed to init entity: "+query)
 	}
 }
 

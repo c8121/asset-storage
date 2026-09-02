@@ -21,7 +21,7 @@ type AssetListFilter struct {
 	MimeType string
 	FileName string
 	PathName string
-	Face     string
+	Face     int64
 	Offset   int
 	Count    int
 }
@@ -55,6 +55,10 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 		}
 	}
 
+	return ListAssetsByIds(ids, filter.Offset, filter.Count)
+}
+
+func ListAssetsByIds(ids ScoredIdMap, offset int, count int) ([]AssetListItem, error) {
 	var query = "SELECT a.id, a.hash, m.name as mimeType, a.fileTime, f.name" +
 		" FROM asset a " +
 		" INNER JOIN mimeType m ON a.mimeType = m.id " +
@@ -64,12 +68,12 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 
 	if ids != nil {
 		sorted := ids.Sort()
-		endIdx := filter.Offset + filter.Count
+		endIdx := offset + count
 		if endIdx >= len(sorted) {
 			endIdx = len(sorted)
 		}
-		if filter.Offset < len(sorted) && endIdx > 0 {
-			slice := sorted[filter.Offset:endIdx]
+		if offset < len(sorted) && endIdx > 0 {
+			slice := sorted[offset:endIdx]
 			//fmt.Printf("Found %d (%d - %d) items\n", len(slice), filter.Offset, endIdx)
 			query += " WHERE a.id in(" +
 				strings.Repeat("?,", len(slice)-1) + "?" +
@@ -101,8 +105,8 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 	} else {
 		//Nothing filtered
 		query += "ORDER BY a.fileTime DESC, a.hash ASC LIMIT ? OFFSET ?;"
-		params = append(params, filter.Count)
-		params = append(params, filter.Offset)
+		params = append(params, count)
+		params = append(params, offset)
 
 		return loadAssetList(query, params...)
 	}

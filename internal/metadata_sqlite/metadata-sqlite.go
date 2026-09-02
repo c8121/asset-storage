@@ -10,7 +10,7 @@ import (
 	"github.com/c8121/asset-storage/internal/metadata_db"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
-	_ "modernc.org/sqlite"
+	_ "gosqlite.org" // Bundles modernc + sqlite-vec
 )
 
 // Open Connect to SQLite database file + init

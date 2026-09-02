@@ -1,53 +1,45 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"strings"
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/faces"
+	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/metadata_sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
 )
 
 func main() {
 
-	command := flag.String("command", "indentify", "Command, either 'identify' or 'similarity'")
-	threshold := flag.Float64("threshold", 0.45, "Minimun similariy threshold")
-
 	config.LoadDefault()
 	storage.CreateDirectories()
 
-	fmt.Printf("Command: %s\n", *command)
+	metadata_sqlite.Open()
+	defer metadata_sqlite.Close()
 
-	if strings.HasPrefix(*command, "i") {
+	handler := func(path string) {
+		hash := storage.HashFromStoragePath(path)
+		assetId := metadata_db_entity.GetAssetId(hash)
 
-		handler := func(path string) {
-			hash := storage.HashFromStoragePath(path)
-			faces, err := faces.GetFaces(hash)
-			if err != nil {
-				fmt.Printf("Cannot get faces from %s: %s\n", hash, err)
-			} else {
-				fmt.Printf("Found %d faces in %s\n", len(faces.Faces), hash)
+		facesFound, err := faces.GetFaces(hash)
+		if err != nil {
+			fmt.Printf("Cannot get faces from %s: %s\n", hash, err)
+		} else {
+			fmt.Printf("Found %d faces in %s\n", len(facesFound.Faces), hash)
+
+			for _, face := range facesFound.Faces {
+
+				fmt.Printf("  %s\n", face.Image)
+
+				err := metadata_db_entity.AddFace(assetId, &face)
+				if err != nil {
+					fmt.Printf("Cannot add face %s: %s\n", hash, err)
+				}
 			}
 		}
-
-		storage.Walk(handler)
-
-	} else if strings.HasPrefix(*command, "s") {
-
-		metadata_sqlite.Open()
-		defer metadata_sqlite.Close()
-
-		embeddings := faces.ReadEmbeddings(config.AssetFacesBaseDir)
-		fmt.Printf("Found %d embeddings\n", len(embeddings))
-
-		faces.CalculateSimilarity(embeddings, *threshold)
-		fmt.Printf("Checked %d embeddings\n", len(embeddings))
-
-	} else {
-		fmt.Printf("Unknown command: %s\n", *command)
 	}
+
+	storage.Walk(handler)
 
 }

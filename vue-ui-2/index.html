@@ -210,11 +210,23 @@
                         this.filterPath(path);
                         break;
                     }
+                    case 'assetFaceClick': {
+                        const faceId = arguments[2];
+                        this.listFilter.FileName = null;
+                        this.listFilter.MimeType = null;
+                        this.listFilter.PathId = null;
+                        this.listFilter.Face = faceId;
+                        this.pathIdFilter = null;
+                        this.$refs.listView.loadAssets();
+                        break;
+                        break;
+                    }
                     case 'pathItemClick': {
                         const path = arguments[2];
                         this.listFilter.FileName = null;
                         this.listFilter.MimeType = null;
                         this.listFilter.PathId = path.Id;
+                        this.listFilter.Face = null;
                         this.pathIdFilter = path.Name;
                         this.$refs.listView.loadAssets();
                         break;
@@ -265,6 +277,7 @@
                         self.listFilter.FileName = null;
                         self.listFilter.MimeType = null;
                         self.listFilter.PathId = json.Id;
+                        self.listFilter.Face = null;
                         self.pathIdFilter = path;
                         self.$refs.listView.loadAssets();
                     });
