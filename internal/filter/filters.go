@@ -73,6 +73,8 @@ func loadAvailableFilters() {
 				"(?i)^image/bmp$",
 				"(?i)^image/tiff$",
 				"(?i)^image/.*xcf$",
+				"(?i)^image/heic$",
+				"(?i)^image/avif$",
 				"(?i)photoshop",
 			},
 		},

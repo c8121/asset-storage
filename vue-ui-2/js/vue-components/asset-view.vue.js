@@ -8,7 +8,7 @@ export default {
                     <span class="text-secondary ps-3">{{ value.FileTime }}</span>
                 </div>
             </div>
-            <div v-if="asset && asset.Origins">
+            <div v-if="asset && asset.Origins" class="overflow-scroll" style="max-height: 40vh">
                 <div v-for="origin in asset.Origins">
                     <div class="text-primary mt-3 text-truncate" role="button" data-toggle="tooltip" data-placement="top" :title="origin.Path" @click="pathClick(origin.Path)">{{ origin.Path }}</div>
                     <div class="text-secondary">{{ origin.Owner }}</div>
@@ -38,15 +38,15 @@ export default {
                 </form>
             </div>
             
-            <div class="mt-3" v-if="asset && faces.length">
+            <div class="asset-faces mt-3" v-if="asset && faces.length">
                 <div v-for="face in faces" class="d-inline-flex">
                     <div role="button" class="text-primary mt-3" @click="faceClick(face.Id)">
-                        <img class="border border-2 rounded-5"
+                        <img 
                             :src="'/assets/cropped/' + asset.Hash + '/75/' 
-                            + face.X1 + '/'
-                            + face.Y1 + '/'
-                            + face.X2 + '/'
-                            + face.Y2" />
+                            + Math.max(face.X1 - Math.floor((face.X2 - face.X1) * 0.4), 0) + '/'
+                            + Math.max(face.Y1 - Math.floor((face.Y2 - face.Y1) * 0.4), 0)  + '/'
+                            + (face.X2 + Math.floor((face.X2 - face.X1) * 0.4)) + '/'
+                            + (face.Y2 + Math.floor((face.Y2 - face.Y1) * 0.4))" />
                     </div>
                 </div>
             </div>
