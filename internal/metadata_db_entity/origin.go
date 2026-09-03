@@ -2,6 +2,7 @@ package metadata_db_entity
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/c8121/asset-storage/internal/util"
@@ -26,6 +27,58 @@ func RemoveOriginsTx(tx *sql.Tx, asset *Asset) error {
 
 	_, err = stmt.Exec(asset.Id)
 	return err
+}
+
+func RemoveOriginsByAssetIdTx(tx *sql.Tx, assetId int64) error {
+
+	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ?;")
+	if err != nil {
+		return err
+	}
+	defer util.CloseOrLog(stmt)
+
+	_, err = stmt.Exec(assetId)
+	return err
+}
+
+func RemoveOriginsByAssetIdAndPathIdTx(tx *sql.Tx, assetId int64, pathId int64) error {
+
+	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ? AND path = ?;")
+	if err != nil {
+		return err
+	}
+	defer util.CloseOrLog(stmt)
+
+	_, err = stmt.Exec(assetId, pathId)
+	return err
+}
+
+func GetOriginsTx(tx *sql.Tx, assetId int64) (*[]Origin, error) {
+
+	stmt, err := tx.Prepare("SELECT id, asset, name, path, owner, fileTime FROM origin WHERE asset = ?;")
+	if err != nil {
+		return nil, err
+	}
+	defer util.CloseOrLog(stmt)
+
+	list := &[]Origin{}
+
+	if rows, err := stmt.Query(assetId); err == nil {
+		defer util.CloseOrLog(rows)
+		if rows.Next() {
+			var origin Origin
+			if err := origin.Scan(rows); err != nil {
+				fmt.Printf("Error scanning rows: %s\n", err)
+				return nil, err
+			}
+			*list = append(*list, origin)
+		}
+
+	} else {
+		return nil, err
+	}
+
+	return list, nil
 }
 
 func (o *Origin) GetId() int64 {

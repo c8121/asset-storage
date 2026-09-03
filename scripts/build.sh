@@ -10,6 +10,7 @@ echo Sources from $CMD_DIR
 mkdir -p $OUT_DIR
 
 go build -o $OUT_DIR/add $CMD_DIR/add/main.go
+go build -o $OUT_DIR/remove $CMD_DIR/remove/main.go
 go build -o $OUT_DIR/metadata-db-create $CMD_DIR/metadata_db_create/main.go
 go build -o $OUT_DIR/rest-server $CMD_DIR/rest_server/main.go
 go build -o $OUT_DIR/spa-server $CMD_DIR/spa_server/main.go

@@ -116,6 +116,90 @@ func GetAssetIdTx(tx *sql.Tx, hash string) int64 {
 	return asset.Id
 }
 
+// GetAssetHash gets hash from db
+func GetAssetHash(assetId int64) string {
+
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		fmt.Printf("Failed to begin transaction: %s\n", err)
+		return ""
+	}
+	defer util.RollbackOrLog(tx)
+
+	stmt, err := tx.Prepare("SELECT hash FROM asset WHERE id = ?;")
+	if err != nil {
+		fmt.Printf("Failed prepare statement: %s\n", err)
+		return ""
+	}
+	defer util.CloseOrLog(stmt)
+
+	if rows, err := stmt.Query(assetId); err == nil {
+		defer util.CloseOrLog(rows)
+		if rows.Next() {
+			var hash string
+			if err := rows.Scan(&hash); err != nil {
+				fmt.Printf("Error scanning rows: %s\n", err)
+				return ""
+			}
+			return hash
+		}
+	}
+
+	return ""
+}
+
+func RemoveMetaData(assetId int64, pathId int64) (int, error) {
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return 9999, err
+	}
+	defer util.RollbackOrLog(tx)
+
+	remainingOrigins, err := RemoveMetaDataTx(tx, assetId, pathId)
+	if err != nil {
+		return 9999, err
+	}
+
+	return remainingOrigins, util.CommitOrLog(tx)
+}
+
+func RemoveMetaDataTx(tx *sql.Tx, assetId int64, pathId int64) (int, error) {
+
+	if pathId > 0 {
+		if err := RemoveOriginsByAssetIdAndPathIdTx(tx, assetId, pathId); err != nil {
+			return 9999, err
+		}
+	} else {
+		if err := RemoveOriginsByAssetIdTx(tx, assetId); err != nil {
+			return 9999, err
+		}
+	}
+
+	remainingOrigins, err := GetOriginsTx(tx, assetId)
+	if err != nil {
+		return 9999, err
+	}
+	if len(*remainingOrigins) > 0 {
+		fmt.Printf("Keep asset, it has more origins: %d\n", assetId)
+		return len(*remainingOrigins), nil
+	}
+
+	stmt, err := tx.Prepare("DELETE FROM asset WHERE id=?;")
+	if err != nil {
+		return 9999, err
+	}
+	defer util.CloseOrLog(stmt)
+
+	_, err = stmt.Exec(assetId)
+	if err != nil {
+		return 9999, err
+	}
+
+	return 0, nil
+}
+
 func (a *Asset) GetId() int64 {
 	return a.Id
 }

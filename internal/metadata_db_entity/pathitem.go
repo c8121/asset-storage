@@ -125,6 +125,102 @@ func GetPathItemTx(tx *sql.Tx, path string, createIfNotExists bool) (*PathItem, 
 	return pathItem, nil
 }
 
+func GetAssetIdsFromPath(pathId int64) ([]int64, error) {
+
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer util.RollbackOrLog(tx)
+
+	list := make([]int64, 0)
+
+	stmt, err := tx.Prepare("SELECT DISTINCT asset FROM origin where path = ?;")
+	if err != nil {
+		return nil, err
+	}
+	defer util.CloseOrLog(stmt)
+
+	if rows, err := stmt.Query(pathId); err == nil {
+		defer util.CloseOrLog(rows)
+		for rows.Next() {
+			var assetId int64
+			if err := rows.Scan(&assetId); err != nil {
+				fmt.Printf("Error scanning rows: %s\n", err)
+				return nil, err
+			} else {
+				list = append(list, assetId)
+			}
+		}
+
+	} else {
+		return nil, err
+	}
+
+	return list, err
+
+}
+
+func RemovePathIfEmpty(pathId int64) error {
+
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer util.RollbackOrLog(tx)
+
+	cnt := countPathRefs(tx, pathId, "SELECT COUNT(*) FROM pathItem where parent = ?;")
+	if cnt > 0 {
+		fmt.Printf("Will not remove path %d, it has %d children\n", pathId, cnt)
+		return nil
+	}
+
+	cnt = countPathRefs(tx, pathId, "SELECT COUNT(*) FROM origin where path = ?;")
+	if cnt > 0 {
+		fmt.Printf("Will not remove path %d, it is referenced in %d origins\n", pathId, cnt)
+		return nil
+	}
+
+	fmt.Printf("Removing path %d\n", pathId)
+	stmt, err := tx.Prepare("DELETE FROM pathItem where id = ?;")
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(pathId)
+	if err != nil {
+		return err
+	}
+
+	return util.CommitOrLog(tx)
+}
+
+func countPathRefs(tx *sql.Tx, pathId int64, sql string) int64 {
+
+	stmt, err := tx.Prepare(sql)
+	if err != nil {
+		return 99999
+	}
+	defer util.CloseOrLog(stmt)
+
+	if rows, err := stmt.Query(pathId); err == nil {
+		defer util.CloseOrLog(rows)
+		if rows.Next() {
+			var count int64
+			if err := rows.Scan(&count); err != nil {
+				fmt.Printf("Error scanning rows: %s\n", err)
+				return 99999
+			}
+
+			return count
+		}
+	}
+
+	return 99999
+}
+
 func (p *PathItem) GetId() int64 {
 	return p.Id
 }

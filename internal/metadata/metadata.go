@@ -164,3 +164,13 @@ func GetMetaDataFilePath(assetHash string) string {
 		name)
 	return path
 }
+
+// RemoveMetaData deletes the metadata file
+func RemoveMetaData(assetHash string) error {
+	metaDataFile := GetMetaDataFilePath(assetHash)
+	if _, err := os.Stat(metaDataFile); err != nil {
+		return err
+	} else {
+		return os.Remove(metaDataFile)
+	}
+}

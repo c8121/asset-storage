@@ -177,6 +177,7 @@ func copyToStorage(reader io.Reader, size int64) (*AddedFileInfo, error) {
 	return info, nil
 }
 
+// Walk visits every asset (file) in storage and calls given handler function on it.
 func Walk(handler func(path string)) {
 
 	timePeriodDirs, err := os.ReadDir(config.AssetStorageBaseDir)
@@ -307,6 +308,16 @@ func Open(assetHash string) (StorageReader, error) {
 	}
 
 	return nil, os.ErrNotExist
+}
+
+// Remove deletes the asset (file)
+func Remove(assetHash string) error {
+
+	if path, err := FindByHash(assetHash); err == nil {
+		return os.Remove(path)
+	}
+
+	return os.ErrNotExist
 }
 
 // TimePeriodName Create a name corresponding to period in time (each 4 hours having same name)
