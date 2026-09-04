@@ -52,7 +52,7 @@ export default {
             </div>
             
             <div v-if="!faces.length">
-                <button @click="detectFaces" class="btn btn-sm btn-outline-secondary">
+                <button @click="detectFaces" class="btn btn-sm btn-link">
                     {{ detectFacesButtonCaption }}
                 </button>
             </div>

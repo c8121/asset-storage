@@ -58,6 +58,7 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 	return ListAssetsByIds(ids, filter.Offset, filter.Count)
 }
 
+// ListAssetsByIds creates a list of AssetListItem's, loaded by given ScoredIdMap
 func ListAssetsByIds(ids ScoredIdMap, offset int, count int) ([]AssetListItem, error) {
 	var query = "SELECT a.id, a.hash, m.name as mimeType, a.fileTime, f.name" +
 		" FROM asset a " +

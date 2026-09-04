@@ -47,7 +47,7 @@ func main() {
 		},
 
 		SftpHandlerCreator: func(username string) (*ssh_server.VirtualSftpHandler, error) {
-			root, err := createVirutalRootDir(username)
+			root, err := createVirtualRootDir(username)
 			if err != nil {
 				return nil, err
 			}
@@ -55,7 +55,7 @@ func main() {
 		},
 
 		RsyncHandlerCreator: func(username string) (*ssh_server.VirtualRsyncHandler, error) {
-			root, err := createVirutalRootDir(username)
+			root, err := createVirtualRootDir(username)
 			if err != nil {
 				return nil, err
 			}
@@ -67,7 +67,7 @@ func main() {
 }
 
 // create a home-/root-directory for the given user.
-func createVirutalRootDir(username string) (string, error) {
+func createVirtualRootDir(username string) (string, error) {
 	root := filepath.Join(config.AssetStorageTempDir, "virtual-users", username)
 	if err := os.MkdirAll(root, storage.FilePermissions); err != nil {
 		return "", err

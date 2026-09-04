@@ -17,7 +17,7 @@ func (w *XorWriter) Name() string {
 	return w.writer.Name()
 }
 
-// Write writes to wrapped writer, xor.ing all bytes
+// Write writes to wrapped writer, xor'ing all bytes
 func (w *XorWriter) Write(p []byte) (int, error) {
 	w.xor.Encode(p)
 	return w.writer.Write(p)

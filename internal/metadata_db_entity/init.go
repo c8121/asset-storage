@@ -2,7 +2,7 @@ package metadata_db_entity
 
 func AutoCreateEntities() {
 
-	var autoCreateables = []AutoCreatable{
+	var autoCreatables = []AutoCreatable{
 		&MimeType{},
 		&FileName{},
 		&PathItem{},
@@ -12,8 +12,8 @@ func AutoCreateEntities() {
 		&Collection{},
 		&FaceEmbedding{},
 	}
-	for _, autoCreateable := range autoCreateables {
-		AutoCreate(autoCreateable)
+	for _, autoCreatable := range autoCreatables {
+		AutoCreate(autoCreatable)
 	}
 
 }
