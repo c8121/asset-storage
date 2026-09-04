@@ -1,13 +1,12 @@
 package metadata_db
 
 import (
-	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/c8121/asset-storage/internal/collections"
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
 )
@@ -26,26 +25,24 @@ type CollectionListFilter struct {
 
 // AddCollection adds/updates collection-data in database
 func AddCollection(jsonCollection *collections.JsonCollection) error {
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
+	tx, err := metadata_db_conn.BeginTransaction()
 	if err != nil {
 		return err
 	}
-	defer util.RollbackOrLog(tx)
 
 	err = AddCollectionTx(tx, jsonCollection)
 	if err != nil {
 		return err
 	}
 
-	return util.CommitOrLog(tx)
+	return metadata_db_conn.CommitOrLog(tx)
 }
 
 // AddCollectionTx adds/updates collection-data in database
 func AddCollectionTx(tx *sql.Tx, jsonCollection *collections.JsonCollection) error {
 
 	var collection = &metadata_db_entity.Collection{Hash: jsonCollection.Hash}
-	err := metadata_db_entity.LoadTx(tx, collection)
+	err := metadata_db_entity.Load(tx, collection)
 	if !errors.Is(err, metadata_db_entity.ErrNotFound) && err != nil {
 		return err
 	}
@@ -55,7 +52,7 @@ func AddCollectionTx(tx *sql.Tx, jsonCollection *collections.JsonCollection) err
 		collection.Created = jsonCollection.Created
 	}
 
-	err = metadata_db_entity.SaveTx(tx, collection)
+	err = metadata_db_entity.Save(tx, collection)
 	if err != nil {
 		return err
 	}
@@ -80,8 +77,9 @@ func ListCollections(filter *CollectionListFilter) ([]CollectionListItem, error)
 // loadCollectionList queries the database
 func loadCollectionList(query string, params ...any) ([]CollectionListItem, error) {
 
-	fmt.Printf("Query: %s\n", query)
-	stmt, err := db.Prepare(query)
+	//fmt.Printf("Query: %s\n", query)
+
+	stmt, err := metadata_db_conn.GetDatabase().Prepare(query)
 	if err != nil {
 		return nil, err
 	}

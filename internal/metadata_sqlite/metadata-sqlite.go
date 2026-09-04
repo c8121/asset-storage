@@ -7,7 +7,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
-	"github.com/c8121/asset-storage/internal/metadata_db"
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
 	_ "gosqlite.org" // Bundles modernc + sqlite-vec
@@ -21,7 +21,7 @@ func Open() {
 
 	url := "file:" + config.AssetMetaDataDb +
 		"?_pragma=journal_mode(wal)" +
-		"&_pragma=busy_timeout(500)" +
+		"&_pragma=busy_timeout(2500)" +
 		"&_pragma=synchronous(normal)" +
 		"&_txlock=immediate"
 
@@ -29,12 +29,12 @@ func Open() {
 	db, err := sql.Open("sqlite", url)
 	util.PanicOnError(err, "Failed to open sqlite database: "+config.AssetMetaDataDb)
 
-	metadata_db.SetDatabase(db)
+	metadata_db_conn.SetDatabase(db)
 	metadata_db_entity.AutoCreateEntities()
 }
 
 // Close Disconnect from Database
 func Close() {
 	fmt.Printf("Close DB %s\n", config.AssetMetaDataDb)
-	metadata_db.CloseDatabase()
+	metadata_db_conn.CloseDatabase()
 }

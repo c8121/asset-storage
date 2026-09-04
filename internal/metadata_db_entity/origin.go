@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
@@ -86,15 +87,15 @@ func (o *Origin) GetId() int64 {
 }
 
 func (o *Origin) Load() error {
-	return Load(o)
+	return Load(metadata_db_conn.GetDatabase(), o)
 }
 
-func (o *Origin) Save() error {
-	return Save(o)
+func (o *Origin) Save(tx *sql.Tx) error {
+	return Save(tx, o)
 }
 
-func (o *Origin) Get(insertIfNotExists bool) error {
-	return Get(insertIfNotExists, o)
+func (o *Origin) Get(tx *sql.Tx, insertIfNotExists bool) error {
+	return Get(tx, insertIfNotExists, o)
 }
 
 func (o *Origin) GetSelectQuery() string {

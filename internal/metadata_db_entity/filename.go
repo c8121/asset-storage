@@ -1,12 +1,9 @@
 package metadata_db_entity
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
-
-	"github.com/c8121/asset-storage/internal/util"
 )
 
 type FileName struct {
@@ -14,8 +11,8 @@ type FileName struct {
 	Name string
 }
 
-func GetFileNameIdTx(tx *sql.Tx, name string, createIfNotExists bool) int64 {
-	fileName, err := GetFileNameTx(tx, name, createIfNotExists)
+func GetFileNameId(tx *sql.Tx, name string, createIfNotExists bool) int64 {
+	fileName, err := GetFileName(tx, name, createIfNotExists)
 	if err != nil {
 		fmt.Println(err)
 		return 0
@@ -23,33 +20,11 @@ func GetFileNameIdTx(tx *sql.Tx, name string, createIfNotExists bool) int64 {
 	return fileName.Id
 }
 
-// GetFileName gets GetFileName from db
-func GetFileName(name string, createIfNotExists bool) (*FileName, error) {
-
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer util.RollbackOrLog(tx)
-
-	fileName, err := GetFileNameTx(tx, name, createIfNotExists)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = util.CommitOrLog(tx); err != nil {
-		return nil, err
-	}
-
-	return fileName, nil
-}
-
-// GetFileNameTx gets FileName from db
-func GetFileNameTx(tx *sql.Tx, name string, createIfNotExists bool) (*FileName, error) {
+// GetFileName gets FileName from db
+func GetFileName(tx *sql.Tx, name string, createIfNotExists bool) (*FileName, error) {
 
 	var fileName = &FileName{Name: name}
-	err := GetTx(tx, createIfNotExists, fileName)
+	err := Get(tx, createIfNotExists, fileName)
 	if errors.Is(err, ErrNotFound) {
 		return nil, err
 	}
@@ -64,8 +39,8 @@ func (n *FileName) GetId() int64 {
 	return n.Id
 }
 
-func (n *FileName) Save() error {
-	return Save(n)
+func (n *FileName) Save(tx *sql.Tx) error {
+	return Save(tx, n)
 }
 
 func (n *FileName) GetSelectQuery() string {

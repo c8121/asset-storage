@@ -1,10 +1,10 @@
 package metadata_db_entity
 
 import (
-	"context"
 	"database/sql"
 	"strings"
 
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
@@ -31,9 +31,7 @@ func NormalizeName(name string) string {
 
 func ListMimeTypes() ([]MimeType, error) {
 
-	var query = "SELECT id, name FROM mimeType ORDER BY name, id;"
-
-	stmt, err := db.Prepare(query)
+	stmt, err := metadata_db_conn.GetDatabase().Prepare("SELECT id, name FROM mimeType ORDER BY name, id;")
 	if err != nil {
 		return nil, err
 	}
@@ -59,19 +57,17 @@ func ListMimeTypes() ([]MimeType, error) {
 }
 
 func GetMimeType(name string, createIfNotExists bool) (*MimeType, error) {
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
+	tx, err := metadata_db_conn.BeginTransaction()
 	if err != nil {
 		return nil, err
 	}
-	defer util.RollbackOrLog(tx)
 
 	mimeType, err := GetMimeTypeTx(tx, name, createIfNotExists)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = util.CommitOrLog(tx); err != nil {
+	if err = metadata_db_conn.CommitOrLog(tx); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +82,7 @@ func GetMimeTypeTx(tx *sql.Tx, name string, createIfNotExists bool) (*MimeType, 
 	}
 
 	mimeType = &MimeType{Name: name}
-	err := GetTx(tx, createIfNotExists, mimeType)
+	err := Get(tx, createIfNotExists, mimeType)
 	if err == nil {
 		mimeTypeCache[name] = mimeType
 	}
@@ -98,8 +94,8 @@ func (m *MimeType) GetId() int64 {
 	return m.Id
 }
 
-func (m *MimeType) Save() error {
-	return Save(m)
+func (m *MimeType) Save(tx *sql.Tx) error {
+	return Save(tx, m)
 }
 
 func (m *MimeType) GetSelectQuery() string {

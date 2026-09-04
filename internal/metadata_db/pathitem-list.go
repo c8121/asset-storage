@@ -1,6 +1,7 @@
 package metadata_db
 
 import (
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
 )
@@ -10,7 +11,7 @@ func ListPathItems(parentId int) ([]metadata_db_entity.PathItem, error) {
 	var query = "SELECT id, parent, name " +
 		" FROM pathItem WHERE parent = ? ORDER BY name, id asc LIMIT 9999;"
 
-	stmt, err := db.Prepare(query)
+	stmt, err := metadata_db_conn.GetDatabase().Prepare(query)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +41,7 @@ func GetPathItemByName(name string, parentId int) (*metadata_db_entity.PathItem,
 	var query = "SELECT id, parent, name " +
 		" FROM pathItem WHERE name = ? AND parent = ?;"
 
-	stmt, err := db.Prepare(query)
+	stmt, err := metadata_db_conn.GetDatabase().Prepare(query)
 	if err != nil {
 		return nil, err
 	}

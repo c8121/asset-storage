@@ -1,11 +1,8 @@
 package metadata_db_entity
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
-
-	"github.com/c8121/asset-storage/internal/util"
 )
 
 type Owner struct {
@@ -30,27 +27,6 @@ func GetOwnerIdTx(tx *sql.Tx, name string, createIfNotExists bool) int64 {
 	return owner.Id
 }
 
-func GetOwner(name string, createIfNotExists bool) (*Owner, error) {
-
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer util.RollbackOrLog(tx)
-
-	owner, err := GetOwnerTx(tx, name, createIfNotExists)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = util.CommitOrLog(tx); err != nil {
-		return nil, err
-	}
-
-	return owner, nil
-}
-
 func GetOwnerTx(tx *sql.Tx, name string, createIfNotExists bool) (*Owner, error) {
 
 	owner, ok := OwnerCache[name]
@@ -59,7 +35,7 @@ func GetOwnerTx(tx *sql.Tx, name string, createIfNotExists bool) (*Owner, error)
 	}
 
 	owner = &Owner{Name: name}
-	err := GetTx(tx, createIfNotExists, owner)
+	err := Get(tx, createIfNotExists, owner)
 	if err == nil {
 		OwnerCache[name] = owner
 	}
@@ -71,8 +47,8 @@ func (o *Owner) GetId() int64 {
 	return o.Id
 }
 
-func (o *Owner) Save() error {
-	return Save(o)
+func (o *Owner) Save(tx *sql.Tx) error {
+	return Save(tx, o)
 }
 
 func (o *Owner) GetSelectQuery() string {

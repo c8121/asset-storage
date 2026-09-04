@@ -1,30 +1,24 @@
 package metadata_db_entity
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
 var (
-	db *sql.DB
-
-	ErrNotIdentifyable = errors.New("not implementing WithId")
+	ErrNotIdentifiable = errors.New("not implementing WithId")
 	ErrNotFound        = errors.New("not found")
 	ErrNotSelectable   = errors.New("not a Selectable")
 	ErrNotInsertable   = errors.New("not a Insertable")
-	ErrNotUpdateable   = errors.New("not a Updateable")
+	ErrNotUpdatable    = errors.New("not a Updatable")
 )
 
-func SetDatabase(databse *sql.DB) {
-	db = databse
-}
-
-func GetDatabase() *sql.DB {
-	return db
+type StatementProvider interface {
+	Prepare(query string) (*sql.Stmt, error)
 }
 
 type WithId interface {
@@ -47,7 +41,7 @@ type Insertable interface {
 	SetId(int64)
 }
 
-type Updateable interface {
+type Updatable interface {
 	GetUpdateQuery() string
 	GetUpdateQueryArgs() []any
 	Exec(stmt *sql.Stmt) (sql.Result, error)
@@ -55,6 +49,7 @@ type Updateable interface {
 
 // AutoCreate executed DDL to create entity if not exists
 func AutoCreate(o AutoCreatable) {
+	db := metadata_db_conn.GetDatabase()
 	queries := o.GetCreateQueries()
 	for _, query := range queries {
 		_, err := db.Exec(query)
@@ -63,31 +58,14 @@ func AutoCreate(o AutoCreatable) {
 }
 
 // Get first tries to Load(...), then Insert(...) if insertIfNotExists = true
-func Get(insertIfNotExists bool, o Selectable) error {
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer util.RollbackOrLog(tx)
-
-	err = GetTx(tx, insertIfNotExists, o)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit()
-}
-
-// GetTx first tries to Load(...), then Insert(...) if insertIfNotExists = true
-func GetTx(tx *sql.Tx, insertIfNotExists bool, o any) error {
+func Get(tx *sql.Tx, insertIfNotExists bool, o any) error {
 
 	scanable, ok := o.(Selectable)
 	if !ok {
 		return ErrNotSelectable
 	}
 
-	err := LoadTx(tx, scanable)
+	err := Load(tx, scanable)
 	if errors.Is(err, ErrNotFound) {
 		if insertIfNotExists {
 
@@ -96,7 +74,7 @@ func GetTx(tx *sql.Tx, insertIfNotExists bool, o any) error {
 				return ErrNotInsertable
 			}
 
-			err = InsertTx(tx, insertable)
+			err = Insert(tx, insertable)
 			if err != nil {
 				return err
 			}
@@ -112,19 +90,7 @@ func GetTx(tx *sql.Tx, insertIfNotExists bool, o any) error {
 }
 
 // Load selects data from database and applies to given Selectable
-func Load(o Selectable) error {
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer util.CommitOrLog(tx)
-
-	return LoadTx(tx, o)
-}
-
-// LoadTx selects data from database and applies to given Selectable
-func LoadTx(tx *sql.Tx, o Selectable) error {
+func Load(tx StatementProvider, o Selectable) error {
 
 	if o == nil {
 		return errors.New("object is nil")
@@ -154,30 +120,12 @@ func LoadTx(tx *sql.Tx, o Selectable) error {
 	return nil
 }
 
-// Save check if object exists in database (GetId() != 0) and then does Insert or Update
-func Save(o any) error {
-
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer util.RollbackOrLog(tx)
-
-	err = SaveTx(tx, o)
-	if err != nil {
-		return err
-	}
-
-	return util.CommitOrLog(tx)
-}
-
-// Save checks it object exists in database (GetId() != 0) and then does Insert or Update
-func SaveTx(tx *sql.Tx, o any) error {
+// Save checks if object exists in database (GetId() != 0) and then does Insert or Update
+func Save(tx *sql.Tx, o any) error {
 
 	withId, ok := o.(WithId)
 	if !ok {
-		return ErrNotIdentifyable
+		return ErrNotIdentifiable
 	}
 
 	var err error
@@ -186,20 +134,20 @@ func SaveTx(tx *sql.Tx, o any) error {
 		if !ok {
 			return ErrNotInsertable
 		}
-		err = InsertTx(tx, insertable)
+		err = Insert(tx, insertable)
 	} else {
-		updateable, ok := o.(Updateable)
+		updatable, ok := o.(Updatable)
 		if !ok {
-			return ErrNotUpdateable
+			return ErrNotUpdatable
 		}
-		err = UpdateTx(tx, updateable)
+		err = Update(tx, updatable)
 	}
 
 	return err
 }
 
-// InsertTx creates new record in database with contents of given Insertable
-func InsertTx(tx *sql.Tx, o Insertable) error {
+// Insert creates new record in database with contents of given Insertable
+func Insert(tx *sql.Tx, o Insertable) error {
 
 	if o == nil {
 		return errors.New("object is nil")
@@ -226,7 +174,7 @@ func InsertTx(tx *sql.Tx, o Insertable) error {
 }
 
 // Insert updates an existing record in database with contents of given Insertable
-func UpdateTx(tx *sql.Tx, o Updateable) error {
+func Update(tx *sql.Tx, o Updatable) error {
 
 	if o == nil {
 		return errors.New("object is nil")

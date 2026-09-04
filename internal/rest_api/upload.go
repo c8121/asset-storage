@@ -10,6 +10,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
@@ -75,6 +76,12 @@ func AddUploadedFile(c *gin.Context) {
 		return
 	}
 
+	tx, err := metadata_db_conn.BeginTransaction()
+	if err != nil {
+		util.LogError(err)
+		tx = nil
+	}
+
 	var list = make([]metadata.JsonAssetMetaData, 0)
 
 	for _, info := range infos {
@@ -104,14 +111,19 @@ func AddUploadedFile(c *gin.Context) {
 			list = append(list, *meta)
 
 			//Create/Update meta-data-database
-			err = metadata_db_entity.AddMetaData(meta)
-			if err != nil {
-				fmt.Printf("Error adding meta-data to database '%s': %s\n", path, err)
+			if tx != nil {
+				err = metadata_db_entity.AddMetaData(tx, meta)
+				if err != nil {
+					fmt.Printf("Error adding meta-data to database '%s': %s\n", path, err)
+				}
 			}
 		}
 	}
 
 	util.LogError(os.Remove(path))
+	if tx != nil {
+		util.LogError(metadata_db_conn.CommitOrLog(tx))
+	}
 
 	c.JSON(http.StatusOK, list)
 }

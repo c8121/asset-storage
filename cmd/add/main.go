@@ -11,9 +11,11 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/metadata_sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 const (
@@ -112,7 +114,7 @@ func addFileAndMetadata(path string, stat os.FileInfo) error {
 	if config.CheckHashBeforeAdd {
 		hash, err := storage.HashFromContent(path)
 		if err != nil {
-			fmt.Printf("Error adding '%s': %s\n", path, err)
+			util.LogError(err)
 			return err
 		}
 		storagePath, err := storage.FindByHash(hash)
@@ -125,8 +127,14 @@ func addFileAndMetadata(path string, stat os.FileInfo) error {
 	//Add file to storage
 	infos, err := storage.AddFile(path)
 	if err != nil {
-		fmt.Printf("Error adding '%s': %s\n", path, err)
+		util.LogError(err)
 		return err
+	}
+
+	tx, err := metadata_db_conn.BeginTransaction()
+	if err != nil {
+		util.LogError(err)
+		tx = nil
 	}
 
 	for _, info := range infos {
@@ -145,11 +153,16 @@ func addFileAndMetadata(path string, stat os.FileInfo) error {
 			}
 
 			//Create/Update meta-data-database
-			err = metadata_db_entity.AddMetaData(meta)
-			if err != nil {
-				fmt.Printf("Error adding meta-data to database '%s': %s\n", path, err)
+			if tx != nil {
+				err = metadata_db_entity.AddMetaData(tx, meta)
+				if err != nil {
+					fmt.Printf("Error adding meta-data to database '%s': %s\n", path, err)
+				}
 			}
 		}
 	}
+
+	util.LogError(metadata_db_conn.CommitOrLog(tx))
+
 	return err
 }

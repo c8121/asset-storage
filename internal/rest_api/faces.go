@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/c8121/asset-storage/internal/faces"
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
@@ -20,14 +21,14 @@ func GetFaces(c *gin.Context) {
 		return
 	}
 
-	faces, err := metadata_db_entity.GetFaces(hash)
+	facesFound, err := metadata_db_entity.GetFaces(hash)
 	if err != nil {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("failed to get faces: %s", err)))
 		return
 	}
 
-	if len(*faces) > 0 {
-		c.IndentedJSON(http.StatusOK, faces)
+	if len(*facesFound) > 0 {
+		c.IndentedJSON(http.StatusOK, facesFound)
 	} else {
 		//https://github.com/gin-gonic/gin/issues/125 ?
 		c.Data(http.StatusOK, "application/json", []byte("[]"))
@@ -43,22 +44,34 @@ func DetectFaces(c *gin.Context) {
 		return
 	}
 
-	assetId := metadata_db_entity.GetAssetId(hash)
-	facesFound, err := faces.GetFaces(hash)
+	assetMeta, err := metadata_db_entity.GetMetaData(hash)
+	if err != nil {
+		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		return
+	}
+
+	facesFound, err := faces.DetectFaces(hash)
 	if err != nil {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 	} else {
 		fmt.Printf("Found %d faces in %s\n", len(*facesFound), hash)
 
-		if err = metadata_db_entity.RemoveFaces(assetId); err != nil {
+		tx, err := metadata_db_conn.BeginTransaction()
+		if err != nil {
+			util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+			return
+		}
+
+		if err = metadata_db_entity.RemoveFaces(tx, assetMeta.Id); err != nil {
 			util.LogError(err)
 		}
 
-		if list, err := metadata_db_entity.AddFaces(assetId, facesFound); err != nil {
+		if list, err := metadata_db_entity.AddFaces(tx, assetMeta.Id, facesFound); err != nil {
 			util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 		} else {
 			c.IndentedJSON(http.StatusOK, list)
 		}
-	}
 
+		util.LogError(metadata_db_conn.CommitOrLog(tx))
+	}
 }

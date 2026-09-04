@@ -38,8 +38,8 @@ func init() {
 	util.CreateDirIfNotExists(config.AssetFacesBaseDir, FilePermissions)
 }
 
-// GetFaces finds faces in image, returns ["name",...]
-func GetFaces(sourceHash string) (*[]RestApiFace, error) {
+// DetectFaces finds faces in image, returns ["name",...]
+func DetectFaces(sourceHash string) (*[]RestApiFace, error) {
 
 	faces, err := restExecExtractFaces(sourceHash)
 	if err != nil {

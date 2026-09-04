@@ -8,6 +8,7 @@ import (
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db"
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/metadata_sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
@@ -45,13 +46,13 @@ func main() {
 
 func removeAsset(hash string) {
 
-	assetId := metadata_db_entity.GetAssetId(hash)
-	if assetId == 0 {
-		fmt.Printf("Asset '%s' not found\n", hash)
+	assetMeta, err := metadata_db_entity.GetMetaData(hash)
+	if err != nil {
+		util.LogError(err)
 		return
 	}
 
-	fmt.Printf("Removing asset %s, id=%d\n", hash, assetId)
+	fmt.Printf("Removing asset %s, id=%d\n", hash, assetMeta.Id)
 
 	if !*force {
 		if !util.CliConfirm("Remove asset " + hash) {
@@ -59,21 +60,29 @@ func removeAsset(hash string) {
 		}
 	}
 
-	if err := metadata_db_entity.RemoveFaces(assetId); err != nil {
-		fmt.Printf("Error removing asset faces %s, id=%d: %s\n", hash, assetId, err)
+	tx, err := metadata_db_conn.BeginTransaction()
+	if err != nil {
+		util.LogError(err)
+		return
 	}
 
-	if _, err := metadata_db_entity.RemoveMetaData(assetId, 0); err != nil {
-		fmt.Printf("Error removing asset db-metadata %s, id=%d: %s\n", hash, assetId, err)
+	if err := metadata_db_entity.RemoveFaces(tx, assetMeta.Id); err != nil {
+		fmt.Printf("Error removing asset faces %s, id=%d: %s\n", hash, assetMeta.Id, err)
+	}
+
+	if _, err := metadata_db_entity.RemoveMetaData(tx, assetMeta.Id, 0); err != nil {
+		fmt.Printf("Error removing asset db-metadata %s, id=%d: %s\n", hash, assetMeta.Id, err)
 	}
 
 	if err := metadata.RemoveMetaData(hash); err != nil {
-		fmt.Printf("Error removing asset metadata %s, id=%d: %s\n", hash, assetId, err)
+		fmt.Printf("Error removing asset metadata %s, id=%d: %s\n", hash, assetMeta.Id, err)
 	}
 
 	if err := storage.Remove(hash); err != nil {
-		fmt.Printf("Error removing asset metadata %s, id=%d: %s\n", hash, assetId, err)
+		fmt.Printf("Error removing asset metadata %s, id=%d: %s\n", hash, assetMeta.Id, err)
 	}
+
+	util.LogError(metadata_db_conn.CommitOrLog(tx))
 }
 
 func removePath(path string) {
@@ -116,32 +125,42 @@ func removePathItem(pathItem *metadata_db_entity.PathItem) {
 		fmt.Printf("Error finding assets from path item '%s': %s\n", pathItem.Id, err.Error())
 	} else {
 		for _, assetId := range assetIds {
-			hash := metadata_db_entity.GetAssetHash(assetId)
-			if hash == "" {
-				fmt.Printf("Asset %d not found\n", assetId)
+
+			assetMeta, err := metadata_db_entity.GetMetaDataById(assetId)
+			if err != nil {
+				util.LogError(err)
+				continue
 			}
 
-			fmt.Printf("Removing asset '%s', id=%d\n", hash, assetId)
+			tx, err := metadata_db_conn.BeginTransaction()
+			if err != nil {
+				util.LogError(err)
+				return
+			}
 
-			remainingOrigins, err := metadata_db_entity.RemoveMetaData(assetId, pathItem.Id)
+			fmt.Printf("Removing asset '%s', id=%d\n", assetMeta.Hash, assetId)
+
+			remainingOrigins, err := metadata_db_entity.RemoveMetaData(tx, assetId, pathItem.Id)
 			if remainingOrigins > 0 {
-				fmt.Printf("Keep meta-data, it has remaining origins: hash=%s, id=%d, remains=%d\n", hash, assetId, remainingOrigins)
+				fmt.Printf("Keep meta-data, it has remaining origins: hash=%s, id=%d, remains=%d\n", assetMeta.Hash, assetId, remainingOrigins)
 			} else if err != nil {
-				fmt.Printf("Error removing asset db-metadata %s, id=%d: %s\n", hash, assetId, err)
+				fmt.Printf("Error removing asset db-metadata %s, id=%d: %s\n", assetMeta.Hash, assetId, err)
 			} else {
 
-				if err := metadata_db_entity.RemoveFaces(assetId); err != nil {
-					fmt.Printf("Error removing asset faces %s, id=%d: %s\n", hash, assetId, err)
+				if err := metadata_db_entity.RemoveFaces(tx, assetId); err != nil {
+					fmt.Printf("Error removing asset faces %s, id=%d: %s\n", assetMeta.Hash, assetId, err)
 				}
 
-				if err := metadata.RemoveMetaData(hash); err != nil {
-					fmt.Printf("Error removing asset metadata %s, id=%d: %s\n", hash, assetId, err)
+				if err := metadata.RemoveMetaData(assetMeta.Hash); err != nil {
+					fmt.Printf("Error removing asset metadata %s, id=%d: %s\n", assetMeta.Hash, assetId, err)
 				}
 
-				if err := storage.Remove(hash); err != nil {
-					fmt.Printf("Error removing asset metadata %s, id=%d: %s\n", hash, assetId, err)
+				if err := storage.Remove(assetMeta.Hash); err != nil {
+					fmt.Printf("Error removing asset metadata %s, id=%d: %s\n", assetMeta.Hash, assetId, err)
 				}
 			}
+
+			util.LogError(metadata_db_conn.CommitOrLog(tx))
 		}
 
 		if err = metadata_db_entity.RemovePathIfEmpty(pathItem.Id); err != nil {

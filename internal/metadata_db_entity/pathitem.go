@@ -1,12 +1,12 @@
 package metadata_db_entity
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
@@ -64,19 +64,17 @@ func SplitPath(path string) []string {
 // GetPathItem gets PathItem from db, splits path and searches
 func GetPathItem(path string, createIfNotExists bool) (*PathItem, error) {
 
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
+	tx, err := metadata_db_conn.BeginTransaction()
 	if err != nil {
 		return nil, err
 	}
-	defer util.RollbackOrLog(tx)
 
 	pathItem, err := GetPathItemTx(tx, path, createIfNotExists)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = util.CommitOrLog(tx); err != nil {
+	if err = metadata_db_conn.CommitOrLog(tx); err != nil {
 		return nil, err
 	}
 
@@ -106,7 +104,7 @@ func GetPathItemTx(tx *sql.Tx, path string, createIfNotExists bool) (*PathItem, 
 		cachedItem, ok := pathItemCache[cacheKey]
 		if !ok {
 			pathItem = &PathItem{Parent: parent, Name: name}
-			err := GetTx(tx, createIfNotExists, pathItem)
+			err := Get(tx, createIfNotExists, pathItem)
 			if errors.Is(err, ErrNotFound) {
 				return nil, err
 			}
@@ -127,16 +125,9 @@ func GetPathItemTx(tx *sql.Tx, path string, createIfNotExists bool) (*PathItem, 
 
 func GetAssetIdsFromPath(pathId int64) ([]int64, error) {
 
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer util.RollbackOrLog(tx)
-
 	list := make([]int64, 0)
 
-	stmt, err := tx.Prepare("SELECT DISTINCT asset FROM origin where path = ?;")
+	stmt, err := metadata_db_conn.GetDatabase().Prepare("SELECT DISTINCT asset FROM origin where path = ?;")
 	if err != nil {
 		return nil, err
 	}
@@ -164,12 +155,10 @@ func GetAssetIdsFromPath(pathId int64) ([]int64, error) {
 
 func RemovePathIfEmpty(pathId int64) error {
 
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
+	tx, err := metadata_db_conn.BeginTransaction()
 	if err != nil {
 		return err
 	}
-	defer util.RollbackOrLog(tx)
 
 	cnt := countPathRefs(tx, pathId, "SELECT COUNT(*) FROM pathItem where parent = ?;")
 	if cnt > 0 {
@@ -194,7 +183,7 @@ func RemovePathIfEmpty(pathId int64) error {
 		return err
 	}
 
-	return util.CommitOrLog(tx)
+	return metadata_db_conn.CommitOrLog(tx)
 }
 
 func countPathRefs(tx *sql.Tx, pathId int64, sql string) int64 {
@@ -225,8 +214,8 @@ func (p *PathItem) GetId() int64 {
 	return p.Id
 }
 
-func (p *PathItem) Save() error {
-	return Save(p)
+func (p *PathItem) Save(tx *sql.Tx) error {
+	return Save(tx, p)
 }
 
 func (p *PathItem) GetSelectQuery() string {

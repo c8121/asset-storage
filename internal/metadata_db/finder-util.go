@@ -3,12 +3,13 @@ package metadata_db
 import (
 	"fmt"
 
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
 func findAssetIds(calcScore func(id int64, match any, idMap *ScoredIdMap), query string, args ...any) (ScoredIdMap, error) {
 
-	stmt, err := db.Prepare(query)
+	stmt, err := metadata_db_conn.GetDatabase().Prepare(query)
 	if err != nil {
 		return nil, err
 	}

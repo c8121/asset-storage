@@ -1,13 +1,13 @@
 package metadata_db_entity
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/c8121/asset-storage/internal/metadata"
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
@@ -20,27 +20,10 @@ type Asset struct {
 }
 
 // AddMetaData adds/updates meta-data in database
-func AddMetaData(jsonMeta *metadata.JsonAssetMetaData) error {
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer util.RollbackOrLog(tx)
-
-	err = AddMetaDataTx(tx, jsonMeta)
-	if err != nil {
-		return err
-	}
-
-	return util.CommitOrLog(tx)
-}
-
-// AddMetaDataTx adds/updates meta-data in database
-func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
+func AddMetaData(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 
 	var asset = &Asset{Hash: jsonMeta.Hash}
-	err := LoadTx(tx, asset)
+	err := Load(tx, asset)
 	if !errors.Is(err, ErrNotFound) && err != nil {
 		return err
 	}
@@ -55,10 +38,10 @@ func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 	latestOrigin := metadata.GetLatestOrigin(jsonMeta)
 	if latestOrigin != nil {
 		asset.FileTime = latestOrigin.FileTime
-		asset.Name = GetFileNameIdTx(tx, latestOrigin.Name, true)
+		asset.Name = GetFileNameId(tx, latestOrigin.Name, true)
 	}
 
-	err = SaveTx(tx, asset)
+	err = Save(tx, asset)
 	if err != nil {
 		return err
 	}
@@ -72,12 +55,12 @@ func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 
 		var origin = &Origin{
 			Asset:    asset.Id,
-			Name:     GetFileNameIdTx(tx, jsonOrigin.Name, true),
+			Name:     GetFileNameId(tx, jsonOrigin.Name, true),
 			Path:     GetPathItemIdTx(tx, jsonOrigin.Path, true),
 			Owner:    GetOwnerIdTx(tx, jsonOrigin.Owner, true),
 			FileTime: jsonOrigin.FileTime,
 		}
-		err = SaveTx(tx, origin)
+		err = Save(tx, origin)
 		if err != nil {
 			return err
 		}
@@ -86,86 +69,46 @@ func AddMetaDataTx(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 	return nil
 }
 
-// GetAssetId gets Asset-ID from db
-func GetAssetId(hash string) int64 {
-
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		fmt.Printf("Failed to begin transaction: %s\n", err)
-		return 0
-	}
-	defer util.RollbackOrLog(tx)
+// GetMetaData loads metadata from database
+func GetMetaData(hash string) (*Asset, error) {
 
 	var asset = &Asset{Hash: hash}
-	err = LoadTx(tx, asset)
+	err := Load(metadata_db_conn.GetDatabase(), asset)
 	if !errors.Is(err, ErrNotFound) && err != nil {
-		fmt.Printf("Failed load asset id: %s\n", err)
-		return 0
+		fmt.Printf("Failed load asset: %s\n", err)
+		return nil, err
 	}
-	return asset.Id
+	return asset, nil
 }
 
-// GetAssetIdTx gets Asset-ID from db
-func GetAssetIdTx(tx *sql.Tx, hash string) int64 {
-	var asset = &Asset{Hash: hash}
-	err := LoadTx(tx, asset)
-	if !errors.Is(err, ErrNotFound) && err != nil {
-		return 0
-	}
-	return asset.Id
-}
+// GetMetaDataById loads metadata from database
+func GetMetaDataById(assetId int64) (*Asset, error) {
 
-// GetAssetHash gets hash from db
-func GetAssetHash(assetId int64) string {
-
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
+	stmt, err := metadata_db_conn.GetDatabase().Prepare("SELECT id, hash, mimeType, fileTime, name FROM asset WHERE id = ?;")
 	if err != nil {
-		fmt.Printf("Failed to begin transaction: %s\n", err)
-		return ""
-	}
-	defer util.RollbackOrLog(tx)
-
-	stmt, err := tx.Prepare("SELECT hash FROM asset WHERE id = ?;")
-	if err != nil {
-		fmt.Printf("Failed prepare statement: %s\n", err)
-		return ""
+		return nil, err
 	}
 	defer util.CloseOrLog(stmt)
 
 	if rows, err := stmt.Query(assetId); err == nil {
 		defer util.CloseOrLog(rows)
 		if rows.Next() {
-			var hash string
-			if err := rows.Scan(&hash); err != nil {
+			asset := Asset{}
+			if err := rows.Scan(&asset.Id, &asset.Hash, &asset.MimeType, &asset.FileTime, &asset.Name); err != nil {
 				fmt.Printf("Error scanning rows: %s\n", err)
-				return ""
+				return nil, err
 			}
-			return hash
+			return &asset, nil
 		}
-	}
 
-	return ""
+		return nil, ErrNotFound
+
+	} else {
+		return nil, err
+	}
 }
 
-func RemoveMetaData(assetId int64, pathId int64) (int, error) {
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return 9999, err
-	}
-	defer util.RollbackOrLog(tx)
-
-	remainingOrigins, err := RemoveMetaDataTx(tx, assetId, pathId)
-	if err != nil {
-		return 9999, err
-	}
-
-	return remainingOrigins, util.CommitOrLog(tx)
-}
-
-func RemoveMetaDataTx(tx *sql.Tx, assetId int64, pathId int64) (int, error) {
+func RemoveMetaData(tx *sql.Tx, assetId int64, pathId int64) (int, error) {
 
 	if pathId > 0 {
 		if err := RemoveOriginsByAssetIdAndPathIdTx(tx, assetId, pathId); err != nil {
@@ -205,15 +148,15 @@ func (a *Asset) GetId() int64 {
 }
 
 func (a *Asset) Load() error {
-	return Load(a)
+	return Load(metadata_db_conn.GetDatabase(), a)
 }
 
-func (a *Asset) Save() error {
-	return Save(a)
+func (a *Asset) Save(tx *sql.Tx) error {
+	return Save(tx, a)
 }
 
-func (a *Asset) Get(insertIfNotExists bool) error {
-	return Get(insertIfNotExists, a)
+func (a *Asset) Get(tx *sql.Tx, insertIfNotExists bool) error {
+	return Get(tx, insertIfNotExists, a)
 }
 
 func (a *Asset) GetSelectQuery() string {

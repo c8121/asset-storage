@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
@@ -125,8 +126,9 @@ func listToMap(items []AssetListItem) map[int64]AssetListItem {
 // loadAssetList queries the database
 func loadAssetList(query string, params ...any) ([]AssetListItem, error) {
 
-	fmt.Printf("Query: %s\n", query)
-	stmt, err := db.Prepare(query)
+	//fmt.Printf("Query: %s\n", query)
+
+	stmt, err := metadata_db_conn.GetDatabase().Prepare(query)
 	if err != nil {
 		return nil, err
 	}
