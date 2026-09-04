@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
@@ -26,37 +24,18 @@ func main() {
 	metadata_sqlite.Open()
 	defer metadata_sqlite.Close()
 
-	util.PanicOnError(readAllMetaData(config.AssetMetaDataBaseDir), "Failed to read meta-data directory")
-}
+	handler := func(path string) {
 
-// readAllMetaData recursively find JSON metadata and write to SQLite database
-func readAllMetaData(path string) error {
-
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		return err
-	}
-	for _, file := range entries {
-		filePath := filepath.Join(path, file.Name())
-		stat, statErr := os.Stat(filePath)
-		if statErr != nil {
-			return statErr
-		}
-		if stat.IsDir() {
-			if err = readAllMetaData(filePath); err != nil {
-				return err
+		if meta, err := metadata.LoadIfExists(path); err == nil {
+			if err = metadata_db_entity.AddMetaData(meta); err == nil {
+				fmt.Printf("Added '%s'\n", path)
+			} else {
+				util.LogError(err)
 			}
 		} else {
-			if meta, err := metadata.LoadIfExists(filePath); err == nil {
-				if err = metadata_db_entity.AddMetaData(meta); err != nil {
-					return err
-				} else {
-					fmt.Printf("Added '%s'\n", filePath)
-				}
-			} else {
-				return err
-			}
+			util.LogError(err)
 		}
 	}
-	return nil
+
+	metadata.Walk(handler)
 }

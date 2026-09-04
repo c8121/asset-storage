@@ -71,7 +71,7 @@ func LoadByHash(assetHash string) (*JsonAssetMetaData, error) {
 	return meta, err
 }
 
-// GetMetaDataFilePath returns the path and filename of a meta-data file.
+// GetMetaDataFilePath returns the path and filename of a metadata file.
 func GetMetaDataFilePath(assetHash string) string {
 	name := fmt.Sprintf("%s%s", assetHash[2:], ".json")
 	path := filepath.Join(
@@ -81,12 +81,30 @@ func GetMetaDataFilePath(assetHash string) string {
 	return path
 }
 
+// Walk visits every asset (file) in storage and calls given handler function on it.
+func Walk(handler func(path string)) {
+
+	children, err := os.ReadDir(config.AssetMetaDataBaseDir)
+	util.PanicOnError(err, "Failed to read directory")
+
+	for _, child := range children {
+		dir := filepath.Join(config.AssetMetaDataBaseDir, child.Name())
+		files, err := os.ReadDir(dir)
+		util.PanicOnError(err, "Failed to read directory")
+
+		for _, file := range files {
+			filePath := filepath.Join(dir, file.Name())
+			handler(filePath)
+		}
+	}
+}
+
 // RemoveMetaData deletes the metadata file
 func RemoveMetaData(assetHash string) error {
 	metaDataFile := GetMetaDataFilePath(assetHash)
 	if _, err := os.Stat(metaDataFile); err != nil {
 		return err
-	} else {
-		return os.Remove(metaDataFile)
 	}
+
+	return os.Remove(metaDataFile)
 }
