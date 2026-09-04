@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/c8121/asset-storage/internal/config"
+	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_sqlite"
 	"github.com/c8121/asset-storage/internal/ssh_server"
 	"github.com/c8121/asset-storage/internal/storage"
@@ -22,6 +23,7 @@ func main() {
 
 	config.LoadDefault()
 	storage.CreateDirectories()
+	metadata.CreateDirectories()
 
 	metadata_sqlite.Open()
 	defer metadata_sqlite.Close()

@@ -29,7 +29,7 @@ func main() {
 	util.PanicOnError(readAllMetaData(config.AssetMetaDataBaseDir), "Failed to read meta-data directory")
 }
 
-// readAllMetaData recursively find JSON meta-data an write to SQLite database
+// readAllMetaData recursively find JSON metadata and write to SQLite database
 func readAllMetaData(path string) error {
 
 	entries, err := os.ReadDir(path)

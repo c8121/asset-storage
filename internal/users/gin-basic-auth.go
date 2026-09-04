@@ -43,12 +43,13 @@ func AuthRequiredHandler(handlerFunc func(c *gin.Context)) func(c *gin.Context) 
 
 func AuthRequiredStaticFileHandler(filepath string) func(c *gin.Context) {
 
-	if !notifiedNoUsers {
-		notifiedNoUsers = true
-		util.AppNotifications.AddNotification("No users configured, granting all access")
-	}
-
 	if !HasUsers() {
+
+		if !notifiedNoUsers {
+			notifiedNoUsers = true
+			util.AppNotifications.AddNotification("No users configured, granting all access")
+		}
+
 		fmt.Printf("***WARN*** No users configured, granting all access to %s\n", filepath)
 		f := func(c *gin.Context) {
 			c.File(filepath)

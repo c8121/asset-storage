@@ -27,8 +27,8 @@ const (
 	FilePermissions = 0744
 )
 
-// Init creates required directories
-func Init() {
+// init creates required directories
+func init() {
 	util.CreateDirIfNotExists(config.AssetCollectionsBaseDir, FilePermissions)
 }
 

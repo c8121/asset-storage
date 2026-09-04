@@ -30,7 +30,6 @@ func main() {
 	}
 
 	config.LoadDefault()
-	storage.CreateDirectories()
 
 	metadata_sqlite.Open()
 	defer metadata_sqlite.Close()
