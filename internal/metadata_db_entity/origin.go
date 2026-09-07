@@ -109,7 +109,7 @@ func (o *Origin) SetId(id int64) {
 	o.Id = id
 }
 
-func (a *Origin) GetCreateQueries() []string {
+func (o *Origin) GetCreateQueries() []string {
 	return []string{
 		"CREATE TABLE IF NOT EXISTS origin(id integer PRIMARY KEY, asset INTEGER, name INTEGER, path INTEGER, owner INTEGER, fileTime DATETIME);",
 		"CREATE INDEX IF NOT EXISTS idx_origin_asset on origin(asset);",
