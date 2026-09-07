@@ -6,6 +6,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/collections"
 	"github.com/c8121/asset-storage/internal/metadata_db"
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 )
@@ -52,6 +53,12 @@ func AddCollection(c *gin.Context) {
 		return
 	}
 
+	tx, err := metadata_db_conn.BeginTransaction()
+	if err != nil {
+		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		return
+	}
+
 	collection, err := collections.AddCollection(req.Name, req.Description, req.Owner, req.AssetHashes)
 	if err != nil {
 		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash (not found)")))
@@ -59,10 +66,12 @@ func AddCollection(c *gin.Context) {
 	}
 
 	//Create/Update meta-data-database
-	err = metadata_db.AddCollection(collection)
+	err = metadata_db.AddCollection(tx, collection)
 	if err != nil {
-		fmt.Printf("Error adding collecton-data to database: %s\n", err)
+		fmt.Printf("Error adding collection-data to database: %s\n", err)
 	}
+
+	util.LogError(metadata_db_conn.CommitOrLog(tx))
 
 	c.IndentedJSON(http.StatusOK, collection)
 }

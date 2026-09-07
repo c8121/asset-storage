@@ -1,8 +1,10 @@
 package metadata_db_entity
 
+import "github.com/c8121/asset-storage/internal/db_entity"
+
 func AutoCreateEntities() {
 
-	var autoCreatables = []AutoCreatable{
+	var autoCreatables = []db_entity.AutoCreatable{
 		&MimeType{},
 		&FileName{},
 		&PathItem{},
@@ -13,7 +15,7 @@ func AutoCreateEntities() {
 		&FaceEmbedding{},
 	}
 	for _, autoCreatable := range autoCreatables {
-		AutoCreate(autoCreatable)
+		db_entity.AutoCreate(autoCreatable)
 	}
 
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/c8121/asset-storage/internal/collections"
+	"github.com/c8121/asset-storage/internal/db_entity"
 	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
@@ -24,26 +25,11 @@ type CollectionListFilter struct {
 }
 
 // AddCollection adds/updates collection-data in database
-func AddCollection(jsonCollection *collections.JsonCollection) error {
-	tx, err := metadata_db_conn.BeginTransaction()
-	if err != nil {
-		return err
-	}
+func AddCollection(tx *sql.Tx, jsonCollection *collections.JsonCollection) error {
 
-	err = AddCollectionTx(tx, jsonCollection)
-	if err != nil {
-		return err
-	}
-
-	return metadata_db_conn.CommitOrLog(tx)
-}
-
-// AddCollectionTx adds/updates collection-data in database
-func AddCollectionTx(tx *sql.Tx, jsonCollection *collections.JsonCollection) error {
-
-	var collection = &metadata_db_entity.Collection{Hash: jsonCollection.Hash}
-	err := metadata_db_entity.Load(tx, collection)
-	if !errors.Is(err, metadata_db_entity.ErrNotFound) && err != nil {
+	var collection = &metadata_db_entity.Collection{}
+	err := db_entity.Load(tx, collection, "hash", jsonCollection.Hash)
+	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
 		return err
 	}
 
@@ -52,7 +38,7 @@ func AddCollectionTx(tx *sql.Tx, jsonCollection *collections.JsonCollection) err
 		collection.Created = jsonCollection.Created
 	}
 
-	err = metadata_db_entity.Save(tx, collection)
+	err = db_entity.SaveEntity(tx, collection)
 	if err != nil {
 		return err
 	}

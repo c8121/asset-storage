@@ -34,7 +34,7 @@ func main() {
 		}
 
 		if meta, err := metadata.LoadIfExists(path); err == nil {
-			if err = metadata_db_entity.AddMetaData(tx, meta); err == nil {
+			if err = metadata_db_entity.AddAsset(tx, meta); err == nil {
 				fmt.Printf("Added '%s'\n", path)
 			} else {
 				util.LogError(err)

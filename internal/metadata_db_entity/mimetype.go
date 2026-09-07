@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"strings"
 
+	"github.com/c8121/asset-storage/internal/db_entity"
 	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
 )
@@ -56,33 +57,15 @@ func ListMimeTypes() ([]MimeType, error) {
 	return items, nil
 }
 
-func GetMimeType(name string, createIfNotExists bool) (*MimeType, error) {
-	tx, err := metadata_db_conn.BeginTransaction()
-	if err != nil {
-		return nil, err
-	}
-
-	mimeType, err := GetMimeTypeTx(tx, name, createIfNotExists)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = metadata_db_conn.CommitOrLog(tx); err != nil {
-		return nil, err
-	}
-
-	return mimeType, nil
-}
-
-func GetMimeTypeTx(tx *sql.Tx, name string, createIfNotExists bool) (*MimeType, error) {
+func LoadMimeType(tx *sql.Tx, name string, createIfNotExists bool) (*MimeType, error) {
 	name = NormalizeName(name)
 	mimeType, ok := mimeTypeCache[name]
 	if ok {
 		return mimeType, nil
 	}
 
-	mimeType = &MimeType{Name: name}
-	err := Get(tx, createIfNotExists, mimeType)
+	mimeType = &MimeType{}
+	err := db_entity.LoadEntity(tx, createIfNotExists, mimeType, "name", name)
 	if err == nil {
 		mimeTypeCache[name] = mimeType
 	}
@@ -94,16 +77,8 @@ func (m *MimeType) GetId() int64 {
 	return m.Id
 }
 
-func (m *MimeType) Save(tx *sql.Tx) error {
-	return Save(tx, m)
-}
-
-func (m *MimeType) GetSelectQuery() string {
-	return "SELECT id, name FROM mimeType WHERE name = ?;"
-}
-
-func (m *MimeType) GetSelectQueryArgs() []any {
-	return []any{m.Name}
+func (m *MimeType) GetSelectQuery(filterColumn string) string {
+	return "SELECT id, name FROM mimeType WHERE " + filterColumn + " = ?;"
 }
 
 func (m *MimeType) Scan(rows *sql.Rows) error {

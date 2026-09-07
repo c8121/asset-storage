@@ -2,10 +2,10 @@ package metadata_db_entity
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/c8121/asset-storage/internal/db_entity"
 	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
 )
@@ -61,38 +61,8 @@ func SplitPath(path string) []string {
 	return names
 }
 
-// GetPathItem gets PathItem from db, splits path and searches
-func GetPathItem(path string, createIfNotExists bool) (*PathItem, error) {
-
-	tx, err := metadata_db_conn.BeginTransaction()
-	if err != nil {
-		return nil, err
-	}
-
-	pathItem, err := GetPathItemTx(tx, path, createIfNotExists)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = metadata_db_conn.CommitOrLog(tx); err != nil {
-		return nil, err
-	}
-
-	return pathItem, nil
-}
-
-// GetPathItemIdTx gets PathItem-ID from db, splits path and searches
-func GetPathItemIdTx(tx *sql.Tx, path string, createIfNotExists bool) int64 {
-	pathItem, err := GetPathItemTx(tx, path, createIfNotExists)
-	if err != nil {
-		fmt.Println(err)
-		return 0
-	}
-	return pathItem.Id
-}
-
-// GetPathItemTx gets PathItem from db, splits path and searches
-func GetPathItemTx(tx *sql.Tx, path string, createIfNotExists bool) (*PathItem, error) {
+// LoadPathItem gets PathItem from db, splits path and searches
+func LoadPathItem(tx *sql.Tx, path string, createIfNotExists bool) (*PathItem, error) {
 
 	names := SplitPath(path)
 	var parent int64 = 0
@@ -104,10 +74,7 @@ func GetPathItemTx(tx *sql.Tx, path string, createIfNotExists bool) (*PathItem, 
 		cachedItem, ok := pathItemCache[cacheKey]
 		if !ok {
 			pathItem = &PathItem{Parent: parent, Name: name}
-			err := Get(tx, createIfNotExists, pathItem)
-			if errors.Is(err, ErrNotFound) {
-				return nil, err
-			}
+			err := db_entity.LoadEntity(tx, createIfNotExists, pathItem)
 			if err != nil {
 				return nil, err
 			}
@@ -215,7 +182,7 @@ func (p *PathItem) GetId() int64 {
 }
 
 func (p *PathItem) Save(tx *sql.Tx) error {
-	return Save(tx, p)
+	return db_entity.SaveEntity(tx, p)
 }
 
 func (p *PathItem) GetSelectQuery() string {

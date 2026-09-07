@@ -112,7 +112,7 @@ func AddUploadedFile(c *gin.Context) {
 
 			//Create/Update meta-data-database
 			if tx != nil {
-				err = metadata_db_entity.AddMetaData(tx, meta)
+				err = metadata_db_entity.AddAsset(tx, meta)
 				if err != nil {
 					fmt.Printf("Error adding meta-data to database '%s': %s\n", path, err)
 				}

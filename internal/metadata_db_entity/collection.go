@@ -3,8 +3,6 @@ package metadata_db_entity
 import (
 	"database/sql"
 	"time"
-
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 )
 
 type Collection struct {
@@ -18,24 +16,8 @@ func (c *Collection) GetId() int64 {
 	return c.Id
 }
 
-func (c *Collection) Load() error {
-	return Load(metadata_db_conn.GetDatabase(), c)
-}
-
-func (c *Collection) Save(tx *sql.Tx) error {
-	return Save(tx, c)
-}
-
-func (c *Collection) Get(tx *sql.Tx, insertIfNotExists bool) error {
-	return Get(tx, insertIfNotExists, c)
-}
-
-func (c *Collection) GetSelectQuery() string {
-	return "SELECT id, hash, name, created FROM collection WHERE hash = ?;"
-}
-
-func (c *Collection) GetSelectQueryArgs() []any {
-	return []any{c.Hash}
+func (c *Collection) GetSelectQuery(filterColumn string) string {
+	return "SELECT id, hash, name, created FROM collection WHERE " + filterColumn + " = ?;"
 }
 
 func (c *Collection) Scan(rows *sql.Rows) error {

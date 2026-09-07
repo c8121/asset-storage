@@ -46,7 +46,7 @@ func main() {
 
 func removeAsset(hash string) {
 
-	assetMeta, err := metadata_db_entity.GetMetaData(hash)
+	assetMeta, err := metadata_db_entity.LoadAsset(metadata_db_conn.GetDatabase(), hash)
 	if err != nil {
 		util.LogError(err)
 		return
@@ -70,7 +70,7 @@ func removeAsset(hash string) {
 		fmt.Printf("Error removing asset faces %s, id=%d: %s\n", hash, assetMeta.Id, err)
 	}
 
-	if _, err := metadata_db_entity.RemoveMetaData(tx, assetMeta.Id, 0); err != nil {
+	if _, err := metadata_db_entity.RemoveAsset(tx, assetMeta.Id, 0); err != nil {
 		fmt.Printf("Error removing asset db-metadata %s, id=%d: %s\n", hash, assetMeta.Id, err)
 	}
 
@@ -126,7 +126,7 @@ func removePathItem(pathItem *metadata_db_entity.PathItem) {
 	} else {
 		for _, assetId := range assetIds {
 
-			assetMeta, err := metadata_db_entity.GetMetaDataById(assetId)
+			assetMeta, err := metadata_db_entity.LoadAssetById(metadata_db_conn.GetDatabase(), assetId)
 			if err != nil {
 				util.LogError(err)
 				continue
@@ -140,7 +140,7 @@ func removePathItem(pathItem *metadata_db_entity.PathItem) {
 
 			fmt.Printf("Removing asset '%s', id=%d\n", assetMeta.Hash, assetId)
 
-			remainingOrigins, err := metadata_db_entity.RemoveMetaData(tx, assetId, pathItem.Id)
+			remainingOrigins, err := metadata_db_entity.RemoveAsset(tx, assetId, pathItem.Id)
 			if remainingOrigins > 0 {
 				fmt.Printf("Keep meta-data, it has remaining origins: hash=%s, id=%d, remains=%d\n", assetMeta.Hash, assetId, remainingOrigins)
 			} else if err != nil {

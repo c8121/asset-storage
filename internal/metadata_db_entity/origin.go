@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
@@ -18,43 +17,7 @@ type Origin struct {
 	FileTime time.Time
 }
 
-func RemoveOriginsTx(tx *sql.Tx, asset *Asset) error {
-
-	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ?;")
-	if err != nil {
-		return err
-	}
-	defer util.CloseOrLog(stmt)
-
-	_, err = stmt.Exec(asset.Id)
-	return err
-}
-
-func RemoveOriginsByAssetIdTx(tx *sql.Tx, assetId int64) error {
-
-	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ?;")
-	if err != nil {
-		return err
-	}
-	defer util.CloseOrLog(stmt)
-
-	_, err = stmt.Exec(assetId)
-	return err
-}
-
-func RemoveOriginsByAssetIdAndPathIdTx(tx *sql.Tx, assetId int64, pathId int64) error {
-
-	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ? AND path = ?;")
-	if err != nil {
-		return err
-	}
-	defer util.CloseOrLog(stmt)
-
-	_, err = stmt.Exec(assetId, pathId)
-	return err
-}
-
-func GetOriginsTx(tx *sql.Tx, assetId int64) (*[]Origin, error) {
+func LoadOriginsByAssetId(tx *sql.Tx, assetId int64) (*[]Origin, error) {
 
 	stmt, err := tx.Prepare("SELECT id, asset, name, path, owner, fileTime FROM origin WHERE asset = ?;")
 	if err != nil {
@@ -82,28 +45,40 @@ func GetOriginsTx(tx *sql.Tx, assetId int64) (*[]Origin, error) {
 	return list, nil
 }
 
-func (o *Origin) GetId() int64 {
-	return o.Id
+func RemoveOrigins(tx *sql.Tx, asset *Asset) error {
+
+	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ?;")
+	if err != nil {
+		return err
+	}
+	defer util.CloseOrLog(stmt)
+
+	_, err = stmt.Exec(asset.Id)
+	return err
 }
 
-func (o *Origin) Load() error {
-	return Load(metadata_db_conn.GetDatabase(), o)
+func RemoveOriginsByAssetId(tx *sql.Tx, assetId int64) error {
+
+	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ?;")
+	if err != nil {
+		return err
+	}
+	defer util.CloseOrLog(stmt)
+
+	_, err = stmt.Exec(assetId)
+	return err
 }
 
-func (o *Origin) Save(tx *sql.Tx) error {
-	return Save(tx, o)
-}
+func RemoveOriginsByAssetIdAndPathId(tx *sql.Tx, assetId int64, pathId int64) error {
 
-func (o *Origin) Get(tx *sql.Tx, insertIfNotExists bool) error {
-	return Get(tx, insertIfNotExists, o)
-}
+	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ? AND path = ?;")
+	if err != nil {
+		return err
+	}
+	defer util.CloseOrLog(stmt)
 
-func (o *Origin) GetSelectQuery() string {
-	return "SELECT id, asset, name, path, owner, fileTime FROM origin WHERE id = ?;"
-}
-
-func (o *Origin) GetSelectQueryArgs() []any {
-	return []any{o.Id}
+	_, err = stmt.Exec(assetId, pathId)
+	return err
 }
 
 func (o *Origin) Scan(rows *sql.Rows) error {

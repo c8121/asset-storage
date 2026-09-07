@@ -31,7 +31,7 @@ func main() {
 			return
 		}
 
-		assetMeta, err := metadata_db_entity.GetMetaData(hash)
+		assetMeta, err := metadata_db_entity.LoadAsset(metadata_db_conn.GetDatabase(), hash)
 		if err != nil {
 			util.LogError(err)
 			return

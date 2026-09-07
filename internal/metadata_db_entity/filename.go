@@ -2,8 +2,8 @@ package metadata_db_entity
 
 import (
 	"database/sql"
-	"errors"
-	"fmt"
+
+	"github.com/c8121/asset-storage/internal/db_entity"
 )
 
 type FileName struct {
@@ -11,23 +11,11 @@ type FileName struct {
 	Name string
 }
 
-func GetFileNameId(tx *sql.Tx, name string, createIfNotExists bool) int64 {
-	fileName, err := GetFileName(tx, name, createIfNotExists)
-	if err != nil {
-		fmt.Println(err)
-		return 0
-	}
-	return fileName.Id
-}
-
-// GetFileName gets FileName from db
-func GetFileName(tx *sql.Tx, name string, createIfNotExists bool) (*FileName, error) {
+// LoadFileName gets FileName from db, created it required
+func LoadFileName(tx *sql.Tx, name string, createIfNotExists bool) (*FileName, error) {
 
 	var fileName = &FileName{Name: name}
-	err := Get(tx, createIfNotExists, fileName)
-	if errors.Is(err, ErrNotFound) {
-		return nil, err
-	}
+	err := db_entity.LoadEntity(tx, createIfNotExists, fileName, "name", fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -39,16 +27,8 @@ func (n *FileName) GetId() int64 {
 	return n.Id
 }
 
-func (n *FileName) Save(tx *sql.Tx) error {
-	return Save(tx, n)
-}
-
-func (n *FileName) GetSelectQuery() string {
-	return "SELECT id, name FROM fileName WHERE name = ?;"
-}
-
-func (n *FileName) GetSelectQueryArgs() []any {
-	return []any{n.Name}
+func (n *FileName) GetSelectQuery(filterColumn string) string {
+	return "SELECT id, name FROM fileName WHERE " + filterColumn + " = ?;"
 }
 
 func (n *FileName) Scan(rows *sql.Rows) error {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/c8121/asset-storage/internal/db_entity"
 	"github.com/c8121/asset-storage/internal/faces"
 	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
@@ -49,7 +50,7 @@ func AddFace(tx *sql.Tx, assetId int64, face *faces.RestApiFace) (*FaceEmbedding
 		Embedding: face.Embedding,
 	}
 
-	err := Insert(tx, faceEmbedding)
+	err := db_entity.Insert(tx, faceEmbedding)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +74,7 @@ func RemoveFaces(tx *sql.Tx, assetId int64) error {
 // Loads FaceEmbedding-Struct without FaceEmbedding.Embedding (use GetFaceEmbedding to load that)
 func GetFaces(hash string) (*[]FaceEmbedding, error) {
 
-	assetMeta, err := GetMetaData(hash)
+	assetMeta, err := LoadAsset(metadata_db_conn.GetDatabase(), hash)
 	if err != nil {
 		return nil, err
 	}
@@ -183,26 +184,6 @@ func FindSimilarFacesByEmbedding(embedding *[]float32, max int) (*[]FaceEmbeddin
 
 	}
 	return list, nil
-}
-
-func (f *FaceEmbedding) GetId() int64 {
-	return f.Id
-}
-
-func (f *FaceEmbedding) Save(tx *sql.Tx) error {
-	return Save(tx, f)
-}
-
-func (f *FaceEmbedding) GetSelectQuery() string {
-	return "SELECT id, assetId FROM faces WHERE id = ?;"
-}
-
-func (f *FaceEmbedding) GetSelectQueryArgs() []any {
-	return []any{f.Id}
-}
-
-func (f *FaceEmbedding) Scan(rows *sql.Rows) error {
-	return rows.Scan(&f.Id, &f.AssetId)
 }
 
 func (f *FaceEmbedding) GetInsertQuery() string {

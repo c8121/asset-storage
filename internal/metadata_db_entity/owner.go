@@ -2,7 +2,8 @@ package metadata_db_entity
 
 import (
 	"database/sql"
-	"fmt"
+
+	"github.com/c8121/asset-storage/internal/db_entity"
 )
 
 type Owner struct {
@@ -18,16 +19,7 @@ func init() {
 	OwnerCache = make(map[string]*Owner)
 }
 
-func GetOwnerIdTx(tx *sql.Tx, name string, createIfNotExists bool) int64 {
-	owner, err := GetOwnerTx(tx, name, createIfNotExists)
-	if err != nil {
-		fmt.Println(err)
-		return 0
-	}
-	return owner.Id
-}
-
-func GetOwnerTx(tx *sql.Tx, name string, createIfNotExists bool) (*Owner, error) {
+func LoadOwner(tx *sql.Tx, name string, createIfNotExists bool) (*Owner, error) {
 
 	owner, ok := OwnerCache[name]
 	if ok {
@@ -35,7 +27,7 @@ func GetOwnerTx(tx *sql.Tx, name string, createIfNotExists bool) (*Owner, error)
 	}
 
 	owner = &Owner{Name: name}
-	err := Get(tx, createIfNotExists, owner)
+	err := db_entity.LoadEntity(tx, createIfNotExists, owner, "name", name)
 	if err == nil {
 		OwnerCache[name] = owner
 	}
@@ -47,16 +39,8 @@ func (o *Owner) GetId() int64 {
 	return o.Id
 }
 
-func (o *Owner) Save(tx *sql.Tx) error {
-	return Save(tx, o)
-}
-
-func (o *Owner) GetSelectQuery() string {
-	return "SELECT id, name FROM owner WHERE name = ?;"
-}
-
-func (o *Owner) GetSelectQueryArgs() []any {
-	return []any{o.Name}
+func (o *Owner) GetSelectQuery(filterColumn string) string {
+	return "SELECT id, name FROM owner WHERE " + filterColumn + " = ?;"
 }
 
 func (o *Owner) Scan(rows *sql.Rows) error {
