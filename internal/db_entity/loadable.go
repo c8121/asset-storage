@@ -31,6 +31,7 @@ func Load(tx StatementProvider, o Loadable) error {
 
 	stmt, err := tx.Prepare(o.GetSelectQuery())
 	if err != nil {
+		fmt.Printf("Failed to prepare statement: %s\n", o.GetSelectQuery())
 		return err
 	}
 	defer util.CloseOrLog(stmt)

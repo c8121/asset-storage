@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/c8121/asset-storage/internal/db_entity"
@@ -74,8 +73,8 @@ func AddAsset(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 		var origin = &Origin{
 			Asset:    asset.Id,
 			Name:     getFileNameId(tx, jsonOrigin.Name),
-			Path:     GetPathItemIdTx(tx, jsonOrigin.Path, true),
-			Owner:    GetOwnerIdTx(tx, jsonOrigin.Owner, true),
+			Path:     getPathItemId(tx, jsonOrigin.Path),
+			Owner:    getOwnerId(tx, jsonOrigin.Owner),
 			FileTime: jsonOrigin.FileTime,
 		}
 		err = db_entity.SaveEntity(tx, origin)
@@ -98,6 +97,32 @@ func getFileNameId(tx *sql.Tx, name string) int64 {
 		return 0
 	}
 	return fileName.Id
+}
+
+func getPathItemId(tx *sql.Tx, path string) int64 {
+	pathItem, err := LoadPathItem(tx, path, true)
+	if err != nil {
+		util.LogError(err)
+		return 0
+	}
+	if pathItem == nil {
+		util.LogError(errors.New("path not found"))
+		return 0
+	}
+	return pathItem.Id
+}
+
+func getOwnerId(tx *sql.Tx, name string) int64 {
+	owner, err := LoadOwner(tx, name, true)
+	if err != nil {
+		util.LogError(err)
+		return 0
+	}
+	if owner == nil {
+		util.LogError(errors.New("path not found"))
+		return 0
+	}
+	return owner.Id
 }
 
 func RemoveAsset(tx *sql.Tx, assetId int64, pathId int64) (int, error) {
@@ -143,13 +168,15 @@ func (a *Asset) GetSelectQuery() string {
 	query := "SELECT id, hash, mimeType, fileTime, name FROM asset"
 	where := ""
 	if a.Hash != "" {
-		where = strings.Join([]string{where, "hash = ?"}, " AND ")
+		where = util.JoinStrings(" AND ", where, "hash = ?")
 	}
 	if a.Id != 0 {
-		where = strings.Join([]string{where, "id = ?"}, " AND ")
+		where = util.JoinStrings(" AND ", where, "id = ?")
 	}
 	if where != "" {
 		query = query + " WHERE " + where
+	} else {
+		fmt.Printf("Warn: No filter defined for asset\n")
 	}
 	return query
 }
@@ -160,13 +187,9 @@ func (a *Asset) GetSelectQueryArgs() []any {
 		args = append(args, a.Hash)
 	}
 	if a.Id != 0 {
-		args = append(args, a.Hash)
+		args = append(args, a.Id)
 	}
 	return args
-}
-
-func (a *Asset) Get() {
-
 }
 
 func (a *Asset) Scan(rows *sql.Rows) error {

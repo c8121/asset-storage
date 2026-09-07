@@ -2,8 +2,10 @@ package metadata_db_entity
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/c8121/asset-storage/internal/db_entity"
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 type FileName struct {
@@ -15,7 +17,7 @@ type FileName struct {
 func LoadFileName(tx *sql.Tx, name string, createIfNotExists bool) (*FileName, error) {
 
 	var fileName = &FileName{Name: name}
-	err := db_entity.LoadEntity(tx, createIfNotExists, fileName, "name", fileName)
+	err := db_entity.LoadEntity(tx, createIfNotExists, fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -27,8 +29,32 @@ func (n *FileName) GetId() int64 {
 	return n.Id
 }
 
-func (n *FileName) GetSelectQuery(filterColumn string) string {
-	return "SELECT id, name FROM fileName WHERE " + filterColumn + " = ?;"
+func (n *FileName) GetSelectQuery() string {
+	query := "SELECT id, name FROM fileName"
+	where := ""
+	if n.Name != "" {
+		where = util.JoinStrings(" AND ", where, "name = ?")
+	}
+	if n.Id != 0 {
+		where = util.JoinStrings(" AND ", where, "id = ?")
+	}
+	if where != "" {
+		query = query + " WHERE " + where
+	} else {
+		fmt.Printf("Warn: No filter defined for filename\n")
+	}
+	return query
+}
+
+func (n *FileName) GetSelectQueryArgs() []any {
+	args := make([]any, 0)
+	if n.Name != "" {
+		args = append(args, n.Name)
+	}
+	if n.Id != 0 {
+		args = append(args, n.Id)
+	}
+	return args
 }
 
 func (n *FileName) Scan(rows *sql.Rows) error {

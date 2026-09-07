@@ -2,8 +2,10 @@ package metadata_db_entity
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/c8121/asset-storage/internal/db_entity"
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 type Owner struct {
@@ -27,7 +29,7 @@ func LoadOwner(tx *sql.Tx, name string, createIfNotExists bool) (*Owner, error) 
 	}
 
 	owner = &Owner{Name: name}
-	err := db_entity.LoadEntity(tx, createIfNotExists, owner, "name", name)
+	err := db_entity.LoadEntity(tx, createIfNotExists, owner)
 	if err == nil {
 		OwnerCache[name] = owner
 	}
@@ -39,8 +41,32 @@ func (o *Owner) GetId() int64 {
 	return o.Id
 }
 
-func (o *Owner) GetSelectQuery(filterColumn string) string {
-	return "SELECT id, name FROM owner WHERE " + filterColumn + " = ?;"
+func (o *Owner) GetSelectQuery() string {
+	query := "SELECT id, name FROM owner"
+	where := ""
+	if o.Name != "" {
+		where = util.JoinStrings(" AND ", where, "name = ?")
+	}
+	if o.Id != 0 {
+		where = util.JoinStrings(" AND ", where, "id = ?")
+	}
+	if where != "" {
+		query = query + " WHERE " + where
+	} else {
+		fmt.Printf("Warn: No filter defined for owner\n")
+	}
+	return query
+}
+
+func (o *Owner) GetSelectQueryArgs() []any {
+	args := make([]any, 0)
+	if o.Name != "" {
+		args = append(args, o.Name)
+	}
+	if o.Id != 0 {
+		args = append(args, o.Id)
+	}
+	return args
 }
 
 func (o *Owner) Scan(rows *sql.Rows) error {

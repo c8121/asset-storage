@@ -2,6 +2,7 @@ package metadata_db_entity
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 
 	"github.com/c8121/asset-storage/internal/db_entity"
@@ -64,8 +65,8 @@ func LoadMimeType(tx *sql.Tx, name string, createIfNotExists bool) (*MimeType, e
 		return mimeType, nil
 	}
 
-	mimeType = &MimeType{}
-	err := db_entity.LoadEntity(tx, createIfNotExists, mimeType, "name", name)
+	mimeType = &MimeType{Name: name}
+	err := db_entity.LoadEntity(tx, createIfNotExists, mimeType)
 	if err == nil {
 		mimeTypeCache[name] = mimeType
 	}
@@ -77,8 +78,32 @@ func (m *MimeType) GetId() int64 {
 	return m.Id
 }
 
-func (m *MimeType) GetSelectQuery(filterColumn string) string {
-	return "SELECT id, name FROM mimeType WHERE " + filterColumn + " = ?;"
+func (m *MimeType) GetSelectQuery() string {
+	query := "SELECT id, name FROM mimeType"
+	where := ""
+	if m.Name != "" {
+		where = util.JoinStrings(" AND ", where, "name = ?")
+	}
+	if m.Id != 0 {
+		where = util.JoinStrings(" AND ", where, "id = ?")
+	}
+	if where != "" {
+		query = query + " WHERE " + where
+	} else {
+		fmt.Printf("Warn: No filter defined for mimetype\n")
+	}
+	return query
+}
+
+func (m *MimeType) GetSelectQueryArgs() []any {
+	args := make([]any, 0)
+	if m.Name != "" {
+		args = append(args, m.Name)
+	}
+	if m.Id != 0 {
+		args = append(args, m.Id)
+	}
+	return args
 }
 
 func (m *MimeType) Scan(rows *sql.Rows) error {

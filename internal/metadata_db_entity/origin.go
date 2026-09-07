@@ -81,6 +81,10 @@ func RemoveOriginsByAssetIdAndPathId(tx *sql.Tx, assetId int64, pathId int64) er
 	return err
 }
 
+func (o *Origin) GetId() int64 {
+	return o.Id
+}
+
 func (o *Origin) Scan(rows *sql.Rows) error {
 	return rows.Scan(&o.Id, &o.Asset, &o.Name, &o.Path, &o.Owner, &o.FileTime)
 }

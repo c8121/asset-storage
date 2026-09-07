@@ -181,16 +181,38 @@ func (p *PathItem) GetId() int64 {
 	return p.Id
 }
 
-func (p *PathItem) Save(tx *sql.Tx) error {
-	return db_entity.SaveEntity(tx, p)
-}
-
 func (p *PathItem) GetSelectQuery() string {
-	return "SELECT id, parent, name FROM pathItem WHERE parent = ? and name = ?;"
+	query := "SELECT id, parent, name FROM pathItem"
+	where := ""
+	if p.Name != "" {
+		where = util.JoinStrings(" AND ", where, "name = ?")
+	}
+	if p.Parent != 0 {
+		where = util.JoinStrings(" AND ", where, "parent = ?")
+	}
+	if p.Id != 0 {
+		where = util.JoinStrings(" AND ", where, "id = ?")
+	}
+	if where != "" {
+		query = query + " WHERE " + where
+	} else {
+		fmt.Printf("Warn: No filter defined for path-item\n")
+	}
+	return query
 }
 
 func (p *PathItem) GetSelectQueryArgs() []any {
-	return []any{p.Parent, p.Name}
+	args := make([]any, 0)
+	if p.Name != "" {
+		args = append(args, p.Name)
+	}
+	if p.Parent != 0 {
+		args = append(args, p.Parent)
+	}
+	if p.Id != 0 {
+		args = append(args, p.Id)
+	}
+	return args
 }
 
 func (p *PathItem) Scan(rows *sql.Rows) error {

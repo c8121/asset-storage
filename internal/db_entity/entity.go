@@ -3,6 +3,7 @@ package db_entity
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 var (
@@ -53,6 +54,7 @@ func SaveEntity(tx *sql.Tx, o any) error {
 
 	withId, ok := o.(WithId)
 	if !ok {
+		fmt.Printf("Not implementing WithId: %T\n", o)
 		return ErrNotIdentifiable
 	}
 

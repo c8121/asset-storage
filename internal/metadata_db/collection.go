@@ -27,8 +27,8 @@ type CollectionListFilter struct {
 // AddCollection adds/updates collection-data in database
 func AddCollection(tx *sql.Tx, jsonCollection *collections.JsonCollection) error {
 
-	var collection = &metadata_db_entity.Collection{}
-	err := db_entity.Load(tx, collection, "hash", jsonCollection.Hash)
+	var collection = &metadata_db_entity.Collection{Hash: jsonCollection.Hash}
+	err := db_entity.Load(tx, collection)
 	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
 		return err
 	}

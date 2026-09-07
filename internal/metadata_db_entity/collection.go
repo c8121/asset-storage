@@ -2,7 +2,10 @@ package metadata_db_entity
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
+
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 type Collection struct {
@@ -16,8 +19,32 @@ func (c *Collection) GetId() int64 {
 	return c.Id
 }
 
-func (c *Collection) GetSelectQuery(filterColumn string) string {
-	return "SELECT id, hash, name, created FROM collection WHERE " + filterColumn + " = ?;"
+func (c *Collection) GetSelectQuery() string {
+	query := "SELECT id, hash, name, created FROM collection WHERE"
+	where := ""
+	if c.Hash != "" {
+		where = util.JoinStrings(" AND ", where, "hash = ?")
+	}
+	if c.Id != 0 {
+		where = util.JoinStrings(" AND ", where, "id = ?")
+	}
+	if where != "" {
+		query = query + " WHERE " + where
+	} else {
+		fmt.Printf("Warn: No filter defined for collection\n")
+	}
+	return query
+}
+
+func (c *Collection) GetSelectQueryArgs() []any {
+	args := make([]any, 0)
+	if c.Hash != "" {
+		args = append(args, c.Hash)
+	}
+	if c.Id != 0 {
+		args = append(args, c.Id)
+	}
+	return args
 }
 
 func (c *Collection) Scan(rows *sql.Rows) error {
