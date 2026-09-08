@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
@@ -28,15 +27,6 @@ type (
 		Faces []RestApiFace
 	}
 )
-
-const (
-	FilePermissions = 0744
-)
-
-// init creates required directories
-func init() {
-	util.CreateDirIfNotExists(config.AssetFacesBaseDir, FilePermissions)
-}
 
 // DetectFaces finds faces in image, returns ["name",...]
 func DetectFaces(sourceHash string) (*[]RestApiFace, error) {

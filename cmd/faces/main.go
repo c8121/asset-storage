@@ -19,6 +19,11 @@ func main() {
 	metadata_sqlite.Open()
 	defer metadata_sqlite.Close()
 
+	if !faces.CheckFaceRestServiceAvailable() {
+		util.PrintNotifications()
+		return
+	}
+
 	handler := func(path string) {
 		hash := storage.HashFromStoragePath(path)
 

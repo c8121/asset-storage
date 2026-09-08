@@ -75,6 +75,32 @@ Add users, set/update passwords. These users will have access to Servers (Web, S
 
 Use `-a` flag to add a new user.
 
+If no users have been added, the storage can be access anonymously through `spa-server`.
+To use the `ssh-server`, users must have been added.
+
+### remove
+
+To remove assets from storage
+
+    remove [-data <directory>] [-hash <hash>] [-path <path>] [-f]
+
+Use either `-hash` or `-path`.
+
+Use `-f` flag to remove assets without asking.
+
+### faces
+
+Detect faces in images.
+
+    faces [-data <directory>]
+
+This requires the external Face-API InsightFace from `services/insightface`:
+
+    source ~/venv/bin/activate
+    uvicorn service:app --host 127.0.0.1 --port 8000
+
+
+
 ## App Commandline args
 
 Commonly used commandline arguments for asset-storage apps:

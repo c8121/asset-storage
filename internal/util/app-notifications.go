@@ -1,5 +1,7 @@
 package util
 
+import "fmt"
+
 type Notifications struct {
 	MaxNotifications int
 	Messages         []string
@@ -20,3 +22,9 @@ func (n *Notifications) AddNotification(notification string) {
 }
 
 var AppNotifications = NewNotifications()
+
+func PrintNotifications() {
+	for _, notification := range AppNotifications.Messages {
+		fmt.Println(notification)
+	}
+}

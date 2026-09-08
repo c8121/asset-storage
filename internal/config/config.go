@@ -15,10 +15,9 @@ var (
 	AssetStorageConfigDir   = "/tmp/asset-storage/config"                   // Base directory for config files.
 	AssetStorageBaseDir     = "/tmp/asset-storage/files"                    // Base directory for all assets.
 	AssetStorageTempDir     = "/tmp/asset-storage/tmp"                      // Temporary directory. Should be on same drive as AssetStorageBaseDir
-	AssetMetaDataBaseDir    = "/tmp/asset-storage/meta"                     // Base directory for all meta-data of assets.
+	AssetMetaDataBaseDir    = "/tmp/asset-storage/meta"                     // Base directory for all metadata of assets.
 	AssetMetaDataDb         = "/tmp/asset-storage/db/asset-metadata.sqlite" // Data source name of database
 	AssetCollectionsBaseDir = "/tmp/asset-collections"                      // Base directory for collections.
-	AssetFacesBaseDir       = "/tmp/asset-storage/faces"                    // Base directory for all meta-data of assets.
 
 	UseGzip = false //Note: Cannot be changed after storage was created!
 	XorKey  []byte  //Note: Cannot be changed after storage was created!
@@ -74,7 +73,6 @@ func LoadDefault() {
 	AssetMetaDataBaseDir = filepath.Join(useDataDir, "meta")
 	AssetMetaDataDb = filepath.Join(useDataDir, "db/asset-metadata.sqlite")
 	AssetCollectionsBaseDir = filepath.Join(useDataDir, "collections")
-	AssetFacesBaseDir = filepath.Join(useDataDir, "faces")
 
 	UseGzip = *cmdUseGzip
 	if UseGzip {

@@ -25,6 +25,7 @@ InsightFace uses python, so at first you need to install python.
 ### Linux
 
     cd services/insightface
+    source venv/bin/activate
     uvicorn service:app --host 127.0.0.1 --port 8000
 
 ### Windows
