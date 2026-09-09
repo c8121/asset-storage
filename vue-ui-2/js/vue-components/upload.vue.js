@@ -1,8 +1,14 @@
 export default {
     template: `
         <div>
-            <div @dragover="dragOver" @drop="drop">
-                <label class="btn btn-outline-secondary" role="button" for="formFileMultiple">Datei hochladen oder hierher ziehen</label>
+            <div>
+                <div class="input-group input-group-sm">
+                    <label class="input-group-text">Upload to</label>
+                    <input class="form-control" v-model="path">
+                </div>
+            </div>
+            <div @dragover="dragOver" @drop="drop" class="mt-2">
+                <label class="btn btn-outline-secondary w-100" role="button" for="formFileMultiple">Datei hochladen oder hierher ziehen</label>
                 <input class="d-none" type="file" @change="fileChanged" id="formFileMultiple" multiple>
             </div>
             <div v-if="message" :class="'alert mt-2 ' + messageClass">
@@ -23,6 +29,8 @@ export default {
 
     data() {
         return {
+            path: 'Web/Upload',
+
             message: '',
             messageClass: 'alert-success',
 
@@ -77,7 +85,7 @@ export default {
 
             const query = {
                 TempName: json.tempName,
-                Path: 'SPA/Upload',
+                Path: self.path,
                 Name: file.name,
                 Owner: "spa", //TODO
                 FileTime: new Date(file.lastModified).toJSON()

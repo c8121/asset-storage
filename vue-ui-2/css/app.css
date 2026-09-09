@@ -38,4 +38,10 @@ section {
         width: var(--navbar-width);
         height: 100vh;
     }
+
+    #mainNav > .row > div {
+        flex: max-content;
+        margin-left: 4pt;
+        margin-right: 4pt;
+    }
 }
