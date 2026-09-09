@@ -16,6 +16,7 @@ import (
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
+	orientation "github.com/takumakei/exif-orientation"
 	"golang.org/x/image/draw"
 
 	_ "github.com/HugoSmits86/nativewebp"
@@ -57,6 +58,8 @@ func (f ImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, p
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to decode asset: %w", err)
 	}
+
+	img = normalizeOrientation(assetHash, img)
 
 	if cropX1 > 0 || cropY1 > 0 || cropX2 > 0 || cropY2 > 0 {
 		img, err = cropImage(img, image.Rect(cropX1, cropY1, cropX2, cropY2))
@@ -119,4 +122,22 @@ func encodePng(img image.Image) ([]byte, string, error) {
 	}
 
 	return outBuf.Bytes(), "image/png", nil
+}
+
+// TODO opens a new reader - maybe cache bytes if image isn't that big?
+func normalizeOrientation(assetHash string, img image.Image) image.Image {
+
+	reader, err := storage.Open(assetHash)
+	if err != nil {
+		fmt.Printf("failed to open asset%s: %v\n", assetHash, err)
+		return img
+	}
+	defer util.CloseOrLog(reader)
+
+	imgOrientation, err := orientation.Read(reader)
+	if err == nil {
+		img = orientation.Normalize(img, imgOrientation)
+	}
+
+	return img
 }
