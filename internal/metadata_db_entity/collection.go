@@ -10,7 +10,7 @@ import (
 
 type Collection struct {
 	Id      int64
-	Hash    string
+	UUID    string
 	Name    string
 	Created time.Time
 }
@@ -20,10 +20,10 @@ func (c *Collection) GetId() int64 {
 }
 
 func (c *Collection) GetSelectQuery() string {
-	query := "SELECT id, hash, name, created FROM collection WHERE"
+	query := "SELECT id, uuid, name, created FROM collection"
 	where := ""
-	if c.Hash != "" {
-		where = util.JoinStrings(" AND ", where, "hash = ?")
+	if c.UUID != "" {
+		where = util.JoinStrings(" AND ", where, "uuid = ?")
 	}
 	if c.Id != 0 {
 		where = util.JoinStrings(" AND ", where, "id = ?")
@@ -38,8 +38,8 @@ func (c *Collection) GetSelectQuery() string {
 
 func (c *Collection) GetSelectQueryArgs() []any {
 	args := make([]any, 0)
-	if c.Hash != "" {
-		args = append(args, c.Hash)
+	if c.UUID != "" {
+		args = append(args, c.UUID)
 	}
 	if c.Id != 0 {
 		args = append(args, c.Id)
@@ -48,23 +48,23 @@ func (c *Collection) GetSelectQueryArgs() []any {
 }
 
 func (c *Collection) Scan(rows *sql.Rows) error {
-	return rows.Scan(&c.Id, &c.Hash, &c.Name, &c.Created)
+	return rows.Scan(&c.Id, &c.UUID, &c.Name, &c.Created)
 }
 
 func (c *Collection) GetInsertQuery() string {
-	return "INSERT INTO collection(hash, name, created) VALUES(?,?,?);"
+	return "INSERT INTO collection(uuid, name, created) VALUES(?,?,?);"
 }
 
 func (c *Collection) GetUpdateQuery() string {
-	return "UPDATE asset SET hash=?, name=?, created=? WHERE id = ?;"
+	return "UPDATE asset SET uuid=?, name=?, created=? WHERE id = ?;"
 }
 
 func (c *Collection) GetUpdateQueryArgs() []any {
-	return []any{&c.Hash, &c.Name, &c.Created}
+	return []any{&c.UUID, &c.Name, &c.Created}
 }
 
 func (c *Collection) Exec(stmt *sql.Stmt) (sql.Result, error) {
-	return stmt.Exec(&c.Hash, &c.Name, &c.Created, &c.Id)
+	return stmt.Exec(&c.UUID, &c.Name, &c.Created, &c.Id)
 }
 
 func (c *Collection) SetId(id int64) {
@@ -73,8 +73,8 @@ func (c *Collection) SetId(id int64) {
 
 func (c *Collection) GetCreateQueries() []string {
 	return []string{
-		"CREATE TABLE IF NOT EXISTS collection(id integer PRIMARY KEY, hash TEXT(64), name TEXT(1024), created DATETIME);",
-		"CREATE INDEX IF NOT EXISTS idx_collection_hash on collection(hash);",
+		"CREATE TABLE IF NOT EXISTS collection(id integer PRIMARY KEY, uuid TEXT(32), name TEXT(1024), created DATETIME);",
+		"CREATE INDEX IF NOT EXISTS idx_collection_hash on collection(uuid);",
 		"CREATE INDEX IF NOT EXISTS idx_collection_name on collection(name);",
 		"CREATE INDEX IF NOT EXISTS idx_collection_created on collection(created);",
 	}

@@ -34,7 +34,11 @@ const (
 // Save Create dir if not exists and save JSON
 func (assetMetaData *JsonAssetMetaData) Save(path string) error {
 
-	util.PanicOnError(os.MkdirAll(filepath.Dir(path), FilePermissions), "Failed to create destination directory")
+	err := os.MkdirAll(filepath.Dir(path), FilePermissions)
+	if err != nil {
+		fmt.Printf("Error creating directory %s: %v\n", path, err)
+		return err
+	}
 
 	jsonBytes, err := json.Marshal(assetMetaData)
 	if err != nil {

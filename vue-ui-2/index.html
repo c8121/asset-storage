@@ -80,6 +80,17 @@
                     </div>
                 </div>
             </div>
+
+            <div class="col pb-2">
+                <div class="btn-group dropdown w-100">
+                    <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                        Collections
+                    </button>
+                    <div class="dropdown-menu p-2" style="width: 50vw">
+                        <collection-list-view @component-event="componentEvent" />
+                    </div>
+                </div>
+            </div>
     
             <div v-if="notifications.length > 0" class="col-sm pb-2">
                 <div class="btn-group dropdown w-100">
@@ -148,6 +159,7 @@
     import AssetSelectionListView from "./js/vue-components/asset-selection-list.vue.js";
     import PathTree from "./js/vue-components/path-tree.vue.js";
     import Upload from "./js/vue-components/upload.vue.js";
+    import CollectionListView from './js/vue-components/collection-list.vue.js'
 
     const routes = [
         {path: '/', component: AssetListView},
@@ -216,22 +228,24 @@
                     }
                     case 'assetFaceClick': {
                         const faceId = arguments[2];
-                        this.listFilter.FileName = null;
-                        this.listFilter.MimeType = null;
-                        this.listFilter.PathId = null;
+                        this.resetListFilter();
                         this.listFilter.Face = faceId;
-                        this.pathIdFilter = null;
                         this.$refs.listView.loadAssets();
                         break;
                         break;
                     }
                     case 'pathItemClick': {
                         const path = arguments[2];
-                        this.listFilter.FileName = null;
-                        this.listFilter.MimeType = null;
+                        this.resetListFilter();
                         this.listFilter.PathId = path.Id;
-                        this.listFilter.Face = null;
                         this.pathIdFilter = path.Name;
+                        this.$refs.listView.loadAssets();
+                        break;
+                    }
+                    case 'collectionClick': {
+                        const collection = arguments[2];
+                        this.resetListFilter();
+                        this.listFilter.Collection = collection.UUID;
                         this.$refs.listView.loadAssets();
                         break;
                     }
@@ -240,6 +254,16 @@
                         console.log(arguments);
                     }
                 }
+            },
+
+            resetListFilter() {
+                this.listFilter.FileName = null;
+                this.listFilter.MimeType = null;
+                this.listFilter.PathId = null;
+                this.listFilter.Face = null;
+                this.listFilter.Collection = null;
+
+                this.pathIdFilter = null;
             },
 
             setToastVisible(el, visible) {
@@ -278,10 +302,8 @@
                 fetch('/pathitem/', requestOptions)
                     .then(res => res.json())
                     .then(json => {
-                        self.listFilter.FileName = null;
-                        self.listFilter.MimeType = null;
+                        self.resetListFilter();
                         self.listFilter.PathId = json.Id;
-                        self.listFilter.Face = null;
                         self.pathIdFilter = path;
                         self.$refs.listView.loadAssets();
                     });
@@ -330,6 +352,7 @@
         .component('asset-selection-list', AssetSelectionListView)
         .component('path-tree', PathTree)
         .component('upload', Upload)
+        .component('collection-list-view', CollectionListView)
         .use(router)
         .mount('#app');
 

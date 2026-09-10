@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/c8121/asset-storage/internal/collections"
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/faces"
 	"github.com/c8121/asset-storage/internal/filter_commands"
@@ -19,6 +20,7 @@ func main() {
 	config.LoadDefault()
 	storage.CreateDirectories()
 	metadata.CreateDirectories()
+	collections.CreateDirectories()
 
 	filter_commands.CheckAndNotify()
 	faces.CheckFaceRestServiceAvailable()

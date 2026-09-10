@@ -12,7 +12,8 @@ import (
 )
 
 type (
-	CreateCollectionRequest struct {
+	UpdateCollectionRequest struct {
+		UUID        string
 		Name        string
 		Description string
 		Owner       string
@@ -23,25 +24,25 @@ type (
 // GetCollection is a rest-api handler to send the collection content
 func GetCollection(c *gin.Context) {
 
-	hash := c.Param("hash")
-	if len(hash) < 32 {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash")))
+	uuid := c.Param("uuid")
+	if len(uuid) < 32 {
+		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid uuid")))
 		return
 	}
 
-	collection, err := collections.LoadByHash(hash)
+	collection, err := collections.LoadById(uuid)
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash (not found)")))
+		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid uuid (not found)")))
 		return
 	}
 
 	c.IndentedJSON(http.StatusOK, collection)
 }
 
-// AddCollection is a rest-api handler to create collections
+// AddCollection is a rest-api handler to create or update a collection
 func AddCollection(c *gin.Context) {
 
-	var req CreateCollectionRequest
+	var req UpdateCollectionRequest
 	err := c.BindJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
@@ -53,15 +54,21 @@ func AddCollection(c *gin.Context) {
 		return
 	}
 
-	tx, err := metadata_db_conn.BeginTransaction()
+	collection, err := collections.AddCollection(
+		req.UUID,
+		req.Name,
+		req.Description,
+		req.Owner,
+		req.AssetHashes)
+
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	collection, err := collections.AddCollection(req.Name, req.Description, req.Owner, req.AssetHashes)
+	tx, err := metadata_db_conn.BeginTransaction()
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash (not found)")))
+		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 		return
 	}
 
@@ -69,6 +76,7 @@ func AddCollection(c *gin.Context) {
 	err = metadata_db.AddCollection(tx, collection)
 	if err != nil {
 		fmt.Printf("Error adding collection-data to database: %s\n", err)
+		metadata_db_conn.RollbackOrLog(tx)
 	}
 
 	util.LogError(metadata_db_conn.CommitOrLog(tx))

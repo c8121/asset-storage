@@ -14,7 +14,7 @@ import (
 
 type CollectionListItem struct {
 	Id      int64
-	Hash    string
+	UUID    string
 	Name    string
 	Created time.Time
 }
@@ -25,9 +25,9 @@ type CollectionListFilter struct {
 }
 
 // AddCollection adds/updates collection-data in database
-func AddCollection(tx *sql.Tx, jsonCollection *collections.JsonCollection) error {
+func AddCollection(tx *sql.Tx, jsonCollection *collections.JsonAssetCollection) error {
 
-	var collection = &metadata_db_entity.Collection{Hash: jsonCollection.Hash}
+	var collection = &metadata_db_entity.Collection{UUID: jsonCollection.UUID}
 	err := db_entity.Load(tx, collection)
 	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
 		return err
@@ -48,7 +48,7 @@ func AddCollection(tx *sql.Tx, jsonCollection *collections.JsonCollection) error
 
 func ListCollections(filter *CollectionListFilter) ([]CollectionListItem, error) {
 
-	var query = "SELECT id, hash, name, created" +
+	var query = "SELECT id, uuid, name, created" +
 		" FROM collection" +
 		" ORDER BY created DESC" +
 		" LIMIT ? OFFSET ?;"
@@ -77,7 +77,7 @@ func loadCollectionList(query string, params ...any) ([]CollectionListItem, erro
 		defer util.CloseOrLog(rows)
 		for rows.Next() {
 			var item CollectionListItem
-			if err := rows.Scan(&item.Id, &item.Hash, &item.Name, &item.Created); err != nil {
+			if err := rows.Scan(&item.Id, &item.UUID, &item.Name, &item.Created); err != nil {
 				return nil, err
 			}
 			items = append(items, item)

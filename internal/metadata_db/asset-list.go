@@ -18,13 +18,14 @@ type AssetListItem struct {
 }
 
 type AssetListFilter struct {
-	PathId   int64
-	MimeType string
-	FileName string
-	PathName string
-	Face     int64
-	Offset   int
-	Count    int
+	PathId     int64
+	MimeType   string
+	FileName   string
+	PathName   string
+	Collection string
+	Face       int64
+	Offset     int
+	Count      int
 }
 
 func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
@@ -34,11 +35,12 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 
 	//Finder -> value to use
 	finders := map[Finder]any{
-		FinderByPathId{}:   filter.PathId,
-		FinderByMimeType{}: filter.MimeType,
-		FinderByFileName{}: filter.FileName,
-		FinderByPathName{}: filter.PathName,
-		FinderByFace{}:     filter.Face,
+		FinderByPathId{}:     filter.PathId,
+		FinderByMimeType{}:   filter.MimeType,
+		FinderByFileName{}:   filter.FileName,
+		FinderByPathName{}:   filter.PathName,
+		FinderByFace{}:       filter.Face,
+		FinderByCollection{}: filter.Collection,
 	}
 
 	for finder, value := range finders {
