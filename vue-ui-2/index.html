@@ -60,7 +60,7 @@
                         <span v-if="pathIdFilter"><i class="bi bi-funnel"></i> {{ pathIdFilter }}</span>
                         <span v-else>Filter Path</span>
                     </button>
-                    <div class="dropdown-menu overflow-scroll p-2" style="max-height: 75vh;">
+                    <div class="dropdown-menu overflow-auto p-2" style="max-height: 75vh;">
                         <button v-if="listFilter.PathId" class="btn btn-sm btn-secondary m-2" @click="listFilter.PathId = null; pathIdFilter = null; $refs.listView.loadAssets()">
                             <i class="bi bi-funnel text-decoration-line-through"></i>
                             Clear Filter
@@ -83,11 +83,11 @@
 
             <div class="col pb-2">
                 <div class="btn-group dropdown w-100">
-                    <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate" data-bs-toggle="dropdown" aria-expanded="false">
                         Collections
                     </button>
                     <div class="dropdown-menu p-2" style="width: 50vw">
-                        <collection-list-view @component-event="componentEvent" />
+                        <collection-list-view ref="collectionList" @component-event="componentEvent" />
                     </div>
                 </div>
             </div>
@@ -127,17 +127,29 @@
                         <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
                     </div>
                     <div class="toast-body">
-                        <asset-view :value="activeAsset" @component-event="componentEvent"/>
+                        <asset-view :value="activeAsset" @component-event="componentEvent" />
                     </div>
                 </div>
 
                 <div ref="selectedAssetsToast" class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
                     <div class="toast-header">
                         <strong class="me-auto">Selection</strong>
+                        <button type="button" class="btn" @click="toggleToastPosition"><i class="bi bi-arrow-left-right"></i></button>
                         <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
                     </div>
                     <div class="toast-body">
-                        <asset-selection-list :value="selectedAssets"/>
+                        <asset-selection-list :value="selectedAssets" @component-event="componentEvent" />
+                    </div>
+                </div>
+
+                <div ref="activeCollectionToast" class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <strong class="me-auto">Collection</strong>
+                        <button type="button" class="btn" @click="toggleToastPosition"><i class="bi bi-arrow-left-right"></i></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        {{ activeCollection }}
                     </div>
                 </div>
             </div>
@@ -183,6 +195,8 @@
                 activeAssetToast: null,
                 selectedAssets: {},
                 selectedAssetsToast: null,
+                activeCollection: null,
+                activeCollectionToast: null,
 
                 mimeTypes: [],
 
@@ -247,9 +261,15 @@
                         this.resetListFilter();
                         this.listFilter.Collection = collection.UUID;
                         this.$refs.listView.loadAssets();
+                        this.activeCollection = collection;
+                        this.setToastVisible(this.activeCollectionToast, true)
                         break;
                     }
-                    default : {
+                    case 'createCollectionClick': {
+                        this.createCollection();
+                        break;
+                    }
+                    default: {
                         console.log("Event not handled: '" + eventName + "', " + arguments.length + " arguments, sender: " + sender);
                         console.log(arguments);
                     }
@@ -335,6 +355,42 @@
                         el.classList.add("end-0");
                     }
                 }
+            },
+
+            createCollection() {
+                const self = this;
+
+                const hashes = [];
+                for( const hash of Object.keys(self.selectedAssets)) {
+                    hashes.push(hash);
+                }
+
+                const requestParams = {
+                    method: 'POST',
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        Name: "Test " + new Date(),
+                        Owner: "Tester",
+                        Description: "Collection created at " + new Date(),
+                        AssetHashes: hashes
+                    })
+                }
+
+                fetch('/collections/add', requestParams)
+                    .then(res => res.json())
+                    .then(json => {
+                        self.selectedAssets = {};
+                        self.setToastVisible(this.selectedAssetsToast, false);
+                        self.$refs.collectionList.loadCollections();
+
+                        self.activeCollection = json;
+                        self.setToastVisible(this.activeCollectionToast, true);
+
+                        self.resetListFilter();
+                        self.listFilter.Collection = json.UUID;
+                        self.$refs.listView.loadAssets();
+                    });
+
             }
         },
 
@@ -343,6 +399,8 @@
             this.setToastVisible(this.activeAssetToast, false);
             this.selectedAssetsToast = this.$refs["selectedAssetsToast"];
             this.setToastVisible(this.selectedAssetsToast, false);
+            this.activeCollectionToast = this.$refs["activeCollectionToast"];
+            this.setToastVisible(this.activeCollectionToast, false);
 
             this.loadMimeTypes();
             this.loadNotifications();

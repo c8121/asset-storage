@@ -21,7 +21,7 @@ export default {
                             <div class="row">
                                 <div class="col">
                                     <div class="form-check form-switch">
-                                        <input type="checkbox"  class="form-check-input" role="switch" @change="assetSelect(asset, $event)">
+                                        <input type="checkbox" v-model="asset.selected" class="form-check-input" role="switch" @change="assetSelect(asset, $event)">
                                     </div>
                                 </div>
                                 <div class="col text-end">

@@ -8,7 +8,7 @@ export default {
                     <span class="text-secondary ps-3">{{ value.FileTime }}</span>
                 </div>
             </div>
-            <div v-if="asset && asset.Origins" class="overflow-scroll" style="max-height: 40vh">
+            <div v-if="asset && asset.Origins" class="overflow-auto" style="max-height: 40vh">
                 <div v-for="origin in asset.Origins">
                     <div class="text-primary mt-3 text-truncate" role="button" data-toggle="tooltip" data-placement="top" :title="origin.Path" @click="pathClick(origin.Path)">{{ origin.Path }}</div>
                     <div class="text-secondary">{{ origin.Owner }}</div>

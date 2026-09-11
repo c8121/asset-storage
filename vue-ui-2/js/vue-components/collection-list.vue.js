@@ -1,10 +1,10 @@
 export default {
     template: `
         <div>
-        
-            <div class="row collection-list">
-                <div v-for="collection in list" class="asset col pb-3">
-                    <pre @click="collectionClick(collection)">{{ collection }}</pre>
+            <div class="collection-list overflow-auto" style="max-height: 50vh" >
+                <div v-for="collection in list" class="row pt-3 border-bottom" @click="collectionClick(collection)" role="button">
+                    <div class="col">{{ collection.Name }}</div>
+                    <div class="col">{{ collection.Created }}</div>
                 </div>
             </div>
         </div>

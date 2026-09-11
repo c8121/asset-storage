@@ -14,7 +14,7 @@ export default {
             <div v-if="message" :class="'alert mt-2 ' + messageClass">
                 {{ message }}
             </div>
-            <div v-if="addedFiles && addedFiles.length" class="overflow-scroll" style="max-height: 60vh;">
+            <div v-if="addedFiles && addedFiles.length" class="overflow-auto" style="max-height: 60vh;">
                 <div v-for="file in addedFiles" class="p-2"
                     role="button"
                     @click="assetClick(file)">
