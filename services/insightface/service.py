@@ -10,7 +10,9 @@ app = FastAPI(title="InsightFace Face Extractor API")
 
 # Initialize InsightFace model
 face_app = FaceAnalysis(name="buffalo_l")
-face_app.prepare(ctx_id=0, det_size=(640, 640))  # ctx_id=0 for GPU, -1 for CPU
+
+# det_sizes: 128, 224, 384, 640 (bigger = slower but detects more)
+face_app.prepare(ctx_id=0, det_size=(224, 224))  # ctx_id=0 for GPU, -1 for CPU
 
 
 @app.get("/status")
