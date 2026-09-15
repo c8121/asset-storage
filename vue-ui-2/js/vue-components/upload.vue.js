@@ -104,6 +104,8 @@ export default {
                     }
                     self.message = "Added " + self.addedFiles.length + " file(s)";
                     self.messageClass = 'alert-success';
+
+                    this.$emit('componentEvent', 'uploadFinished', 'upload', json);
                 });
         },
         dragOver(e) {

@@ -265,6 +265,11 @@
                         this.setToastVisible(this.activeCollectionToast, true)
                         break;
                     }
+                    case 'uploadFinished': {
+                        this.resetListFilter();
+                        this.$refs.listView.loadAssets();
+                        break;
+                    }
                     case 'createCollectionClick': {
                         this.createCollection();
                         break;
