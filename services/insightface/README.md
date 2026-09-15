@@ -9,8 +9,6 @@ InsightFace uses python, so at first you need to install python.
     sudo apt install python3
     sudo apt install python3-pip
     sudo apt install python3-venv
-    python3 -m venv venv
-    source venv/bin/activate
 
 ### Linux
 
@@ -24,8 +22,11 @@ InsightFace uses python, so at first you need to install python.
 
 ### Linux
 
+    cd ~
+    python3 -m venv venv
+
     cd services/insightface
-    source venv/bin/activate
+    source ~/venv/bin/activate
     uvicorn service:app --host 127.0.0.1 --port 8000
 
 ### Windows
