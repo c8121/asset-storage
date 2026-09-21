@@ -22,8 +22,12 @@ InsightFace uses python, so at first you need to install python.
 
 ### Linux
 
+Create virtual environment for python
+
     cd ~
     python3 -m venv venv
+
+Run the service
 
     cd services/insightface
     source ~/venv/bin/activate
