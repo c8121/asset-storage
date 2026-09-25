@@ -3,9 +3,6 @@
 Basically a DAM-System (Digital Asset Management). Includes a Webserver providing a SPA (Single Page Application) 
 to browse the storage content.
 
-> [!NOTE]
-> Work in progress, things might change and be not downward compatible 
-
 ## Goals
 
 **DAM**: Manage Pictures, Documents...
@@ -118,6 +115,47 @@ Commonly used commandline arguments for asset-storage apps:
 | listen <ip:port&gt; | IP and Port to listen to (Web-Server, Ssh-Server).                                                                                                                                                                                                                                                                                              |
 | cert <path&gt;      | Path to SSL/TLS-Certificate                                                                                                                                                                                                                                                                                                                     |
 | key <path&gt;       | Path to SSL/TLS-Key                                                                                                                                                                                                                                                                                                                             |
+
+
+## Integrations
+
+The following applications can be used by asset-storage to convert assets, create thumbnails, extract text.
+It is recommended to install these applications alongside asset-storage to be able to get video-thumbnails for example.
+
+### ImageMagick
+
+https://imagemagick.org/
+
+Supports a wide range of image formats.
+
+Installation (Linux):
+
+    sudo apt update
+    sudo apt install imagemagick
+
+### FFmpeg
+
+https://ffmpeg.org/
+
+Used to create images and thumbs from videos.
+
+Installation (Linux):
+
+    sudo apt update
+    sudo apt install ffmpeg
+
+### Tesseract OCR
+
+https://github.com/tesseract-ocr/tesseract
+
+To extract text from images.
+
+Installation (Linux):
+
+    sudo apt update
+    sudo apt install tesseract-ocr
+    # language package
+    sudo apt install tesseract-ocr-deu
 
 
 ## Libraries used
