@@ -31,7 +31,7 @@ func GetFiltered(c *gin.Context) {
 	filterParamsReader := c.Request.Body
 	b, err := io.ReadAll(filterParamsReader)
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("Failed to read request body")))
+		util.LogError(c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("failed to read request body")))
 		return
 	}
 	filterParams := paramsToMap(string(b))

@@ -39,17 +39,17 @@ func (f TesseractImageToTextFilter) Apply(assetHash string, meta *metadata.JsonA
 
 	out, err := f.imageTesseractImageToText(in, lang)
 	if err != nil {
-		return nil, "", fmt.Errorf("Failed to extract text: %w", err)
+		return nil, "", fmt.Errorf("failed to extract text: %w", err)
 	}
 
 	bytes, err := os.ReadFile(out)
 	if err != nil {
 		util.LogError(os.Remove(out))
-		return nil, "", fmt.Errorf("Failed to extract text: %w", err)
+		return nil, "", fmt.Errorf("failed to extract text: %w", err)
 	}
 
 	util.LogError(os.Remove(out))
-	return bytes, "text/plain", nil
+	return bytes, "text/plain;charset=UTF-8", nil
 }
 
 // imageTesseractImageToText executes Tesseract for Image to Text conversion ...
@@ -57,14 +57,15 @@ func (f TesseractImageToTextFilter) imageTesseractImageToText(input string, lang
 
 	binary := filter_commands.FindTesseractBin()
 	if binary == "" {
-		return "", fmt.Errorf("Tesseract not found (searching in %v)", filter_commands.TesseractBinPaths)
+		return "", fmt.Errorf("tesseract not found (searching in %v)", filter_commands.TesseractBinPaths)
 	}
 
 	out, err := os.CreateTemp(config.AssetStorageTempDir, "tesseract*")
 	if err != nil {
-		return "", fmt.Errorf("Failed to create temp file: %w", err)
+		return "", fmt.Errorf("failed to create temp file: %w", err)
 	}
-	os.Remove(out.Name())
+	util.CloseOrLog(out)
+	util.LogError(os.Remove(out.Name()))
 
 	var args []string
 
@@ -80,12 +81,12 @@ func (f TesseractImageToTextFilter) imageTesseractImageToText(input string, lang
 
 	err = util.RunSilentWithEnv(binary, env, args...)
 	if err != nil {
-		return "", fmt.Errorf("Failed to extract text: %w", err)
+		return "", fmt.Errorf("failed to extract text: %w", err)
 	}
 
 	entries, err := os.ReadDir(config.AssetStorageTempDir)
 	if err != nil {
-		return "", fmt.Errorf("Failed to read dir: %w", err)
+		return "", fmt.Errorf("failed to read dir: %w", err)
 	}
 
 	outFileName := filepath.Base(out.Name())
@@ -95,5 +96,5 @@ func (f TesseractImageToTextFilter) imageTesseractImageToText(input string, lang
 		}
 	}
 
-	return "", fmt.Errorf("Output file not found")
+	return "", fmt.Errorf("output file not found")
 }
