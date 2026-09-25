@@ -118,6 +118,14 @@ func loadAvailableFilters() {
 				"(?i)^image/",
 			},
 		},
+		{
+			Name:   "PopplerPdfToTextFilter",
+			Alias:  "Text",
+			Filter: NewPopplerPdfToTextFilter(),
+			MimeTypes: []string{
+				"(?i)^application/pdf$",
+			},
+		},
 	}
 
 }

@@ -157,6 +157,15 @@ Installation (Linux):
     # language package
     sudo apt install tesseract-ocr-deu
 
+### Poppler pdftotext
+
+https://poppler.freedesktop.org/
+
+To convert PDF to text.
+
+    sudo apt update
+    sudo apt install poppler-utils
+
 
 ## Libraries used
 

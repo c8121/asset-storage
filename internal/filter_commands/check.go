@@ -29,6 +29,13 @@ func CheckAndNotify() {
 		util.AppNotifications.AddNotification("Using Tesseract from " + path)
 	}
 
+	path = FindPopplerPdfBin()
+	if path == "" {
+		util.AppNotifications.AddNotification("Poppler pdftotext is not installed. To support pdf to text conversion, please install pdftotext")
+	} else {
+		util.AppNotifications.AddNotification("Using pdftotext from " + path)
+	}
+
 	for _, msg := range util.AppNotifications.Messages {
 		fmt.Println(msg)
 	}
