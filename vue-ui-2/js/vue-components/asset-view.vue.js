@@ -20,6 +20,7 @@ export default {
                     <select class="form-select" v-model="filterName" @change="filterChange">
                         <option :value="null">Original</option>
                         <option value="image">Image</option>
+                        <option value="text">Text</option>
                     </select>
                     <button class="btn btn-primary"
                         @click="downloadClick()">
@@ -32,7 +33,7 @@ export default {
                     <div v-if="filterParams" v-for="p in filterParams">
                         <div class="input-group input-group-sm mb-1">
                             <label class="input-group-text">{{p.label}}</label>
-                            <input type="number" :name="p.name" v-model="p.value" class="form-control">
+                            <input :type="p.type" :name="p.name" v-model="p.value" class="form-control">
                         </div>
                     </div>
                 </form>
@@ -75,8 +76,11 @@ export default {
 
             availableFilterParams: {
                 image: [
-                    { name: 'width', label: 'Width', value: 100 },
-                    { name: 'height', label: 'Height', value: "" }
+                    { name: 'width', label: 'Width', value: 100, type: "number" },
+                    { name: 'height', label: 'Height', value: "", type: "number" }
+                ],
+                text: [
+                    { name: 'lang', label: 'Language', value: "deu", type: "text" }
                 ]
             },
 

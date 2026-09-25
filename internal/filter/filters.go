@@ -110,6 +110,14 @@ func loadAvailableFilters() {
 				"(?i)^video/",
 			},
 		},
+		{
+			Name:   "TesseractImageToTextFilter",
+			Alias:  "Text",
+			Filter: NewTesseractImageToTextFilter(),
+			MimeTypes: []string{
+				"(?i)^image/",
+			},
+		},
 	}
 
 }

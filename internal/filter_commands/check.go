@@ -22,6 +22,13 @@ func CheckAndNotify() {
 		util.AppNotifications.AddNotification("Using ImageMagick from " + path)
 	}
 
+	path = FindTesseractBin()
+	if path == "" {
+		util.AppNotifications.AddNotification("Tesseract-OCR is not installed. To support image to text conversion, please install Tesseract-OCR")
+	} else {
+		util.AppNotifications.AddNotification("Using Tesseract from " + path)
+	}
+
 	for _, msg := range util.AppNotifications.Messages {
 		fmt.Println(msg)
 	}
