@@ -77,15 +77,15 @@ func (o *Owner) GetInsertQuery() string {
 	return "INSERT INTO owner(name) VALUES(?);"
 }
 
+func (o *Owner) ExecInsert(stmt *sql.Stmt) (sql.Result, error) {
+	return stmt.Exec(&o.Name)
+}
+
 func (o *Owner) GetUpdateQuery() string {
 	return "UPDATE owner SET name=? WHERE id = ?;"
 }
 
-func (o *Owner) GetUpdateQueryArgs() []any {
-	return []any{&o.Name, &o.Id}
-}
-
-func (o *Owner) Exec(stmt *sql.Stmt) (sql.Result, error) {
+func (o *Owner) ExecUpdate(stmt *sql.Stmt) (sql.Result, error) {
 	return stmt.Exec(&o.Name, &o.Id)
 }
 

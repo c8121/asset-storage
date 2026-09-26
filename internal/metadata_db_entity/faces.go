@@ -189,7 +189,7 @@ func (f *FaceEmbedding) GetInsertQuery() string {
 	return "INSERT INTO faces(assetId, x1, y1, x2, y2, embedding) VALUES(?,?,?,?,?,vec_f32(?));"
 }
 
-func (f *FaceEmbedding) Exec(stmt *sql.Stmt) (sql.Result, error) {
+func (f *FaceEmbedding) ExecInsert(stmt *sql.Stmt) (sql.Result, error) {
 	embeddingJson, err := json.Marshal(f.Embedding)
 	if err != nil {
 		return nil, err

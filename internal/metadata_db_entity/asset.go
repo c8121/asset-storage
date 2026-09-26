@@ -200,15 +200,15 @@ func (a *Asset) GetInsertQuery() string {
 	return "INSERT INTO asset(hash, mimeType, fileTime, name) VALUES(?,?,?,?);"
 }
 
+func (a *Asset) ExecInsert(stmt *sql.Stmt) (sql.Result, error) {
+	return stmt.Exec(&a.Hash, &a.MimeType, &a.FileTime, &a.Name)
+}
+
 func (a *Asset) GetUpdateQuery() string {
 	return "UPDATE asset SET hash=?, mimeType=?, fileTime=?, name=? WHERE id = ?;"
 }
 
-func (a *Asset) GetUpdateQueryArgs() []any {
-	return []any{&a.Hash, &a.MimeType, &a.FileTime, &a.Name, &a.Id}
-}
-
-func (a *Asset) Exec(stmt *sql.Stmt) (sql.Result, error) {
+func (a *Asset) ExecUpdate(stmt *sql.Stmt) (sql.Result, error) {
 	return stmt.Exec(&a.Hash, &a.MimeType, &a.FileTime, &a.Name, &a.Id)
 }
 

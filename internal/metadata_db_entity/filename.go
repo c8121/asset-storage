@@ -65,15 +65,15 @@ func (n *FileName) GetInsertQuery() string {
 	return "INSERT INTO fileName(name) VALUES(?);"
 }
 
+func (n *FileName) ExecInsert(stmt *sql.Stmt) (sql.Result, error) {
+	return stmt.Exec(&n.Name)
+}
+
 func (n *FileName) GetUpdateQuery() string {
 	return "UPDATE fileName SET name=? WHERE id = ?;"
 }
 
-func (n *FileName) GetUpdateQueryArgs() []any {
-	return []any{&n.Name, &n.Id}
-}
-
-func (n *FileName) Exec(stmt *sql.Stmt) (sql.Result, error) {
+func (n *FileName) ExecUpdate(stmt *sql.Stmt) (sql.Result, error) {
 	return stmt.Exec(&n.Name, &n.Id)
 }
 

@@ -55,15 +55,15 @@ func (c *Collection) GetInsertQuery() string {
 	return "INSERT INTO collection(uuid, name, created) VALUES(?,?,?);"
 }
 
+func (c *Collection) ExecInsert(stmt *sql.Stmt) (sql.Result, error) {
+	return stmt.Exec(&c.UUID, &c.Name, &c.Created, &c.Id)
+}
+
 func (c *Collection) GetUpdateQuery() string {
-	return "UPDATE asset SET uuid=?, name=?, created=? WHERE id = ?;"
+	return "UPDATE collection set uuid=?, name=?, created=? WHERE id=?;"
 }
 
-func (c *Collection) GetUpdateQueryArgs() []any {
-	return []any{&c.UUID, &c.Name, &c.Created}
-}
-
-func (c *Collection) Exec(stmt *sql.Stmt) (sql.Result, error) {
+func (c *Collection) ExecUpdate(stmt *sql.Stmt) (sql.Result, error) {
 	return stmt.Exec(&c.UUID, &c.Name, &c.Created, &c.Id)
 }
 

@@ -114,15 +114,15 @@ func (m *MimeType) GetInsertQuery() string {
 	return "INSERT INTO mimeType(name) VALUES(?);"
 }
 
+func (m *MimeType) ExecInsert(stmt *sql.Stmt) (sql.Result, error) {
+	return stmt.Exec(&m.Name)
+}
+
 func (m *MimeType) GetUpdateQuery() string {
 	return "UPDATE mimeType SET name=? WHERE id = ?;"
 }
 
-func (m *MimeType) GetUpdateQueryArgs() []any {
-	return []any{&m.Name, &m.Id}
-}
-
-func (m *MimeType) Exec(stmt *sql.Stmt) (sql.Result, error) {
+func (m *MimeType) ExecUpdate(stmt *sql.Stmt) (sql.Result, error) {
 	return stmt.Exec(&m.Name, &m.Id)
 }
 

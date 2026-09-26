@@ -93,15 +93,15 @@ func (o *Origin) GetInsertQuery() string {
 	return "INSERT INTO origin(asset, name, path, owner, fileTime) VALUES(?,?,?,?,?);"
 }
 
+func (o *Origin) ExecInsert(stmt *sql.Stmt) (sql.Result, error) {
+	return stmt.Exec(&o.Asset, &o.Name, &o.Path, &o.Owner, &o.FileTime)
+}
+
 func (o *Origin) GetUpdateQuery() string {
 	return "UPDATE origin SET asset=?, name=?, path=?, owner=?, fileTime=? WHERE id = ?;"
 }
 
-func (o *Origin) GetUpdateQueryArgs() []any {
-	return []any{&o.Asset, &o.Name, &o.Path, &o.Owner, &o.FileTime, &o.Id}
-}
-
-func (o *Origin) Exec(stmt *sql.Stmt) (sql.Result, error) {
+func (o *Origin) ExecUpdate(stmt *sql.Stmt) (sql.Result, error) {
 	return stmt.Exec(&o.Asset, &o.Name, &o.Path, &o.Owner, &o.FileTime, &o.Id)
 }
 

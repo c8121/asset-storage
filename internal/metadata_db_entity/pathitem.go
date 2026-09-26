@@ -223,15 +223,15 @@ func (p *PathItem) GetInsertQuery() string {
 	return "INSERT INTO pathItem(parent, name) VALUES(?,?);"
 }
 
+func (p *PathItem) ExecInsert(stmt *sql.Stmt) (sql.Result, error) {
+	return stmt.Exec(&p.Parent, &p.Name)
+}
+
 func (p *PathItem) GetUpdateQuery() string {
 	return "UPDATE pathItem SET parent=?, name=? WHERE id = ?;"
 }
 
-func (p *PathItem) GetUpdateQueryArgs() []any {
-	return []any{&p.Parent, &p.Name, &p.Id}
-}
-
-func (p *PathItem) Exec(stmt *sql.Stmt) (sql.Result, error) {
+func (p *PathItem) ExecUpdate(stmt *sql.Stmt) (sql.Result, error) {
 	return stmt.Exec(&p.Parent, &p.Name, &p.Id)
 }
 

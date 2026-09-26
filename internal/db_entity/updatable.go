@@ -9,8 +9,7 @@ import (
 
 type Updatable interface {
 	GetUpdateQuery() string
-	GetUpdateQueryArgs() []any
-	Exec(stmt *sql.Stmt) (sql.Result, error)
+	ExecUpdate(stmt *sql.Stmt) (sql.Result, error)
 }
 
 // Update updates an existing record in database with contents of given Insertable
@@ -26,7 +25,7 @@ func Update(tx *sql.Tx, o Updatable) error {
 	}
 	defer util.CloseOrLog(stmt)
 
-	_, err = o.Exec(stmt)
+	_, err = o.ExecUpdate(stmt)
 	if err != nil {
 		return err
 	}

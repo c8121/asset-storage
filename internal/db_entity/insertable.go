@@ -9,7 +9,7 @@ import (
 
 type Insertable interface {
 	GetInsertQuery() string
-	Exec(stmt *sql.Stmt) (sql.Result, error)
+	ExecInsert(stmt *sql.Stmt) (sql.Result, error)
 	SetId(int64)
 }
 
@@ -26,7 +26,7 @@ func Insert(tx *sql.Tx, o Insertable) error {
 	}
 	defer util.CloseOrLog(stmt)
 
-	r, err := o.Exec(stmt)
+	r, err := o.ExecInsert(stmt)
 	if err != nil {
 		return err
 	}
