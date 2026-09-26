@@ -78,10 +78,6 @@ func (f ImageMagickPdfToImageFilter) imageMagickPdfToImage(input string, output 
 
 	args = append(args, input+"[0]")
 
-	if width > 0 || height > 0 {
-		args = append(args, "-thumbnail")
-		args = append(args, fmt.Sprintf("%sx%s", util.Iif(width > 0, strconv.Itoa(width), ""), util.Iif(height > 0, strconv.Itoa(height), "")))
-	}
 	args = append(args, "-thumbnail")
 	if width > 0 && height > 0 {
 		args = append(args, fmt.Sprintf("%dx%d", width, height))
