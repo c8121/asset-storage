@@ -87,6 +87,15 @@ func loadAvailableFilters() {
 			},
 		},
 		{
+			Name:   "ImageMagickDocToImageFilter",
+			Alias:  "Image",
+			Filter: NewImageMagickDocToImageFilter(),
+			MimeTypes: []string{
+				"(?i)officedocument",
+				"(?i)^application/vnd.ms-",
+			},
+		},
+		{
 			Name:   "ImageMagickTextToImageFilter",
 			Alias:  "Image",
 			Filter: NewImageMagickTextToImageFilter(),
