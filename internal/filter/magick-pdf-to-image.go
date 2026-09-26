@@ -46,20 +46,20 @@ func (f ImageMagickPdfToImageFilter) Apply(assetHash string, meta *metadata.Json
 
 	out, err := os.CreateTemp(config.AssetStorageTempDir, tempFileNamePattern)
 	if err != nil {
-		return nil, "", fmt.Errorf("Failed to create temp file: %w", err)
+		return nil, "", fmt.Errorf("failed to create temp file: %w", err)
 	}
 	util.LogError(out.Close())
 
 	err = f.imageMagickPdfToImage(in, out.Name(), width, height)
 	if err != nil {
 		util.LogError(os.Remove(out.Name()))
-		return nil, "", fmt.Errorf("Failed to create thumbnail: %w", err)
+		return nil, "", fmt.Errorf("failed to create thumbnail: %w", err)
 	}
 
 	bytes, err := os.ReadFile(out.Name())
 	if err != nil {
 		util.LogError(os.Remove(out.Name()))
-		return nil, "", fmt.Errorf("Failed to read thumbnail: %w", err)
+		return nil, "", fmt.Errorf("failed to read thumbnail: %w", err)
 	}
 
 	util.LogError(os.Remove(out.Name()))
