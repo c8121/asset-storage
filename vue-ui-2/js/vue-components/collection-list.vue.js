@@ -4,7 +4,7 @@ export default {
             <div class="collection-list overflow-auto" style="max-height: 50vh" >
                 <div v-for="collection in list" class="row pt-3 border-bottom" @click="collectionClick(collection)" role="button">
                     <div class="col">{{ collection.Name }}</div>
-                    <div class="col">{{ collection.Created }}</div>
+                    <div class="col">{{ formatDate(collection.Created) }}</div>
                 </div>
             </div>
         </div>
@@ -17,7 +17,9 @@ export default {
             offset: 0,
             count: 30,
 
-            loading: false
+            loading: false,
+
+            dateFormatter: Intl.DateTimeFormat('de-DE')
         }
     },
 
@@ -54,6 +56,10 @@ export default {
 
         collectionClick(collection) {
             this.$emit('componentEvent', 'collectionClick', 'collection-list', collection);
+        },
+
+        formatDate(d) {
+            return this.dateFormatter.format(Date.parse(d));
         }
     },
 

@@ -84,6 +84,41 @@ func AddCollection(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, collection)
 }
 
+// RemoveCollection is a rest-api handler to remove a collection
+func RemoveCollection(c *gin.Context) {
+
+	uuid := c.PostForm("UUID")
+	if len(uuid) < 32 {
+		c.JSON(http.StatusBadRequest, "UUID missing or invalid")
+		return
+	}
+
+	// Remove from filesystem
+	err := collections.RemoveCollection(uuid)
+	if err != nil {
+		util.LogError(err)
+	}
+
+	tx, err := metadata_db_conn.BeginTransaction()
+	if err != nil {
+		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		return
+	}
+
+	collection := &collections.JsonAssetCollection{UUID: uuid}
+
+	// Remove from DB
+	err = metadata_db.RemoveCollection(tx, collection)
+	if err != nil {
+		fmt.Printf("Error removing collection-data to database: %s\n", err)
+		metadata_db_conn.RollbackOrLog(tx)
+	}
+
+	util.LogError(metadata_db_conn.CommitOrLog(tx))
+
+	c.IndentedJSON(http.StatusOK, collection)
+}
+
 // ListCollections is a rest-api handler to send a list of collections
 func ListCollections(c *gin.Context) {
 

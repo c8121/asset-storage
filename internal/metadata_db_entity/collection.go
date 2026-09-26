@@ -71,6 +71,14 @@ func (c *Collection) SetId(id int64) {
 	c.Id = id
 }
 
+func (c *Collection) GetDeleteQuery() string {
+	return "DELETE FROM collection WHERE uuid=?;"
+}
+
+func (c *Collection) ExecDelete(stmt *sql.Stmt) (sql.Result, error) {
+	return stmt.Exec(&c.UUID)
+}
+
 func (c *Collection) GetCreateQueries() []string {
 	return []string{
 		"CREATE TABLE IF NOT EXISTS collection(id integer PRIMARY KEY, uuid TEXT(32), name TEXT(1024), created DATETIME);",

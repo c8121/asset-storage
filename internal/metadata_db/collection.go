@@ -46,6 +46,23 @@ func AddCollection(tx *sql.Tx, jsonCollection *collections.JsonAssetCollection) 
 	return nil
 }
 
+// RemoveCollection removes collection-data in database
+func RemoveCollection(tx *sql.Tx, jsonCollection *collections.JsonAssetCollection) error {
+
+	var collection = &metadata_db_entity.Collection{UUID: jsonCollection.UUID}
+	err := db_entity.Load(tx, collection)
+	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
+		return err
+	}
+
+	err = db_entity.DeleteEntity(tx, collection)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func ListCollections(filter *CollectionListFilter) ([]CollectionListItem, error) {
 
 	var query = "SELECT id, uuid, name, created" +

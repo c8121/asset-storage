@@ -25,6 +25,7 @@ func CreateRoutes(router *gin.Engine) {
 	router.POST("/collections/list", users.AuthRequiredHandler(ListCollections))
 
 	router.POST("/collections/add", users.AuthRequiredHandler(AddCollection))
+	router.POST("/collections/remove", users.AuthRequiredHandler(RemoveCollection))
 
 	router.GET("/mimetypes/list", users.AuthRequiredHandler(ListMimeTypes))
 	router.GET("/pathitems/list", users.AuthRequiredHandler(ListPathItems))

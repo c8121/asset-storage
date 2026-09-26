@@ -11,6 +11,7 @@ var (
 	ErrNotLoadable     = errors.New("not a Loadable")
 	ErrNotInsertable   = errors.New("not a Insertable")
 	ErrNotUpdatable    = errors.New("not a Updatable")
+	ErrNotDeletable    = errors.New("not a Deletable")
 )
 
 type WithId interface {
@@ -74,4 +75,20 @@ func SaveEntity(tx *sql.Tx, o any) error {
 	}
 
 	return err
+}
+
+// DeleteEntity deletes an entity from database.
+func DeleteEntity(tx *sql.Tx, o any) error {
+
+	deletable, ok := o.(Deletable)
+	if !ok {
+		return ErrNotDeletable
+	}
+
+	err := Delete(tx, deletable)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

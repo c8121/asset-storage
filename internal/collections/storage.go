@@ -75,3 +75,13 @@ func GetCollectionFilePath(uuid string) string {
 		name)
 	return path
 }
+
+// RemoveCollection deletes the collection file
+func RemoveCollection(uuid string) error {
+	collectionFile := GetCollectionFilePath(uuid)
+	if _, err := os.Stat(collectionFile); err != nil {
+		return err
+	}
+
+	return os.Remove(collectionFile)
+}

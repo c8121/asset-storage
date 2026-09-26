@@ -61,10 +61,6 @@
                         <span v-else>Filter Path</span>
                     </button>
                     <div class="dropdown-menu overflow-auto p-2" style="max-height: 75vh;">
-                        <button v-if="listFilter.PathId" class="btn btn-sm btn-secondary m-2" @click="listFilter.PathId = null; pathIdFilter = null; $refs.listView.loadAssets()">
-                            <i class="bi bi-funnel text-decoration-line-through"></i>
-                            Clear Filter
-                        </button>
                         <path-tree @component-event="componentEvent" />
                     </div>
                 </div>
@@ -92,8 +88,8 @@
                 </div>
             </div>
     
-            <div v-if="notifications.length > 0" class="col-sm pb-2">
-                <div class="btn-group dropdown w-100">
+            <div v-if="notifications.length > 0" class="col-sm pb-2 mt-5">
+                <div class="btn-group dropdown">
                     <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                         <i class="bi bi-bell"></i>
                     </button>
@@ -101,6 +97,13 @@
                         <div v-for="msg in notifications" class="m-2 small border-bottom pb-2">{{ msg }}</div>
                     </div>
                 </div>
+            </div>
+
+            <div v-if="listFilter.MimeType || listFilter.FileName || listFilter.PathId || listFilter.Face || listFilter.Collection">
+                <button class="btn btn-sm btn-secondary m-2" @click="resetListFilter(); $refs.listView.loadAssets()">
+                    <i class="bi bi-funnel text-decoration-line-through"></i>
+                    Clear Filter
+                </button>
             </div>
 
         </div>
@@ -150,6 +153,10 @@
                     </div>
                     <div class="toast-body">
                         {{ activeCollection }}
+
+                        <div v-if="activeCollection && activeCollection.UUID">
+                            <button type="button" class="btn btn-sm btn-outline-danger" @click="removeCollection(activeCollection)">Delete</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -396,6 +403,30 @@
                         self.$refs.listView.loadAssets();
                     });
 
+            },
+
+            removeCollection(collection) {
+                const self = this;
+                if(!confirm("Delete collection?"))
+                    return
+
+                const requestParams = {
+                    method: 'POST',
+                    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                    body: "UUID=" + encodeURI(collection.UUID)
+                }
+
+                fetch('/collections/remove', requestParams)
+                    .then(res => res.json())
+                    .then(json => {
+                        console.log(json);
+                        self.activeCollection = null;
+                        self.setToastVisible(this.activeCollectionToast, false);
+                        self.$refs.collectionList.loadCollections();
+
+                        self.resetListFilter();
+                        self.$refs.listView.loadAssets();
+                    });
             }
         },
 
