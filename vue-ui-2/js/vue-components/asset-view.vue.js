@@ -52,10 +52,14 @@ export default {
                 </div>
             </div>
             
-            <div v-if="!faces.length">
-                <button @click="detectFaces" class="btn btn-sm btn-link">
-                    {{ detectFacesButtonCaption }}
+            <div v-if="!faces.length && value && value.MimeType.toLowerCase().indexOf('image/') > -1">
+                <button @click="detectFaces" class="btn" title="Detect faces">
+                    <i class=\"bi bi-person-add\"></i>
                 </button>
+            </div>
+
+            <div v-if="message" class="alert-info m-2">
+                {{ message }}
             </div>
         </div>
     `,
@@ -86,7 +90,7 @@ export default {
 
             faces: [],
 
-            detectFacesButtonCaption: "Detect Faces"
+            message: ""
         }
     },
 
@@ -134,8 +138,7 @@ export default {
             if(!self.value || !self.value.Hash)
                 return;
 
-            const btnCaption = self.detectFacesButtonCaption;
-            self.detectFacesButtonCaption = "wait...";
+            self.message = "wait...";
 
             const requestOptions = {
                 method: 'GET'
@@ -146,7 +149,7 @@ export default {
                     self.faces = json;
                 })
                 .finally(() =>{
-                    self.detectFacesButtonCaption = btnCaption;
+                    self.message = "";
                 });
         },
 
