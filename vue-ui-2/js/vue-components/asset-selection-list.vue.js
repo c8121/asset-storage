@@ -7,7 +7,11 @@ export default {
                 </div>
             </div>
             <div class="mt-3">
-                <button class="btn btn-secondary" @click="createCollectionClick">Create collection</button>
+                Collection:
+                <div class="input-group">
+                    <input class="form-control" v-model="collectionName">
+                    <button class="btn btn-secondary" @click="createCollectionClick">Create</button>
+                </div>
             </div>
         </div>
     `,
@@ -19,9 +23,15 @@ export default {
         }
     },
 
+    data() {
+        return{
+            collectionName: ""
+        }
+    },
+
     methods: {
         createCollectionClick() {
-            this.$emit('componentEvent', 'createCollectionClick', 'asset-selection-list');
+            this.$emit('componentEvent', 'createCollectionClick', 'asset-selection-list', this.collectionName);
         }
     },
 

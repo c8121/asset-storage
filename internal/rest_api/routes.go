@@ -20,7 +20,7 @@ func CreateRoutes(router *gin.Engine) {
 	router.POST("/assets/upload", users.AuthRequiredHandler(ReceiveUpload))
 	router.POST("/assets/upload/add", users.AuthRequiredHandler(AddUploadedFile))
 
-	router.GET("/collections/:hash", users.AuthRequiredHandler(GetCollection))
+	router.GET("/collections/:uuid", users.AuthRequiredHandler(GetCollection))
 
 	router.POST("/collections/list", users.AuthRequiredHandler(ListCollections))
 

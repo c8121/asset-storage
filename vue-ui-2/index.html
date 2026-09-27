@@ -36,7 +36,7 @@
             <span class="d-block">:) Asset Storage</span>
         </a>
 
-        <div class="row mt-4">
+        <div class="row mt-lg-4">
             <div class="col-sm-8 pb-2">
                 <div class="input-group">
                     <input v-model="listFilter.FileName" class="form-control border-secondary" type="search" placeholder="Search" aria-label="Search" @keyup.enter="$refs.listView.loadAssets()">
@@ -46,7 +46,7 @@
     
             <div class="col-sm-4 pb-2">
                 <select v-model="listFilter.MimeType" class="form-select" @change="$refs.listView.loadAssets()">
-                    <option :value="null">All</option>
+                    <option :value="null">Type</option>
                     <option value="image/*">Images</option>
                     <option value="video/*">Videos</option>
                     <option :value="null"> - </option>
@@ -66,7 +66,7 @@
                 </div>
             </div>
     
-            <div class="col pb-2">
+            <div class="col pb-2 mt-lg-3">
                 <div class="btn-group dropdown w-100">
                     <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                         Upload
@@ -88,7 +88,7 @@
                 </div>
             </div>
     
-            <div v-if="notifications.length > 0" class="col-sm pb-2 mt-5">
+            <div v-if="notifications.length > 0" class="col-sm pb-2 mt-lg-5">
                 <div class="btn-group dropdown">
                     <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                         <i class="bi bi-bell"></i>
@@ -152,9 +152,11 @@
                         <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
                     </div>
                     <div class="toast-body">
-                        {{ activeCollection }}
+                        <div>
+                            <collection-view :value="activeCollection" @component-event="componentEvent" />
+                        </div>
 
-                        <div v-if="activeCollection && activeCollection.UUID">
+                        <div v-if="activeCollection && activeCollection.UUID" class="mt-3">
                             <button type="button" class="btn btn-sm btn-outline-danger" @click="removeCollection(activeCollection)">Delete</button>
                         </div>
                     </div>
@@ -179,6 +181,7 @@
     import PathTree from "./js/vue-components/path-tree.vue.js";
     import Upload from "./js/vue-components/upload.vue.js";
     import CollectionListView from './js/vue-components/collection-list.vue.js'
+    import CollectionView from './js/vue-components/collection-view.vue.js'
 
     const routes = [
         {path: '/', component: AssetListView},
@@ -272,13 +275,18 @@
                         this.setToastVisible(this.activeCollectionToast, true)
                         break;
                     }
+                    case 'collectionSaved': {
+                        this.$refs.collectionList.loadCollections();
+                        break;
+                    }
                     case 'uploadFinished': {
                         this.resetListFilter();
                         this.$refs.listView.loadAssets();
                         break;
                     }
                     case 'createCollectionClick': {
-                        this.createCollection();
+                        const name = arguments[2];
+                        this.createCollection(name);
                         break;
                     }
                     default: {
@@ -369,7 +377,7 @@
                 }
             },
 
-            createCollection() {
+            createCollection(name) {
                 const self = this;
 
                 const hashes = [];
@@ -377,14 +385,18 @@
                     hashes.push(hash);
                 }
 
+                if(!name || name.trim() === "") {
+                    name = "Collection " + new Date()
+                }
+
                 const requestParams = {
                     method: 'POST',
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({
-                        Name: "Test " + new Date(),
-                        Owner: "Tester",
+                        Name: name,
+                        Owner: "spa",
                         Description: "Collection created at " + new Date(),
-                        AssetHashes: hashes
+                        Assets: hashes
                     })
                 }
 
@@ -446,6 +458,7 @@
         .component('asset-selection-list', AssetSelectionListView)
         .component('path-tree', PathTree)
         .component('upload', Upload)
+        .component('collection-view', CollectionView)
         .component('collection-list-view', CollectionListView)
         .use(router)
         .mount('#app');

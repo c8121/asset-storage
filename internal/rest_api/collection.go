@@ -17,7 +17,7 @@ type (
 		Name        string
 		Description string
 		Owner       string
-		AssetHashes []string
+		Assets      []string
 	}
 )
 
@@ -49,7 +49,7 @@ func AddCollection(c *gin.Context) {
 		return
 	}
 
-	if len(req.AssetHashes) == 0 {
+	if len(req.Assets) == 0 {
 		c.JSON(http.StatusBadRequest, "No asset hashes given")
 		return
 	}
@@ -59,7 +59,7 @@ func AddCollection(c *gin.Context) {
 		req.Name,
 		req.Description,
 		req.Owner,
-		req.AssetHashes)
+		req.Assets)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
