@@ -17,3 +17,4 @@ go build -o $OUT_DIR/spa-server $CMD_DIR/spa_server/main.go
 go build -o $OUT_DIR/ssh-server $CMD_DIR/ssh_server/main.go
 go build -o $OUT_DIR/user-edit $CMD_DIR/user_edit/main.go
 go build -o $OUT_DIR/faces $CMD_DIR/faces/main.go
+go build -o $OUT_DIR/fulltext $CMD_DIR/fulltext/main.go

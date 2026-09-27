@@ -14,3 +14,4 @@ go build -o %OUT_DIR%\spa-server.exe %CMD_DIR%\spa_server\main.go
 go build -o %OUT_DIR%\ssh-server.exe %CMD_DIR%\ssh_server\main.go
 go build -o %OUT_DIR%\user-edit.exe %CMD_DIR%\user_edit\main.go
 go build -o %OUT_DIR%\faces.exe %CMD_DIR%\faces\main.go
+go build -o %OUT_DIR%\fulltext.exe %CMD_DIR%\fulltext\main.go

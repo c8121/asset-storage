@@ -12,12 +12,13 @@ import (
 
 var (
 	// Default values for testing
-	AssetStorageConfigDir   = "/tmp/asset-storage/config"                   // Base directory for config files.
-	AssetStorageBaseDir     = "/tmp/asset-storage/files"                    // Base directory for all assets.
-	AssetStorageTempDir     = "/tmp/asset-storage/tmp"                      // Temporary directory. Should be on same drive as AssetStorageBaseDir
-	AssetMetaDataBaseDir    = "/tmp/asset-storage/meta"                     // Base directory for all metadata of assets.
-	AssetMetaDataDb         = "/tmp/asset-storage/db/asset-metadata.sqlite" // Data source name of database
-	AssetCollectionsBaseDir = "/tmp/asset-collections"                      // Base directory for collections.
+	AssetStorageConfigDir     = "/tmp/asset-storage/config"                   // Base directory for config files.
+	AssetStorageBaseDir       = "/tmp/asset-storage/files"                    // Base directory for all assets.
+	AssetStorageTempDir       = "/tmp/asset-storage/tmp"                      // Temporary directory. Should be on same drive as AssetStorageBaseDir
+	AssetMetaDataBaseDir      = "/tmp/asset-storage/meta"                     // Base directory for all metadata of assets.
+	AssetMetaDataDb           = "/tmp/asset-storage/db/asset-metadata.sqlite" // Data source name of database
+	AssetCollectionsBaseDir   = "/tmp/asset-storage/collections"              // Base directory for collections.
+	AssetFulltextIndexBaseDir = "/tmp/asset-storage/index"                    // Base directory for fulltext index.
 
 	UseGzip = false //Note: Cannot be changed after storage was created!
 	XorKey  []byte  //Note: Cannot be changed after storage was created!
@@ -73,6 +74,7 @@ func LoadDefault() {
 	AssetMetaDataBaseDir = filepath.Join(useDataDir, "meta")
 	AssetMetaDataDb = filepath.Join(useDataDir, "db/asset-metadata.sqlite")
 	AssetCollectionsBaseDir = filepath.Join(useDataDir, "collections")
+	AssetFulltextIndexBaseDir = filepath.Join(useDataDir, "index")
 
 	UseGzip = *cmdUseGzip
 	if UseGzip {
@@ -143,7 +145,7 @@ func validateDataDir(path string) {
 		panic(err)
 	}
 
-	validNames := []string{"config", "files", "tmp", "meta", "db", "collections", "faces", "bin", "vue-ui"}
+	validNames := []string{"config", "files", "tmp", "meta", "db", "collections", "faces", "index", "bin", "vue-ui"}
 
 	for _, entry := range entries {
 		if !slices.Contains(validNames, entry.Name()) {

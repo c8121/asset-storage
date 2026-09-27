@@ -173,6 +173,7 @@ I have used these libraries (many thanks to the authors)
 
 - SQLite: https://pkg.go.dev/modernc.org/sqlite
 - Web Services: https://pkg.go.dev/github.com/gin-gonic/gin
+- Fulltext Index: https://github.com/blevesearch/bleve
 - Webp decoding: https://github.com/HugoSmits86/nativewebp
 - Image scaling: https://pkg.go.dev/golang.org/x/image/draw
 - MIME type detection: https://pkg.go.dev/github.com/gabriel-vasile/mimetype
