@@ -6,17 +6,17 @@ import (
 	"path/filepath"
 
 	"github.com/blevesearch/bleve/v2"
-	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
-	"github.com/blevesearch/bleve/v2/analysis/lang/en"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/c8121/asset-storage/internal/config"
+	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
 type (
-	JsonAssetText struct {
-		name string
-		text string
+	Document struct {
+		Name string
+		Text string
+		Type string
 	}
 )
 
@@ -32,7 +32,7 @@ const (
 	batchSize = 100
 )
 
-func AddText(assetHash string, text string) error {
+func Add(assetMeta *metadata.JsonAssetMetaData, text string) error {
 	err := initIndex()
 	if err != nil {
 		return err
@@ -51,11 +51,40 @@ func AddText(assetHash string, text string) error {
 		batch = index.NewBatch()
 	}
 
-	doc := &JsonAssetText{
-		name: assetHash,
-		text: text,
+	name := assetMeta.Hash //Fallback
+	latestOrigin := metadata.GetLatestOrigin(assetMeta)
+	if latestOrigin != nil {
+		name = latestOrigin.Name
 	}
-	return batch.Index(assetHash, doc)
+
+	doc := Document{
+		Name: name,
+		Text: text,
+		Type: "document",
+	}
+
+	return batch.Index(assetMeta.Hash, doc)
+}
+
+func Find(query string) error {
+	err := initIndex()
+	if err != nil {
+		return err
+	}
+
+	matchQuery := bleve.NewQueryStringQuery(query)
+	searchRequest := bleve.NewSearchRequest(matchQuery)
+	searchResults, err := index.Search(searchRequest)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Found %d documents\n", searchResults.Total)
+	for _, hit := range searchResults.Hits {
+		fmt.Println(hit.ID)
+	}
+
+	return nil
 }
 
 func initIndex() error {
@@ -81,36 +110,30 @@ func initIndex() error {
 
 	} else if err != nil {
 		return err
-	} else {
-		fmt.Printf("Opening index: %s\n", indexPath)
 	}
+
+	fmt.Printf("Opening index: %s\n", indexPath)
 
 	return nil
 }
 
-// See https://github.com/blevesearch/beer-search/blob/master/mapping.go
 func buildIndexMapping() (mapping.IndexMapping, error) {
-	// a generic reusable mapping for english text
-	englishTextFieldMapping := bleve.NewTextFieldMapping()
-	englishTextFieldMapping.Analyzer = en.AnalyzerName
 
-	// a generic reusable mapping for keyword text
-	keywordFieldMapping := bleve.NewTextFieldMapping()
-	keywordFieldMapping.Analyzer = keyword.Name
-
-	documentMapping := bleve.NewDocumentMapping()
-
-	// name
-	documentMapping.AddFieldMappingsAt("name", englishTextFieldMapping)
-
-	// content
-	documentMapping.AddFieldMappingsAt("text", englishTextFieldMapping)
-
+	// Create a new index mapping
 	indexMapping := bleve.NewIndexMapping()
-	indexMapping.AddDocumentMapping("assets", documentMapping)
 
-	indexMapping.TypeField = "type"
-	indexMapping.DefaultAnalyzer = "en"
+	// Create a field mapping for text where Store is false, but Index is true
+	textFieldMapping := bleve.NewTextFieldMapping()
+	textFieldMapping.Index = true
+	textFieldMapping.Store = false // Do not store the raw text
+	textFieldMapping.IncludeInAll = false
+	//textFieldMapping.IncludeTermVectors = true // Optional
+
+	// Apply it to a specific field in your document mapping
+	docMapping := bleve.NewDocumentMapping()
+	docMapping.AddFieldMappingsAt("Text", textFieldMapping)
+
+	indexMapping.AddDocumentMapping("document", docMapping)
 
 	return indexMapping, nil
 }

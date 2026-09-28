@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"strings"
 
@@ -12,10 +13,23 @@ import (
 	"github.com/c8121/asset-storage/internal/util"
 )
 
+var (
+	query = flag.String("q", "", "Query")
+)
+
 func main() {
 
 	config.LoadDefault()
 
+	if *query != "" {
+		defer fulltext.CloseIndex()
+		util.LogError(fulltext.Find(*query))
+	} else {
+		updateIndex()
+	}
+}
+
+func updateIndex() {
 	fulltext.CreateDirectories()
 	defer fulltext.CloseIndex()
 
@@ -55,7 +69,7 @@ func main() {
 			return
 		}
 
-		err = fulltext.AddText(hash, string(bytes))
+		err = fulltext.Add(assetMeta, string(bytes))
 		if err != nil {
 			util.LogError(err)
 		}
