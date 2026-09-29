@@ -7,6 +7,7 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/mapping"
+	indexApi "github.com/blevesearch/bleve_index_api"
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/util"
@@ -16,7 +17,6 @@ type (
 	Document struct {
 		Name string
 		Text string
-		Type string
 	}
 )
 
@@ -60,7 +60,6 @@ func Add(assetMeta *metadata.JsonAssetMetaData, text string) error {
 	doc := Document{
 		Name: name,
 		Text: text,
-		Type: "document",
 	}
 
 	return batch.Index(assetMeta.Hash, doc)
@@ -73,6 +72,7 @@ func Find(query string) error {
 	}
 
 	matchQuery := bleve.NewQueryStringQuery(query)
+	//matchQuery := bleve.NewMatchAllQuery()
 	searchRequest := bleve.NewSearchRequest(matchQuery)
 	searchResults, err := index.Search(searchRequest)
 	if err != nil {
@@ -81,7 +81,20 @@ func Find(query string) error {
 
 	fmt.Printf("Found %d documents\n", searchResults.Total)
 	for _, hit := range searchResults.Hits {
-		fmt.Println(hit.ID)
+		fmt.Printf("%s\n", hit.ID)
+
+		doc, err := index.Document(hit.ID)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		doc.VisitFields(func(field indexApi.Field) {
+			if field.Name() == "Type" {
+				fmt.Printf("    %s: %s\n", field.Name(), field.Value())
+			} else {
+				fmt.Printf("    %s: %s\n", field.Name(), field.Options())
+			}
+		})
 	}
 
 	return nil
@@ -119,21 +132,16 @@ func initIndex() error {
 
 func buildIndexMapping() (mapping.IndexMapping, error) {
 
-	// Create a new index mapping
 	indexMapping := bleve.NewIndexMapping()
-
-	// Create a field mapping for text where Store is false, but Index is true
-	textFieldMapping := bleve.NewTextFieldMapping()
-	textFieldMapping.Index = true
-	textFieldMapping.Store = false // Do not store the raw text
-	textFieldMapping.IncludeInAll = false
-	//textFieldMapping.IncludeTermVectors = true // Optional
-
-	// Apply it to a specific field in your document mapping
 	docMapping := bleve.NewDocumentMapping()
-	docMapping.AddFieldMappingsAt("Text", textFieldMapping)
 
-	indexMapping.AddDocumentMapping("document", docMapping)
+	textMappingNoStore := bleve.NewTextFieldMapping()
+	textMappingNoStore.Store = false
+	textMappingNoStore.Index = true
+	textMappingNoStore.IncludeInAll = true
+	docMapping.AddFieldMappingsAt("Text", textMappingNoStore)
+
+	indexMapping.DefaultMapping = docMapping
 
 	return indexMapping, nil
 }
