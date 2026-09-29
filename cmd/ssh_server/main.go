@@ -28,6 +28,8 @@ var (
 
 func main() {
 
+	config.LoadDefault()
+
 	if *hostKeyFile == "" {
 
 		usr, err := user.Current()
@@ -53,7 +55,6 @@ func main() {
 		return
 	}
 
-	config.LoadDefault()
 	storage.CreateDirectories()
 	metadata.CreateDirectories()
 
