@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/user"
 	"path/filepath"
+	"strings"
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
@@ -16,10 +18,40 @@ import (
 )
 
 var (
-	hostKeyFile = flag.String("host-key", "id_rsa", "SSH-Host Key-File")
+	DefaultHostKeyFiles = []string{
+		"~/.ssh/ssh_host_key_rsa",
+		"~/.ssh/id_rsa",
+	}
+
+	hostKeyFile = flag.String("host-key", "", "SSH-Host Key-File")
 )
 
 func main() {
+
+	if *hostKeyFile == "" {
+
+		usr, err := user.Current()
+		usrHomeDir := "~/"
+		if usr != nil && err == nil {
+			usrHomeDir = usr.HomeDir
+		}
+
+		for _, file := range DefaultHostKeyFiles {
+			if strings.HasPrefix(file, "~/") {
+				file = filepath.Join(usrHomeDir, file[2:])
+			}
+			if _, err := os.Stat(file); err == nil {
+				*hostKeyFile = file
+				fmt.Printf("Using host key file: %s\n", *hostKeyFile)
+				break
+			}
+		}
+	}
+
+	if *hostKeyFile == "" {
+		fmt.Println("No host key files found. Use -host-key to specify a file")
+		return
+	}
 
 	config.LoadDefault()
 	storage.CreateDirectories()
