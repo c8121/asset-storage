@@ -1,36 +1,18 @@
-.assets {
-    display: flow-root;
+.asset-list .asset .card {
+    min-width: 125px;
+    max-width: 175px;
 }
 
-.assets .asset {
-    float: left;
-    width: 200px;
-    margin-right: 10px;
-    margin-bottom: 10px;
+.asset-list .asset img {
+    max-width: 150px;
 }
 
-.asset .asset-image {
-    height: 180px;
-    overflow: hidden;
-}
-
-.asset .asset-image img {
-    position: relative;
-    z-index: 1;
-    width: auto;
-}
-
-.asset .asset-filename {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 0;
-    font-size: 0.7em;
-}
-
-.asset-group-header {
-    clear: both;
-    display: block;
-    border-bottom: 1px solid #ccc
+.asset-faces img {
+    margin: 3px;
+    height: 75px;
+    width: 75px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+    border: 3px solid #ccc;
 }

@@ -1,59 +1,47 @@
-html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
+@charset "UTF-8";
+
+:root {
+    --navbar-width: 10rem;
+    --navbar-icon-size: 7rem;
+    --main-nav-color: #333;
+    --main-nav-bg: #ccc;
 }
 
-#clientMessages, #clientProgressInfo {
-    position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 99;
+
+#mainNav {
+    padding: 1rem;
+    color: var(--main-nav-color);
+    background-color: var(--main-nav-bg);
+    z-index: 999;
 }
 
-.loadSpinnerWrapper {
-    position: fixed;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 98;
-    background-image: url("/img/spinner.gif");
-    background-position: center center;
-    background-repeat: no-repeat;
+section {
+    padding-left: 3rem;
+    padding-right: 3rem;
+    padding-top: 2rem;
+    padding-bottom: 5rem;
 }
 
-/* App frames */
+@media (min-width: 992px) {
+    body {
+        padding-top: 0;
+        padding-left: var(--navbar-width);
+    }
 
-#app {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
+    #mainNav {
+        padding-left: 0;
+        padding-right: 0;
+        text-align: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: var(--navbar-width);
+        height: 100vh;
+    }
 
-#mainContainer {
-    position: relative;
-    height: 100%;
-}
-
-.pathDropdown .dropdown-menu {
-    opacity: 0.9;
-}
-
-ul.pathitem-tree {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    padding-left: 1em;
-}
-
-ul.pathitem-tree li {
-    margin: 0;
-    padding: 0;
-}
-
-ul.pathitem-tree button {
-    font-size: 0.8rem;
-    border: none;
-    background-color: inherit;
+    #mainNav > .row > div {
+        flex: max-content;
+        margin-left: 4pt;
+        margin-right: 4pt;
+    }
 }

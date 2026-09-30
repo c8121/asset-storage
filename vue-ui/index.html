@@ -1,100 +1,472 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
 
-    <title>Asset Storage</title>
+    <meta name="description" content="Asset Storage"/>
+    <meta name="author" content="c8121"/>
 
-    <script src="/js/loader.js"></script>
-    <script src="/js/client.js"></script>
-    <script src="/js/dialog.js"></script>
-    <script src="/js/ui.js"></script>
+    <title>:) Asset Storage</title>
+    <link rel="icon" type="image/x-icon" href="ui-assets/favicon.ico"/>
 
-    <script src="/vue/vue.global.js"></script>
-    <script src="/vue/vue-router.global.js"></script>
-    <script src="/vue/VueComponentUtil.js"></script>
-    <script src="/vue/Formatter.js"></script>
+    <link href="css/bootstrap-5.3.8-dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="css/boostrap-icons-1.13.1/bootstrap-icons.min.css" rel="stylesheet"/>
+    <link href="css/app.css" rel="stylesheet"/>
+    <link href="css/assets.css" rel="stylesheet"/>
 
-    <link href="/bootstrap/5.3/css/bootstrap.min.css" rel="stylesheet">
-    <script src="/bootstrap/5.3/js/bootstrap.bundle.min.js"></script>
-
-    <link href="/css/app.css" rel="stylesheet">
-    <link href="/css/assets.css" rel="stylesheet">
-
-    <script>
-
-        function startApp() {
-
-            const routes = [
-                {
-                    path: '/',
-                    component: () => VueComponentUtil.loadComponent('/vue/components/AssetList.js')
-                }
-            ]
-
-            const router = VueRouter.createRouter({
-                history: VueRouter.createWebHashHistory(),
-                routes // short for `routes: routes`
-            });
-
-            const app = Vue.createApp({
-                data() {
-                    return {
-                        pathsVisible: false
-                    }
-                },
-                methods: {
-                }
-            });
-            app.use(router);
-
-            app.mount('#app');
+    <script type="importmap">
+        {
+          "imports": {
+            "vue": "./js/vue-3.5.41/vue.esm-browser.js",
+            "vue-router": "./js/vue-router-5.2.0/vue-router.esm-browser.prod.js"
+          }
         }
-
-        (function (callback) {
-            if (document.readyState !== "loading") callback();
-            else document.addEventListener("DOMContentLoaded", callback);
-        })(startApp);
-
     </script>
 
 </head>
+
 <body>
-
-<div id="clientProgressInfo"></div>
-<div id="clientMessages"></div>
-
 
 <div id="app">
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">:&nbsp;)</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/collections.html">Collections</a>
-                    </li>
-                    <!-- <li class="nav-item">
-                        <router-link class="nav-link active" to="/">Home</router-link>
-                    </li> -->
-                </ul>
+    <!-- Menu-->
+    <nav id="mainNav">
+        <a class="navbar-brand" href="#">
+            <span class="d-block">:) Asset Storage</span>
+        </a>
+
+        <div class="row mt-lg-4">
+            <div class="col-sm-8 pb-2">
+                <div class="input-group">
+                    <input v-model="listFilter.FileName" class="form-control border-secondary" type="search" placeholder="Search" aria-label="Search" @keyup.enter="$refs.listView.loadAssets()">
+                    <button class="btn btn-outline-secondary" type="submit" @click="$refs.listView.loadAssets()"><i class="bi bi-search"></i></button>
+                </div>
             </div>
+    
+            <div class="col-sm-4 pb-2">
+                <select v-model="listFilter.MimeType" class="form-select" @change="$refs.listView.loadAssets()">
+                    <option :value="null">Type</option>
+                    <option value="image/*">Images</option>
+                    <option value="video/*">Videos</option>
+                    <option :value="null"> - </option>
+                    <option v-for="t in mimeTypes" :value="t.Id.toString()">{{t.Name}}</option>
+                </select>
+            </div>
+    
+            <div class="col pb-2">
+                <div class="btn-group dropdown dropd w-100">
+                    <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                        <span v-if="pathIdFilter"><i class="bi bi-funnel"></i> {{ pathIdFilter }}</span>
+                        <span v-else>Filter Path</span>
+                    </button>
+                    <div class="dropdown-menu overflow-auto p-2" style="max-height: 75vh;">
+                        <path-tree @component-event="componentEvent" />
+                    </div>
+                </div>
+            </div>
+    
+            <div class="col pb-2 mt-lg-3">
+                <div class="btn-group dropdown w-100">
+                    <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                        Upload
+                    </button>
+                    <div class="dropdown-menu p-2" style="width: 50vw">
+                        <upload @component-event="componentEvent" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="col pb-2">
+                <div class="btn-group dropdown w-100">
+                    <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate" data-bs-toggle="dropdown" aria-expanded="false">
+                        Collections
+                    </button>
+                    <div class="dropdown-menu p-2" style="width: 50vw">
+                        <collection-list-view ref="collectionList" @component-event="componentEvent" />
+                    </div>
+                </div>
+            </div>
+    
+            <div v-if="notifications.length > 0" class="col-sm pb-2 mt-lg-5">
+                <div class="btn-group dropdown">
+                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                        <i class="bi bi-bell"></i>
+                    </button>
+                    <div class="dropdown-menu" style="width: 50vw">
+                        <div v-for="msg in notifications" class="m-2 small border-bottom pb-2">{{ msg }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="listFilter.MimeType || listFilter.FileName || listFilter.PathId || listFilter.Face || listFilter.Collection">
+                <button class="btn btn-sm btn-secondary m-2" @click="resetListFilter(); $refs.listView.loadAssets()">
+                    <i class="bi bi-funnel text-decoration-line-through"></i>
+                    Clear Filter
+                </button>
+            </div>
+
         </div>
+
     </nav>
-    <div id="mainContainer" class="container-fluid">
-        <router-view v-slot="{ Component }">
-            <component ref="view" :is="Component"></component>
-        </router-view>
+
+
+    <!-- Content-->
+    <div class="container-fluid p-0" id="mainContent">
+
+        <section>
+
+            <router-view v-slot="{ Component }">
+                <component ref="listView" :is="Component" @component-event="componentEvent" :filter="listFilter"/>
+            </router-view>
+
+            <div id="toasts" class="position-fixed toast-container top-0 end-0 p-3 mt-5">
+
+                <div ref="activeAssetToast" class="toast show" role="alert" aria-live="assertive" aria-atomic="true"
+                     data-bs-delay="15000">
+                    <div class="toast-header">
+                        <strong class="me-auto">Asset</strong>
+                        <button type="button" class="btn" @click="toggleToastPosition"><i class="bi bi-arrow-left-right"></i></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        <asset-view :value="activeAsset" @component-event="componentEvent" />
+                    </div>
+                </div>
+
+                <div ref="selectedAssetsToast" class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <strong class="me-auto">Selection</strong>
+                        <button type="button" class="btn" @click="toggleToastPosition"><i class="bi bi-arrow-left-right"></i></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        <asset-selection-list :value="selectedAssets" @component-event="componentEvent" />
+                    </div>
+                </div>
+
+                <div ref="activeCollectionToast" class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <strong class="me-auto">Collection</strong>
+                        <button type="button" class="btn" @click="toggleToastPosition"><i class="bi bi-arrow-left-right"></i></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        <div>
+                            <collection-view :value="activeCollection" @component-event="componentEvent" />
+                        </div>
+
+                        <div v-if="activeCollection && activeCollection.UUID" class="mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-danger" @click="removeCollection(activeCollection)">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
     </div>
+
 </div>
 
+<!-- Main App -->
+<script type="module">
+
+    import {createApp, ref} from 'vue'
+    import {createWebHashHistory, createRouter} from 'vue-router'
+
+    import AssetListView from './js/vue-components/asset-list.vue.js'
+    import AssetView from './js/vue-components/asset-view.vue.js'
+    import AssetSelectionListView from "./js/vue-components/asset-selection-list.vue.js";
+    import PathTree from "./js/vue-components/path-tree.vue.js";
+    import Upload from "./js/vue-components/upload.vue.js";
+    import CollectionListView from './js/vue-components/collection-list.vue.js'
+    import CollectionView from './js/vue-components/collection-view.vue.js'
+
+    const routes = [
+        {path: '/', component: AssetListView},
+    ];
+
+    export const router = createRouter({
+        history: createWebHashHistory(),
+        routes
+    });
+
+    createApp({
+
+        data() {
+            return {
+                listFilter: {
+                    MimeType: null,
+                    FileName: null
+                },
+
+                activeAsset: null,
+                activeAssetToast: null,
+                selectedAssets: {},
+                selectedAssetsToast: null,
+                activeCollection: null,
+                activeCollectionToast: null,
+
+                mimeTypes: [],
+
+                pathIdFilter: '',
+
+                notifications: []
+            }
+        },
+
+        methods: {
+
+            componentEvent(eventName, sender) {
+                switch (eventName) {
+                    case 'assetClick': {
+                        this.activeAsset = arguments[2];
+                        this.setToastVisible(this.activeAssetToast, this.activeAsset !== null);
+                        if(sender === 'asset-view') {
+                            window.open('/assets/' + this.activeAsset.Hash);
+                        }
+                        break;
+                    }
+                    case 'assetSelect': {
+                        const asset = arguments[2];
+                        this.selectedAssets[asset.Hash] = asset;
+                        this.setToastVisible(this.selectedAssetsToast, Object.keys(this.selectedAssets).length > 0);
+                        break;
+                    }
+                    case 'assetUnselect': {
+                        const asset = arguments[2];
+                        delete this.selectedAssets[asset.Hash];
+                        this.setToastVisible(this.selectedAssetsToast, Object.keys(this.selectedAssets).length > 0);
+                        break;
+                    }
+                    case 'assetDownloadClick': {
+                        const asset = arguments[2];
+                        window.open('/assets/' + asset.Hash);
+                        break;
+                    }
+                    case 'assetPathClick': {
+                        const path = arguments[2];
+                        this.filterPath(path);
+                        break;
+                    }
+                    case 'assetFaceClick': {
+                        const faceId = arguments[2];
+                        this.resetListFilter();
+                        this.listFilter.Face = faceId;
+                        this.$refs.listView.loadAssets();
+                        break;
+                        break;
+                    }
+                    case 'pathItemClick': {
+                        const path = arguments[2];
+                        this.resetListFilter();
+                        this.listFilter.PathId = path.Id;
+                        this.pathIdFilter = path.Name;
+                        this.$refs.listView.loadAssets();
+                        break;
+                    }
+                    case 'collectionClick': {
+                        const collection = arguments[2];
+                        this.resetListFilter();
+                        this.listFilter.Collection = collection.UUID;
+                        this.$refs.listView.loadAssets();
+                        this.activeCollection = collection;
+                        this.setToastVisible(this.activeCollectionToast, true)
+                        break;
+                    }
+                    case 'collectionSaved': {
+                        this.$refs.collectionList.loadCollections();
+                        break;
+                    }
+                    case 'uploadFinished': {
+                        this.resetListFilter();
+                        this.$refs.listView.loadAssets();
+                        break;
+                    }
+                    case 'createCollectionClick': {
+                        const name = arguments[2];
+                        this.createCollection(name);
+                        break;
+                    }
+                    default: {
+                        console.log("Event not handled: '" + eventName + "', " + arguments.length + " arguments, sender: " + sender);
+                        console.log(arguments);
+                    }
+                }
+            },
+
+            resetListFilter() {
+                this.listFilter.FileName = null;
+                this.listFilter.MimeType = null;
+                this.listFilter.PathId = null;
+                this.listFilter.Face = null;
+                this.listFilter.Collection = null;
+
+                this.pathIdFilter = null;
+            },
+
+            setToastVisible(el, visible) {
+                if (!el) return;
+                if (visible) {
+                    el.classList.add('show');
+                    el.classList.remove('hide');
+                } else {
+                    el.classList.add('hide');
+                    el.classList.remove('show');
+                }
+            },
+
+            loadMimeTypes() {
+                const self = this;
+                const requestOptions = {
+                    method: 'GET'
+                }
+                fetch('/mimetypes/list', requestOptions)
+                    .then(res => res.json())
+                    .then(json => {
+                        self.mimeTypes.splice(0, self.mimeTypes.length);
+                        for (const item of json) {
+                            self.mimeTypes.push(item);
+                        }
+                    });
+            },
+
+            filterPath(path) {
+                const self = this;
+                const requestOptions = {
+                    method: 'POST',
+                    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                    body: "path=" + encodeURI(path)
+                }
+                fetch('/pathitem/', requestOptions)
+                    .then(res => res.json())
+                    .then(json => {
+                        self.resetListFilter();
+                        self.listFilter.PathId = json.Id;
+                        self.pathIdFilter = path;
+                        self.$refs.listView.loadAssets();
+                    });
+            },
+
+            loadNotifications() {
+                const self = this;
+                const requestOptions = {
+                    method: 'GET'
+                }
+                fetch('/notifications', requestOptions)
+                    .then(res => res.json())
+                    .then(json => {
+                        self.notifications.splice(0, self.notifications.length);
+                        for (const msg of json) {
+                            self.notifications.push(msg);
+                        }
+                    });
+            },
+
+            toggleToastPosition() {
+                const el = document.getElementById("toasts");
+                if(el) {
+                    if(el.classList.contains("end-0")) {
+                        el.classList.remove("end-0");
+                        el.classList.add("start-0")
+                    } else {
+                        el.classList.remove("start-0")
+                        el.classList.add("end-0");
+                    }
+                }
+            },
+
+            createCollection(name) {
+                const self = this;
+
+                const hashes = [];
+                for( const hash of Object.keys(self.selectedAssets)) {
+                    hashes.push(hash);
+                }
+
+                if(!name || name.trim() === "") {
+                    name = "Collection " + new Date()
+                }
+
+                const requestParams = {
+                    method: 'POST',
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        Name: name,
+                        Owner: "spa",
+                        Description: "Collection created at " + new Date(),
+                        Assets: hashes
+                    })
+                }
+
+                fetch('/collections/add', requestParams)
+                    .then(res => res.json())
+                    .then(json => {
+                        self.selectedAssets = {};
+                        self.setToastVisible(this.selectedAssetsToast, false);
+                        self.$refs.collectionList.loadCollections();
+
+                        self.activeCollection = json;
+                        self.setToastVisible(this.activeCollectionToast, true);
+
+                        self.resetListFilter();
+                        self.listFilter.Collection = json.UUID;
+                        self.$refs.listView.loadAssets();
+                    });
+
+            },
+
+            removeCollection(collection) {
+                const self = this;
+                if(!confirm("Delete collection?"))
+                    return
+
+                const requestParams = {
+                    method: 'POST',
+                    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                    body: "UUID=" + encodeURI(collection.UUID)
+                }
+
+                fetch('/collections/remove', requestParams)
+                    .then(res => res.json())
+                    .then(json => {
+                        console.log(json);
+                        self.activeCollection = null;
+                        self.setToastVisible(this.activeCollectionToast, false);
+                        self.$refs.collectionList.loadCollections();
+
+                        self.resetListFilter();
+                        self.$refs.listView.loadAssets();
+                    });
+            }
+        },
+
+        mounted() {
+            this.activeAssetToast = this.$refs["activeAssetToast"];
+            this.setToastVisible(this.activeAssetToast, false);
+            this.selectedAssetsToast = this.$refs["selectedAssetsToast"];
+            this.setToastVisible(this.selectedAssetsToast, false);
+            this.activeCollectionToast = this.$refs["activeCollectionToast"];
+            this.setToastVisible(this.activeCollectionToast, false);
+
+            this.loadMimeTypes();
+            this.loadNotifications();
+        }
+    })
+        .component('asset-view', AssetView)
+        .component('asset-selection-list', AssetSelectionListView)
+        .component('path-tree', PathTree)
+        .component('upload', Upload)
+        .component('collection-view', CollectionView)
+        .component('collection-list-view', CollectionListView)
+        .use(router)
+        .mount('#app');
+
+</script>
+
+<!-- UI Scripts -->
+<script src="css/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>
