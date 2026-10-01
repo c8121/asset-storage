@@ -30,11 +30,6 @@ func NewImageMagickDocToImageFilter() *ImageMagickDocToImageFilter {
 
 func (f ImageMagickDocToImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
-	check := strings.ToLower(meta.MimeType)
-	if !strings.Contains(check, "document") && !strings.Contains(check, "application/vnd.ms-") {
-		return nil, "", fmt.Errorf("mime-type not supported: %s", meta.MimeType)
-	}
-
 	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", strconv.Itoa(f.DefaultWidth)))
 	height, _ := strconv.Atoi(util.GetOrDefault(params, "height", "0"))
 	tempFileNamePattern := util.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)

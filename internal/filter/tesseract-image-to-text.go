@@ -25,11 +25,6 @@ func NewTesseractImageToTextFilter() *TesseractImageToTextFilter {
 
 func (f TesseractImageToTextFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
-	check := strings.ToLower(meta.MimeType)
-	if !strings.HasPrefix(check, "image/") {
-		return nil, "", fmt.Errorf("mime-type not supported: %s", meta.MimeType)
-	}
-
 	lang := util.GetOrDefault(params, "lang", f.DefaultLanguage)
 
 	in, err := storage.FindByHash(assetHash)

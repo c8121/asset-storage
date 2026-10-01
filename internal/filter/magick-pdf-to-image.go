@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/filter_commands"
@@ -28,11 +27,6 @@ func NewImageMagickPdfToImageFilter() *ImageMagickPdfToImageFilter {
 }
 
 func (f ImageMagickPdfToImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
-
-	check := strings.ToLower(meta.MimeType)
-	if !strings.Contains(check, "pdf") {
-		return nil, "", fmt.Errorf("mime-type not supported: %s", meta.MimeType)
-	}
 
 	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", strconv.Itoa(f.DefaultWidth)))
 	height, _ := strconv.Atoi(util.GetOrDefault(params, "height", "0"))

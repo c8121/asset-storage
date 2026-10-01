@@ -37,11 +37,6 @@ func NewImageMagickTextToImageFilter() *ImageMagickTextToImageFilter {
 
 func (f ImageMagickTextToImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
-	check := strings.ToLower(meta.MimeType)
-	if !strings.HasPrefix(check, "text/") {
-		return nil, "", fmt.Errorf("mime-type not supported: %s", meta.MimeType)
-	}
-
 	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", strconv.Itoa(f.DefaultWidth)))
 	height, _ := strconv.Atoi(util.GetOrDefault(params, "height", "0"))
 	tempFileNamePattern := util.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)

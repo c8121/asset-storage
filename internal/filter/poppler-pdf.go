@@ -3,7 +3,6 @@ package filter
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/filter_commands"
@@ -21,11 +20,6 @@ func NewPopplerPdfToTextFilter() *PopplerPdfToTextFilter {
 }
 
 func (f PopplerPdfToTextFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
-
-	check := strings.ToLower(meta.MimeType)
-	if !strings.HasPrefix(check, "application/pdf") {
-		return nil, "", fmt.Errorf("mime-type not supported: %s", meta.MimeType)
-	}
 
 	in, err := storage.FindByHash(assetHash)
 	if err != nil {
