@@ -36,6 +36,13 @@ func CheckAndNotify() {
 		util.AppNotifications.AddNotification("Using pdftotext from " + path)
 	}
 
+	path = FindPandocBin()
+	if path == "" {
+		util.AppNotifications.AddNotification("Pandoc is not installed. To support doc to text conversion, please install pandoc")
+	} else {
+		util.AppNotifications.AddNotification("Using pandoc from " + path)
+	}
+
 	for _, msg := range util.AppNotifications.Messages {
 		fmt.Println(msg)
 	}

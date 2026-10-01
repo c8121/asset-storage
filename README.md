@@ -166,6 +166,15 @@ To convert PDF to text.
     sudo apt update
     sudo apt install poppler-utils
 
+### Pandoc
+
+https://pandoc.org/
+
+To convert Office-Documents to text.
+
+    sudo apt update
+    sudo apt install pandoc
+
 
 ## Libraries used
 

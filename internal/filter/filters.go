@@ -137,6 +137,15 @@ func loadAvailableFilters() {
 				"(?i)^application/pdf$",
 			},
 		},
+		{
+			Name:   "PandocOfficeToTextFilter",
+			Alias:  "Text",
+			Filter: NewPandocOfficeToTextFilter(),
+			MimeTypes: []string{
+				"(?i)^application/.*word.*$",
+				"(?i)^application/.*document.*$",
+			},
+		},
 	}
 
 }
