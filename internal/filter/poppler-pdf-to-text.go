@@ -26,7 +26,7 @@ func (f PopplerPdfToTextFilter) Apply(assetHash string, meta *metadata.JsonAsset
 		return nil, "", fmt.Errorf("cannot find asset: %w", err)
 	}
 
-	out, err := f.pdfPopplerPdfToText(in)
+	out, err := f.popplerPdfToText(in)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to extract text: %w", err)
 	}
@@ -42,11 +42,11 @@ func (f PopplerPdfToTextFilter) Apply(assetHash string, meta *metadata.JsonAsset
 }
 
 // pdfPopplerPdfToText executes pdftotext for PDF to Text conversion ...
-func (f PopplerPdfToTextFilter) pdfPopplerPdfToText(input string) (string, error) {
+func (f PopplerPdfToTextFilter) popplerPdfToText(input string) (string, error) {
 
 	binary := filter_commands.FindPopplerPdfBin()
 	if binary == "" {
-		return "", fmt.Errorf("pdftotext not found (searching in %v)", filter_commands.TesseractBinPaths)
+		return "", fmt.Errorf("pdftotext not found (searching in %v)", filter_commands.PopplerPdfBinPaths)
 	}
 
 	out, err := os.CreateTemp(config.AssetStorageTempDir, "poppler-pdftotext-*.txt")

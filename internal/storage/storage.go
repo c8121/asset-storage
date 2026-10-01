@@ -152,7 +152,8 @@ func Walk(handler func(path string)) {
 	}
 }
 
-// FindByHash Check all time-periods if file exists
+// FindByHash Check all time-periods if file exists.
+// Returns the absolte file path or empty string if not found
 func FindByHash(hashHex string) (string, error) {
 
 	if len(hashHex) < 2 {
