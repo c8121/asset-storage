@@ -92,7 +92,9 @@ func loadAvailableFilters() {
 			Filter: NewImageMagickDocToImageFilter(),
 			MimeTypes: []string{
 				"(?i)officedocument",
+				"(?i)opendocument",
 				"(?i)^application/vnd.ms-",
+				"(?i)^application/x-ole-storage",
 			},
 		},
 		{
@@ -100,7 +102,7 @@ func loadAvailableFilters() {
 			Alias:  "Image",
 			Filter: NewImageMagickTextToImageFilter(),
 			MimeTypes: []string{
-				"(?i)^text/plain",
+				"(?i)^text/",
 			},
 		},
 		{
