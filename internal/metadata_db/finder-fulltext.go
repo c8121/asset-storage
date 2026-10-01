@@ -18,7 +18,7 @@ func (f FinderByFulltext) Find(fulltextQuery any) (ScoredIdMap, error) {
 		return nil, nil
 	}
 
-	hashes, err := fulltext.Find(sQuery)
+	hashes, err := fulltext.Find(sQuery, 0, 999)
 	if err != nil {
 		return nil, err
 	}

@@ -35,7 +35,7 @@ func main() {
 
 func searchIndex(query string) {
 
-	hashes, err := fulltext.Find(query)
+	hashes, err := fulltext.Find(query, 0, 30)
 	if err != nil {
 		util.LogError(err)
 		return

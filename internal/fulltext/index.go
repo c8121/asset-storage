@@ -108,14 +108,14 @@ func Add(assetMeta *metadata.JsonAssetMetaData, text string) error {
 	return batch.Index(assetMeta.Hash, doc)
 }
 
-func Find(query string) ([]string, error) {
+func Find(query string, offset int, count int) ([]string, error) {
 	if index == nil {
 		return nil, fmt.Errorf("index not opened (call fulltext.Open() before)")
 	}
 
 	matchQuery := bleve.NewQueryStringQuery(query)
 	//matchQuery := bleve.NewMatchAllQuery()
-	searchRequest := bleve.NewSearchRequestOptions(matchQuery, 30, 0, false)
+	searchRequest := bleve.NewSearchRequestOptions(matchQuery, count, offset, false)
 	searchResults, err := index.Search(searchRequest)
 	if err != nil {
 		return nil, err
