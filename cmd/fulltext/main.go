@@ -21,17 +21,33 @@ func main() {
 
 	config.LoadDefault()
 
+	fulltext.CreateDirectories()
+
+	util.LogError(fulltext.Open())
+	defer fulltext.Close()
+
 	if *query != "" {
-		defer fulltext.CloseIndex()
-		util.LogError(fulltext.Find(*query))
+		searchIndex(*query)
 	} else {
 		updateIndex()
 	}
 }
 
+func searchIndex(query string) {
+
+	hashes, err := fulltext.Find(query)
+	if err != nil {
+		util.LogError(err)
+		return
+	}
+
+	for _, hash := range hashes {
+		fmt.Println(hash)
+	}
+
+}
+
 func updateIndex() {
-	fulltext.CreateDirectories()
-	defer fulltext.CloseIndex()
 
 	handler := func(path string) {
 		hash := storage.HashFromStoragePath(path)

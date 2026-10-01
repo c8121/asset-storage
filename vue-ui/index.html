@@ -39,14 +39,14 @@
         <div class="row mt-lg-4">
             <div class="col-sm-8 pb-2">
                 <div class="input-group">
-                    <input v-model="listFilter.FileName" class="form-control border-secondary" type="search" placeholder="Search" aria-label="Search" @keyup.enter="$refs.listView.loadAssets()">
+                    <input v-model="listFilter.Fulltext" class="form-control border-secondary" type="search" placeholder="Search" aria-label="Search" @keyup.enter="$refs.listView.loadAssets()">
                     <button class="btn btn-outline-secondary" type="submit" @click="$refs.listView.loadAssets()"><i class="bi bi-search"></i></button>
                 </div>
             </div>
     
             <div class="col-sm-4 pb-2">
                 <select v-model="listFilter.MimeType" class="form-select" @change="$refs.listView.loadAssets()">
-                    <option :value="null">Type</option>
+                    <option :value="null">Filter Type</option>
                     <option value="image/*">Images</option>
                     <option value="video/*">Videos</option>
                     <option :value="null"> - </option>
@@ -99,7 +99,7 @@
                 </div>
             </div>
 
-            <div v-if="listFilter.MimeType || listFilter.FileName || listFilter.PathId || listFilter.Face || listFilter.Collection">
+            <div v-if="listFilter.MimeType || listFilter.FileName || listFilter.PathId || listFilter.Face || listFilter.Collection || listFilter.Fulltext">
                 <button class="btn btn-sm btn-secondary m-2" @click="resetListFilter(); $refs.listView.loadAssets()">
                     <i class="bi bi-funnel text-decoration-line-through"></i>
                     Clear Filter
@@ -302,6 +302,7 @@
                 this.listFilter.PathId = null;
                 this.listFilter.Face = null;
                 this.listFilter.Collection = null;
+                this.listFilter.Fulltext = null;
 
                 this.pathIdFilter = null;
             },

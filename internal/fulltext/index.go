@@ -7,7 +7,6 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/mapping"
-	indexApi "github.com/blevesearch/bleve_index_api"
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/util"
@@ -32,76 +31,10 @@ const (
 	batchSize = 100
 )
 
-func Add(assetMeta *metadata.JsonAssetMetaData, text string) error {
-	err := initIndex()
-	if err != nil {
-		return err
-	}
+func Open() error {
 
-	//fmt.Printf("Adding from %s: %s\n", assetHash, text)
-
-	if batch == nil {
-		batch = index.NewBatch()
-	} else if batch.Size() >= batchSize {
-		fmt.Printf("Add batch of %d.\n", batch.Size())
-		err = index.Batch(batch)
-		if err != nil {
-			return err
-		}
-		batch = index.NewBatch()
-	}
-
-	name := assetMeta.Hash //Fallback
-	latestOrigin := metadata.GetLatestOrigin(assetMeta)
-	if latestOrigin != nil {
-		name = latestOrigin.Name
-	}
-
-	doc := Document{
-		Name: name,
-		Text: text,
-	}
-
-	return batch.Index(assetMeta.Hash, doc)
-}
-
-func Find(query string) error {
-	err := initIndex()
-	if err != nil {
-		return err
-	}
-
-	matchQuery := bleve.NewQueryStringQuery(query)
-	//matchQuery := bleve.NewMatchAllQuery()
-	searchRequest := bleve.NewSearchRequest(matchQuery)
-	searchResults, err := index.Search(searchRequest)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Found %d documents\n", searchResults.Total)
-	for _, hit := range searchResults.Hits {
-		fmt.Printf("%s\n", hit.ID)
-
-		doc, err := index.Document(hit.ID)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		doc.VisitFields(func(field indexApi.Field) {
-			if field.Name() == "Type" {
-				fmt.Printf("    %s: %s\n", field.Name(), field.Value())
-			} else {
-				fmt.Printf("    %s: %s\n", field.Name(), field.Options())
-			}
-		})
-	}
-
-	return nil
-}
-
-func initIndex() error {
 	if index != nil {
+		fmt.Println("Index already opened")
 		return nil
 	}
 
@@ -130,6 +63,74 @@ func initIndex() error {
 	return nil
 }
 
+func Close() {
+	if index != nil {
+		if batch != nil {
+			fmt.Printf("Close index, add batch of %d.\n", batch.Size())
+			util.LogError(index.Batch(batch))
+			batch = nil
+		}
+
+		util.LogError(index.Close())
+		index = nil
+	}
+}
+
+func Add(assetMeta *metadata.JsonAssetMetaData, text string) error {
+	if index == nil {
+		return fmt.Errorf("index not opened (call fulltext.Open() before)")
+	}
+
+	//fmt.Printf("Adding from %s: %s\n", assetHash, text)
+
+	if batch == nil {
+		batch = index.NewBatch()
+	} else if batch.Size() >= batchSize {
+		fmt.Printf("Add batch of %d.\n", batch.Size())
+		err := index.Batch(batch)
+		if err != nil {
+			return err
+		}
+		batch = index.NewBatch()
+	}
+
+	name := assetMeta.Hash //Fallback
+	latestOrigin := metadata.GetLatestOrigin(assetMeta)
+	if latestOrigin != nil {
+		name = latestOrigin.Name
+	}
+
+	doc := Document{
+		Name: name,
+		Text: text,
+	}
+
+	return batch.Index(assetMeta.Hash, doc)
+}
+
+func Find(query string) ([]string, error) {
+	if index == nil {
+		return nil, fmt.Errorf("index not opened (call fulltext.Open() before)")
+	}
+
+	matchQuery := bleve.NewQueryStringQuery(query)
+	//matchQuery := bleve.NewMatchAllQuery()
+	searchRequest := bleve.NewSearchRequestOptions(matchQuery, 30, 0, false)
+	searchResults, err := index.Search(searchRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	var hashes = make([]string, 0)
+
+	fmt.Printf("Found %d documents\n", searchResults.Total)
+	for _, hit := range searchResults.Hits {
+		hashes = append(hashes, hit.ID)
+	}
+
+	return hashes, nil
+}
+
 func buildIndexMapping() (mapping.IndexMapping, error) {
 
 	indexMapping := bleve.NewIndexMapping()
@@ -144,17 +145,4 @@ func buildIndexMapping() (mapping.IndexMapping, error) {
 	indexMapping.DefaultMapping = docMapping
 
 	return indexMapping, nil
-}
-
-func CloseIndex() {
-	if index != nil {
-		if batch != nil {
-			fmt.Printf("Close index, add batch of %d.\n", batch.Size())
-			util.LogError(index.Batch(batch))
-			batch = nil
-		}
-
-		util.LogError(index.Close())
-		index = nil
-	}
 }

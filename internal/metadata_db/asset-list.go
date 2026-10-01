@@ -23,6 +23,7 @@ type AssetListFilter struct {
 	FileName   string
 	PathName   string
 	Collection string
+	Fulltext   string
 	Face       int64
 	Offset     int
 	Count      int
@@ -41,6 +42,7 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 		FinderByPathName{}:   filter.PathName,
 		FinderByFace{}:       filter.Face,
 		FinderByCollection{}: filter.Collection,
+		FinderByFulltext{}:   filter.Fulltext,
 	}
 
 	for finder, value := range finders {

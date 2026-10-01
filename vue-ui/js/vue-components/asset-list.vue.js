@@ -96,14 +96,11 @@ export default {
         createRequestOptions() {
             const self = this;
 
+            //For available filters see internal/metadata_db/asset-list.go
             const listFilter = {
                 Offset: self.offset,
                 Count: self.count,
-                MimeType: null,
-                //FileName: null,
-                //PathName: null,
-                //PathId: null,
-                //Face: null
+                MimeType: null
             }
 
             for(const p of Object.keys(self.filter)) {

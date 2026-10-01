@@ -2,10 +2,16 @@ export default {
     template: `
         <div>
             <div v-if="value">
-                <div @click="assetClick()" role="button">
-                    <span class="text-primary"><strong>{{ value.Name }}</strong></span>
-                    <span class="text-secondary ps-3">{{ value.MimeType }}</span>
-                    <span class="text-secondary ps-3">{{ value.FileTime }}</span>
+                <div class="input-group">
+                    <input type="text" readonly class="form-control" v-model="value.Name">
+                    <button class="btn btn-primary"
+                        @click="assetClick()">
+                       <i class="bi bi-download"></i>
+                    </button>
+                </div>
+                <div class="row">
+                    <div class="col small text-secondary pt-2">{{ value.MimeType }}</div>
+                    <div class="col small text-secondary pt-2">{{ value.FileTime }}</div>
                 </div>
             </div>
             <div v-if="asset && asset.Origins" class="overflow-auto" style="max-height: 40vh">

@@ -5,6 +5,7 @@ import (
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/faces"
 	"github.com/c8121/asset-storage/internal/filter_commands"
+	"github.com/c8121/asset-storage/internal/fulltext"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/rest_api"
 	"github.com/c8121/asset-storage/internal/spa_server"
@@ -21,9 +22,13 @@ func main() {
 	storage.CreateDirectories()
 	metadata.CreateDirectories()
 	collections.CreateDirectories()
+	fulltext.CreateDirectories()
 
 	filter_commands.CheckAndNotify()
 	faces.CheckFaceRestServiceAvailable()
+
+	util.LogError(fulltext.Open())
+	defer fulltext.Close()
 
 	metadata_sqlite.Open()
 	defer metadata_sqlite.Close()
