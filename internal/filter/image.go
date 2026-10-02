@@ -3,7 +3,6 @@ package filter
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"bufio"
 	"bytes"
@@ -42,11 +41,6 @@ func (f ImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, p
 	cropY1, _ := strconv.Atoi(util.GetOrDefault(params, "y1", "0"))
 	cropX2, _ := strconv.Atoi(util.GetOrDefault(params, "x2", "0"))
 	cropY2, _ := strconv.Atoi(util.GetOrDefault(params, "y2", "0"))
-
-	check := strings.ToLower(meta.MimeType)
-	if !strings.HasPrefix(check, "image/") {
-		return nil, "", fmt.Errorf("mime-type not supported: %s", meta.MimeType)
-	}
 
 	reader, err := storage.Open(assetHash)
 	if err != nil {
