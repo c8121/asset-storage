@@ -14,6 +14,7 @@ import (
 
 type ImageMagickPdfToImageFilter struct {
 	DefaultWidth           int
+	DefaultDensity         int
 	DefaultFileNamePattern string
 	DefaultMimeType        string
 }
@@ -21,6 +22,7 @@ type ImageMagickPdfToImageFilter struct {
 func NewImageMagickPdfToImageFilter() *ImageMagickPdfToImageFilter {
 	f := &ImageMagickPdfToImageFilter{}
 	f.DefaultWidth = 400
+	f.DefaultDensity = 75
 	f.DefaultFileNamePattern = "asset-thumb*.png"
 	f.DefaultMimeType = "image/png"
 	return f
@@ -30,6 +32,7 @@ func (f ImageMagickPdfToImageFilter) Apply(assetHash string, meta *metadata.Json
 
 	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", strconv.Itoa(f.DefaultWidth)))
 	height, _ := strconv.Atoi(util.GetOrDefault(params, "height", "0"))
+	density, _ := strconv.Atoi(util.GetOrDefault(params, "density", strconv.Itoa(f.DefaultDensity)))
 	tempFileNamePattern := util.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)
 	mimeType := util.GetOrDefault(params, "mimeType", f.DefaultMimeType)
 
@@ -44,7 +47,7 @@ func (f ImageMagickPdfToImageFilter) Apply(assetHash string, meta *metadata.Json
 	}
 	util.LogError(out.Close())
 
-	err = f.imageMagickPdfToImage(in, out.Name(), width, height)
+	err = f.imageMagickPdfToImage(in, out.Name(), width, height, density)
 	if err != nil {
 		util.LogError(os.Remove(out.Name()))
 		return nil, "", fmt.Errorf("failed to create thumbnail: %w", err)
@@ -61,7 +64,7 @@ func (f ImageMagickPdfToImageFilter) Apply(assetHash string, meta *metadata.Json
 }
 
 // imageMagickPdfToImage executes ImageMagick for PDF to Image conversion ...
-func (f ImageMagickPdfToImageFilter) imageMagickPdfToImage(input string, output string, width int, height int) error {
+func (f ImageMagickPdfToImageFilter) imageMagickPdfToImage(input string, output string, width int, height int, density int) error {
 
 	binary := filter_commands.FindImageMagickBin()
 	if binary == "" {
@@ -69,6 +72,10 @@ func (f ImageMagickPdfToImageFilter) imageMagickPdfToImage(input string, output 
 	}
 
 	var args []string
+
+	if density > 0 {
+		args = append(args, "-density", fmt.Sprintf("%d", density)) //must be before input
+	}
 
 	args = append(args, input+"[0]")
 

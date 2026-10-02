@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	ThumbnailWidth = 150
+	ThumbnailWidth   = 150
+	ThumbnailDensity = 50
 )
 
 // GetPreview is a rest-api handler to generate a preview image
@@ -64,6 +65,7 @@ func generateThumbnail(assetHash string, meta *metadata.JsonAssetMetaData) ([]by
 
 	params := map[string]string{}
 	params["width"] = strconv.Itoa(ThumbnailWidth)
+	params["density"] = strconv.Itoa(ThumbnailDensity)
 
 	return f.Apply(assetHash, meta, params)
 }
