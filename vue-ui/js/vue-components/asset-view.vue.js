@@ -25,8 +25,7 @@ export default {
                 <div class="input-group">
                     <select class="form-select" v-model="filterName" @change="filterChange">
                         <option :value="null">Original</option>
-                        <option value="image">Image</option>
-                        <option value="text">Text</option>
+                        <option v-for="filter in availableFilters" :value="filter.name">{{filter.label}}</option>
                     </select>
                     <button class="btn btn-primary"
                         @click="downloadClick()">
@@ -84,13 +83,20 @@ export default {
             filterName: null,
             filterParams: null,
 
+            availableFilters: [
+                { name: 'image', label: 'Image' },
+                { name: 'text', label: 'Text' },
+                //{ name: 'OcrPreparedImage', label: 'OcrPreparedImage' },
+                { name: 'OCR', label: 'OCR' },
+            ],
+
             availableFilterParams: {
                 image: [
                     { name: 'width', label: 'Width', value: 100, type: "number" },
                     { name: 'height', label: 'Height', value: "", type: "number" }
                 ],
-                text: [
-                    { name: 'lang', label: 'Language', value: "deu", type: "text" }
+                ocr: [
+                    { name: 'lang', label: 'Language', value: "deu", type: "OCR" }
                 ]
             },
 

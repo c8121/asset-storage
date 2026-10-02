@@ -9,7 +9,6 @@ import (
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/filter_commands"
 	"github.com/c8121/asset-storage/internal/metadata"
-	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
@@ -27,22 +26,35 @@ func (f TesseractImageToTextFilter) Apply(assetHash string, meta *metadata.JsonA
 
 	lang := util.GetOrDefault(params, "lang", f.DefaultLanguage)
 
-	in, err := storage.FindByHash(assetHash)
+	prepareFilter := NewOcrImagePrepareFilter()
+	bytes, _, err := prepareFilter.Apply(assetHash, meta, params)
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot find asset: %w", err)
 	}
 
-	out, err := f.imageTesseractImageToText(in, lang)
+	tmpFile, err := os.CreateTemp(config.AssetStorageTempDir, "tesseract-prep*")
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to create temp file: %w", err)
+	}
+	_, err = tmpFile.Write(bytes)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to write temp file: %w", err)
+	}
+
+	util.CloseOrLog(tmpFile)
+
+	out, err := f.imageTesseractImageToText(tmpFile.Name(), lang)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to extract text: %w", err)
 	}
 
-	bytes, err := os.ReadFile(out)
+	bytes, err = os.ReadFile(out)
 	if err != nil {
 		util.LogError(os.Remove(out))
 		return nil, "", fmt.Errorf("failed to extract text: %w", err)
 	}
 
+	util.LogError(os.Remove(tmpFile.Name()))
 	util.LogError(os.Remove(out))
 	return bytes, "text/plain;charset=UTF-8", nil
 }

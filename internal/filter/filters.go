@@ -146,6 +146,24 @@ func loadAvailableFilters() {
 				"(?i)^application/.*document.*$",
 			},
 		},
+		{
+			Name:   "OcrImagePrepareFilter",
+			Alias:  "OcrPreparedImage",
+			Filter: NewOcrImagePrepareFilter(),
+			MimeTypes: []string{
+				"(?i)^image/",
+				"(?i)^application/pdf$",
+			},
+		},
+		{
+			Name:   "TesseractImageToTextFilter",
+			Alias:  "OCR",
+			Filter: NewTesseractImageToTextFilter(),
+			MimeTypes: []string{
+				"(?i)^image/",
+				"(?i)^application/pdf$",
+			},
+		},
 	}
 
 }
