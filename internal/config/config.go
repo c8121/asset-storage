@@ -34,16 +34,19 @@ var (
 	CertFile      = ""
 	KeyFile       = ""
 
-	cmdDataDir              = flag.String("data", "", "Data directory for storage, meta-data, db...")
-	cmdUseGzip              = flag.Bool("gzip", false, "Use GZIP compression")
-	cmdXorKey               = flag.String("xor", "", "XOR Key for content obfusication")
-	cmdMaxMemFileSize       = flag.Int64("maxmem", 0, "Max memory file size in bytes")
-	cmdSpaHttpRoot          = flag.String("spa", "", "HTTP root directory of SPA app")
-	cmdSkipMetaDataIfExists = flag.Bool("skip-meta", false, "Skip meta data update if file exist")
-	cmdCheckHashBeforeAdd   = flag.Bool("check-hash", false, "Check hash before trying to add file.")
-	cmdListen               = flag.String("listen", "", "Listen Address (ip:port)")
-	cmdCertFile             = flag.String("cert", "", "Certificate file")
-	cmdKeyFile              = flag.String("key", "", "Key file")
+	PdfToTextCharCountToUseOcr = 10 //Use OCR when converting PDF to Text, if result does not have more chars
+
+	cmdDataDir               = flag.String("data", "", "Data directory for storage, meta-data, db...")
+	cmdUseGzip               = flag.Bool("gzip", false, "Use GZIP compression")
+	cmdXorKey                = flag.String("xor", "", "XOR Key for content obfusication")
+	cmdMaxMemFileSize        = flag.Int64("maxmem", 0, "Max memory file size in bytes")
+	cmdSpaHttpRoot           = flag.String("spa", "", "HTTP root directory of SPA app")
+	cmdSkipMetaDataIfExists  = flag.Bool("skip-meta", false, "Skip meta data update if file exist")
+	cmdCheckHashBeforeAdd    = flag.Bool("check-hash", false, "Check hash before trying to add file.")
+	cmdListen                = flag.String("listen", "", "Listen Address (ip:port)")
+	cmdCertFile              = flag.String("cert", "", "Certificate file")
+	cmdKeyFile               = flag.String("key", "", "Key file")
+	cmdCharCountPdfToTextOcr = flag.Int("pdf-ocr", 10, "Use OCR when converting PDF to Text, if result does not have more chars")
 )
 
 // LoadDefault initializes configuration with defaults,
@@ -124,6 +127,11 @@ func LoadDefault() {
 	if *cmdKeyFile != "" {
 		KeyFile = *cmdKeyFile
 		fmt.Printf("Key file: %s\n", KeyFile)
+	}
+
+	if *cmdCharCountPdfToTextOcr >= 0 {
+		PdfToTextCharCountToUseOcr = *cmdCharCountPdfToTextOcr
+		fmt.Printf("Using OCR if for PDF to text conversion if non-OCR result <= %d chars\n", PdfToTextCharCountToUseOcr)
 	}
 }
 

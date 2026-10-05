@@ -37,6 +37,18 @@ func (f PopplerPdfToTextFilter) Apply(assetHash string, meta *metadata.JsonAsset
 		return nil, "", fmt.Errorf("failed to extract text: %w", err)
 	}
 
+	if len(bytes) < config.PdfToTextCharCountToUseOcr {
+		fmt.Printf("Result of pdftotext has %d chars.\n", len(bytes))
+		if filter_commands.FindImageMagickBin() == "" {
+			fmt.Printf("Cannot use OCR, ImageMagick not found\n")
+		} else if filter_commands.FindTesseractBin() == "" {
+			fmt.Printf("Cannot use OCR, Tesseract not found\n")
+		} else {
+			filter := NewTesseractImageToTextFilter()
+			return filter.Apply(assetHash, meta, params)
+		}
+	}
+
 	util.LogError(os.Remove(out))
 	return bytes, "text/plain;charset=UTF-8", nil
 }
