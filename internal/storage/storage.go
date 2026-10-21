@@ -95,7 +95,7 @@ func copyToStorage(reader io.Reader, size int64) (*AddedFileInfo, error) {
 	info.IsNewFile = true
 
 	destName := info.Hash[2:]
-	destDir := fmt.Sprintf("%s/%s/%s",
+	destDir := filepath.Join(
 		config.AssetStorageBaseDir,
 		TimePeriodName(),
 		info.Hash[:2])
@@ -105,7 +105,7 @@ func copyToStorage(reader io.Reader, size int64) (*AddedFileInfo, error) {
 		return info, fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	info.StoragePath = fmt.Sprintf("%s/%s",
+	info.StoragePath = filepath.Join(
 		destDir,
 		destName)
 
@@ -197,6 +197,7 @@ func FindByHash(hashHex string) (string, error) {
 }
 
 // HashFromStoragePath Extract full hash from path (.../hash[:2]/hash[2:]...)
+// The path-name itself will be used to get the hash, the file wont be read and no hash calculated.
 func HashFromStoragePath(path string) string {
 	dir, name := filepath.Split(path)
 	_, dir2 := filepath.Split(dir[:len(dir)-1])
@@ -209,7 +210,8 @@ func HashFromStoragePath(path string) string {
 	return hash
 }
 
-// HashFromContent calculates the content hash
+// HashFromContent calculates the content hash.
+// File will be opened and read to calculate the hash
 func HashFromContent(path string) (string, error) {
 
 	reader, err := os.Open(path)
