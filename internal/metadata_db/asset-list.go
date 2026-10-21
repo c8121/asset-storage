@@ -60,7 +60,16 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 		}
 	}
 
-	return ListAssetsByIds(ids, filter.Offset, filter.Count)
+	items, err := ListAssetsByIds(ids, filter.Offset, filter.Count)
+	if err != nil {
+		return nil, err
+	}
+
+	if pathIds, err := FindPathIds(items); err == nil {
+		fmt.Printf("PathIds: %v\n", pathIds)
+	}
+
+	return items, nil
 }
 
 // ListAssetsByIds creates a list of AssetListItem's, loaded by given ScoredIdMap
@@ -155,4 +164,62 @@ func loadAssetList(query string, params ...any) ([]AssetListItem, error) {
 	}
 
 	return items, nil
+}
+
+func FindPathIds(items []AssetListItem) (map[int64][]int64, error) {
+
+	var idMap = make(map[int64][]int64, len(items))
+	var chunk = make([]AssetListItem, 0)
+
+	for i, item := range items {
+
+		chunk = append(chunk, item)
+		if len(chunk) == 4 || (i+1) == len(items) {
+
+			var query = "SELECT a.id, o.path" +
+				" FROM origin o " +
+				" INNER JOIN asset a ON o.asset = a.id "
+
+			query += " WHERE a.id in(" +
+				strings.Repeat("?,", len(chunk)-1) + "?" +
+				");"
+
+			var params = make([]any, 0)
+			for _, id := range chunk {
+				params = append(params, id.Id)
+			}
+
+			stmt, err := metadata_db_conn.GetDatabase().Prepare(query)
+			if err != nil {
+				return nil, err
+			}
+			defer util.CloseOrLog(stmt)
+
+			if rows, err := stmt.Query(params...); err == nil {
+				defer util.CloseOrLog(rows)
+				for rows.Next() {
+					var assetId int64
+					var pathId int64
+					if err := rows.Scan(&assetId, &pathId); err != nil {
+						return nil, err
+					}
+
+					list, exists := idMap[assetId]
+					if exists {
+						idMap[assetId] = append(list, pathId)
+					} else {
+						list = make([]int64, 0)
+						idMap[assetId] = append(list, pathId)
+					}
+				}
+
+			} else {
+				return nil, err
+			}
+
+			chunk = make([]AssetListItem, 0)
+		}
+	}
+
+	return idMap, nil
 }
