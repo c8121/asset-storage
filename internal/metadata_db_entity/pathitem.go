@@ -17,7 +17,8 @@ type PathItem struct {
 }
 
 var (
-	pathItemCache map[string]*PathItem
+	pathItemCache     map[string]*PathItem
+	loadPathChunkSize = 100
 )
 
 func init() {
@@ -88,6 +89,66 @@ func LoadPathItem(tx *sql.Tx, path string, createIfNotExists bool) (*PathItem, e
 	}
 
 	return pathItem, nil
+}
+
+// FindPathIds looks for origin-paths in database and
+// returns it as map: asset.Id -> [path.Id,...]
+func FindPathIds(assetIds []int64) (map[int64][]int64, error) {
+
+	var idMap = make(map[int64][]int64, len(assetIds))
+	var chunk = make([]int64, 0)
+
+	for i, assetId := range assetIds {
+
+		chunk = append(chunk, assetId)
+		if len(chunk) == loadPathChunkSize || (i+1) == len(assetIds) {
+
+			var query = "SELECT a.id, o.path" +
+				" FROM origin o " +
+				" INNER JOIN asset a ON o.asset = a.id "
+
+			query += " WHERE a.id in(" +
+				strings.Repeat("?,", len(chunk)-1) + "?" +
+				");"
+
+			var params = make([]any, 0)
+			for _, id := range chunk {
+				params = append(params, id)
+			}
+
+			stmt, err := metadata_db_conn.GetDatabase().Prepare(query)
+			if err != nil {
+				return nil, err
+			}
+			defer util.CloseOrLog(stmt)
+
+			if rows, err := stmt.Query(params...); err == nil {
+				defer util.CloseOrLog(rows)
+				for rows.Next() {
+					var assetId int64
+					var pathId int64
+					if err := rows.Scan(&assetId, &pathId); err != nil {
+						return nil, err
+					}
+
+					list, exists := idMap[assetId]
+					if exists {
+						idMap[assetId] = append(list, pathId)
+					} else {
+						list = make([]int64, 0)
+						idMap[assetId] = append(list, pathId)
+					}
+				}
+
+			} else {
+				return nil, err
+			}
+
+			chunk = make([]int64, 0)
+		}
+	}
+
+	return idMap, nil
 }
 
 func GetAssetIdsFromPath(pathId int64) ([]int64, error) {
