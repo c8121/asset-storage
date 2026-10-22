@@ -15,6 +15,7 @@ type AssetListItem struct {
 	Name     string
 	MimeType string
 	FileTime time.Time
+	PathIds  []int64
 }
 
 type AssetListFilter struct {
@@ -60,16 +61,7 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 		}
 	}
 
-	items, err := ListAssetsByIds(ids, filter.Offset, filter.Count)
-	if err != nil {
-		return nil, err
-	}
-
-	if pathIds, err := FindPathIds(items); err == nil {
-		fmt.Printf("PathIds: %v\n", pathIds)
-	}
-
-	return items, nil
+	return ListAssetsByIds(ids, filter.Offset, filter.Count)
 }
 
 // ListAssetsByIds creates a list of AssetListItem's, loaded by given ScoredIdMap
@@ -110,6 +102,13 @@ func ListAssetsByIds(ids ScoredIdMap, offset int, count int) ([]AssetListItem, e
 					list = append(list, item)
 				}
 			}
+
+			if err = assignPathIds(&list); err != nil {
+				return nil, err
+			}
+			for _, item := range list {
+				fmt.Printf("%d items\n", len(item.PathIds))
+			}
 			return list, nil
 
 		} else {
@@ -123,7 +122,17 @@ func ListAssetsByIds(ids ScoredIdMap, offset int, count int) ([]AssetListItem, e
 		params = append(params, count)
 		params = append(params, offset)
 
-		return loadAssetList(query, params...)
+		list, err := loadAssetList(query, params...)
+		if err != nil {
+			return nil, err
+		}
+		if err = assignPathIds(&list); err != nil {
+			return nil, err
+		}
+		for _, item := range list {
+			fmt.Printf("%d items\n", len(item.PathIds))
+		}
+		return list, nil
 	}
 }
 
@@ -166,6 +175,25 @@ func loadAssetList(query string, params ...any) ([]AssetListItem, error) {
 	return items, nil
 }
 
+// assignPathIds uses FindPathIds and assigns to AssetListItem.PathIds
+func assignPathIds(items *[]AssetListItem) error {
+
+	idMap, err := FindPathIds(*items)
+	if err != nil {
+		return err
+	}
+
+	for i := range *items {
+		src := idMap[(*items)[i].Id]
+		(*items)[i].PathIds = make([]int64, len(src))
+		copy((*items)[i].PathIds, src)
+	}
+
+	return nil
+}
+
+// FindPathIds looks for origin-paths in database and
+// returns it as map: asset.Id -> [path.Id,...]
 func FindPathIds(items []AssetListItem) (map[int64][]int64, error) {
 
 	var idMap = make(map[int64][]int64, len(items))
