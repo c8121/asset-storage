@@ -33,6 +33,12 @@ func GetAsset(c *gin.Context) {
 		return
 	}
 
+	if !metadata_db.CanRead(asset.Id) {
+		fmt.Printf("Access dinied to %s\n", hash)
+		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
+		return
+	}
+
 	fileName, _ := metadata_db_entity.LoadFileNameById(metadata_db_conn.GetDatabase(), asset.Name)
 	mimeType, _ := metadata_db_entity.LoadMimeTypeById(metadata_db_conn.GetDatabase(), asset.MimeType)
 

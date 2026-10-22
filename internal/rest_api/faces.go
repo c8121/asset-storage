@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/c8121/asset-storage/internal/faces"
+	"github.com/c8121/asset-storage/internal/metadata_db"
 	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
@@ -18,6 +19,11 @@ func GetFaces(c *gin.Context) {
 	hash := c.Param("hash")
 	if len(hash) < 32 {
 		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash")))
+		return
+	}
+
+	if !metadata_db.CanReadHash(hash) {
+		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
 		return
 	}
 
@@ -41,6 +47,11 @@ func DetectFaces(c *gin.Context) {
 	hash := c.Param("hash")
 	if len(hash) < 32 {
 		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash")))
+		return
+	}
+
+	if !metadata_db.CanReadHash(hash) {
+		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
 		return
 	}
 
