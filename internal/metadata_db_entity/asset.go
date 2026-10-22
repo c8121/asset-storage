@@ -25,7 +25,7 @@ func LoadAsset(prv db_entity.StatementProvider, hash string) (*Asset, error) {
 	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
 		return nil, err
 	}
-	return asset, nil
+	return asset, err
 }
 
 func LoadAssetById(prv db_entity.StatementProvider, id int64) (*Asset, error) {
@@ -34,7 +34,7 @@ func LoadAssetById(prv db_entity.StatementProvider, id int64) (*Asset, error) {
 	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
 		return nil, err
 	}
-	return asset, nil
+	return asset, err
 }
 
 // AddAsset adds/updates meta-data in database

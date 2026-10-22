@@ -33,8 +33,8 @@ func GetAsset(c *gin.Context) {
 		return
 	}
 
-	fileName, err := metadata_db_entity.LoadFileNameById(metadata_db_conn.GetDatabase(), asset.Name)
-	mimeType, err := metadata_db_entity.LoadMimeTypeById(metadata_db_conn.GetDatabase(), asset.MimeType)
+	fileName, _ := metadata_db_entity.LoadFileNameById(metadata_db_conn.GetDatabase(), asset.Name)
+	mimeType, _ := metadata_db_entity.LoadMimeTypeById(metadata_db_conn.GetDatabase(), asset.MimeType)
 
 	reader, err := storage.Open(hash)
 	if err != nil {
@@ -44,7 +44,12 @@ func GetAsset(c *gin.Context) {
 	defer util.CloseOrLog(reader)
 
 	c.Status(http.StatusOK)
-	c.Header("Content-Type", mimeType.Name)
+
+	if mimeType != nil && len(mimeType.Name) > 0 {
+		c.Header("Content-Type", mimeType.Name)
+	} else {
+		c.Header("Content-Type", "application/octed-stream")
+	}
 
 	if fileName != nil && len(fileName.Name) > 0 {
 		c.Header("Content-Disposition", "inline; filename=\""+fileName.Name+"\"")
