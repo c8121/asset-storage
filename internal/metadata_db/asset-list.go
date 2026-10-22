@@ -160,9 +160,7 @@ func loadAssetList(query string, params ...any) ([]AssetListItem, error) {
 			if err := rows.Scan(&item.Id, &item.Hash, &item.MimeType, &item.FileTime, &item.Name); err != nil {
 				return nil, err
 			}
-			if CanRead(item.Id) {
-				items = append(items, item)
-			}
+			items = append(items, item)
 		}
 
 	} else {

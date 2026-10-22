@@ -1,4 +1,4 @@
-package users
+package rest_api
 
 import (
 	"encoding/base64"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/c8121/asset-storage/internal/users"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +16,7 @@ var notifiedNoUsers = false
 
 func AuthRequiredHandler(handlerFunc func(c *gin.Context)) func(c *gin.Context) {
 
-	if !HasUsers() {
+	if !users.HasUsers() {
 
 		if !notifiedNoUsers {
 			notifiedNoUsers = true
@@ -43,7 +44,7 @@ func AuthRequiredHandler(handlerFunc func(c *gin.Context)) func(c *gin.Context) 
 
 func AuthRequiredStaticFileHandler(filepath string) func(c *gin.Context) {
 
-	if !HasUsers() {
+	if !users.HasUsers() {
 
 		if !notifiedNoUsers {
 			notifiedNoUsers = true
@@ -98,7 +99,14 @@ func CheckBasicAuth(c *gin.Context) error {
 	username := key[:p]
 	password := key[p+1:]
 
-	return Authenticate(username, []byte(password))
+	user, err := users.Authenticate(username, []byte(password))
+	if err != nil || user == nil {
+		util.LogError(err)
+		return err
+	}
+
+	c.Set("user", user)
+	return nil
 }
 
 func RespondBasicAuthRequired(c *gin.Context) {

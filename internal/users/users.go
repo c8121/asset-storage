@@ -23,6 +23,10 @@ var (
 	users map[string]string = nil
 )
 
+type AuthenticatedUser struct {
+	Username string
+}
+
 // CreateDirectories creates required directories
 func CreateDirectories() {
 	util.CreateDirIfNotExists(config.AssetStorageConfigDir, FilePermissions)
@@ -44,19 +48,32 @@ func UserExists(name string) bool {
 	return ok
 }
 
-func Authenticate(username string, password []byte) error {
+func Authenticate(username string, password []byte) (*AuthenticatedUser, error) {
 
 	if !UserExists(username) {
-		return errors.New("No such user")
+		return nil, errors.New("No such user")
 	}
 
 	hash, _ := users[username]
 
-	return bcrypt.CompareHashAndPassword([]byte(hash), password)
+	err := bcrypt.CompareHashAndPassword([]byte(hash), password)
+	if err != nil {
+		return nil, err
+	}
+
+	user := &AuthenticatedUser{Username: username}
+	return user, nil
 }
 
 func AddOrUpdateUser(name string, pwdHash string) {
 	readUsers()
+
+	if len(name) == 0 {
+		fmt.Println("Empty user name not allowed")
+		return
+	}
+
+	name = strings.ToLower(name)
 
 	_, ok := users[name]
 	if ok {
@@ -80,7 +97,7 @@ func readUsers() {
 		if !errors.Is(err, os.ErrNotExist) {
 			fmt.Printf("Cannot read users file")
 		}
-		return //File doesnt exist yet, nothing to read
+		return //File doesn't exist yet, nothing to read
 	} else if !stat.Mode().IsRegular() {
 		panic("Cannot read users file: Not a file\n")
 	}
@@ -114,7 +131,7 @@ func readUsers() {
 			continue
 		}
 
-		users[s[0:p]] = s[p+1:]
+		users[strings.ToLower(s[0:p])] = s[p+1:]
 	}
 
 }

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/c8121/asset-storage/internal/config"
-	"github.com/c8121/asset-storage/internal/users"
+	"github.com/c8121/asset-storage/internal/rest_api"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,9 +26,9 @@ func CreateRoutes(router *gin.Engine) {
 	for _, e := range dir {
 		if strings.HasPrefix(e.Name(), "index.") {
 			//Default document, when '/' was requested
-			router.GET("/", users.AuthRequiredStaticFileHandler(filepath.Join(config.SpaHttpRoot, e.Name())))
+			router.GET("/", rest_api.AuthRequiredStaticFileHandler(filepath.Join(config.SpaHttpRoot, e.Name())))
 		} else if !e.IsDir() {
-			router.GET("/"+e.Name(), users.AuthRequiredStaticFileHandler(filepath.Join(config.SpaHttpRoot, e.Name())))
+			router.GET("/"+e.Name(), rest_api.AuthRequiredStaticFileHandler(filepath.Join(config.SpaHttpRoot, e.Name())))
 		} else {
 			router.Static("/"+e.Name(), filepath.Join(config.SpaHttpRoot, e.Name()))
 		}

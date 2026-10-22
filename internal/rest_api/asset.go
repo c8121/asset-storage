@@ -33,7 +33,8 @@ func GetAsset(c *gin.Context) {
 		return
 	}
 
-	if !metadata_db.CanRead(asset.Id) {
+	acc := GetAccessContext(c)
+	if !CanRead(asset.Id, acc) {
 		fmt.Printf("Access dinied to %s\n", hash)
 		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
 		return

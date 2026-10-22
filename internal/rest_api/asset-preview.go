@@ -7,7 +7,6 @@ import (
 
 	"github.com/c8121/asset-storage/internal/filter"
 	"github.com/c8121/asset-storage/internal/metadata"
-	"github.com/c8121/asset-storage/internal/metadata_db"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 )
@@ -26,7 +25,8 @@ func GetPreview(c *gin.Context) {
 		return
 	}
 
-	if !metadata_db.CanReadHash(hash) {
+	acc := GetAccessContext(c)
+	if !CanReadHash(hash, acc) {
 		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
 		return
 	}
@@ -85,7 +85,8 @@ func GetCoppedPreview(c *gin.Context) {
 		return
 	}
 
-	if !metadata_db.CanReadHash(hash) {
+	acc := GetAccessContext(c)
+	if !CanReadHash(hash, acc) {
 		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
 		return
 	}

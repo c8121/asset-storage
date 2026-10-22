@@ -72,7 +72,7 @@ func main() {
 			fmt.Printf("Login attempt from %s: %s\n", c.RemoteAddr(), c.User())
 			if len(c.User()) == 0 {
 				return nil, fmt.Errorf("user rejected for %q", c.User())
-			} else if err := users.Authenticate(c.User(), pass); err != nil {
+			} else if _, err := users.Authenticate(c.User(), pass); err != nil {
 				return nil, fmt.Errorf("password rejected for %q", c.User())
 			}
 
