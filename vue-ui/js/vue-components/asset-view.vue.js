@@ -3,8 +3,8 @@ export default {
         <div>
             <div v-if="value">
                 <div class="input-group">
-                    <input type="text" readonly class="form-control" v-model="value.Name">
-                    <button class="btn btn-primary"
+                    <input type="text" readonly class="form-control" v-model="value.Name" role="button" @click="assetClick()" title="download...">
+                    <button class="btn btn-primary" title="download..."
                         @click="assetClick()">
                        <i class="bi bi-download"></i>
                     </button>
