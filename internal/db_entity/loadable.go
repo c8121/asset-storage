@@ -12,10 +12,6 @@ var (
 	ErrNotFound = errors.New("not found")
 )
 
-type StatementProvider interface {
-	Prepare(query string) (*sql.Stmt, error)
-}
-
 type Loadable interface {
 	GetSelectQuery() string
 	GetSelectQueryArgs() []any
@@ -23,13 +19,13 @@ type Loadable interface {
 }
 
 // Load selects all data from database and applies to given Loadable
-func Load(tx StatementProvider, o Loadable) error {
+func Load(prv StatementProvider, o Loadable) error {
 
 	if o == nil {
 		return errors.New("object is nil")
 	}
 
-	stmt, err := tx.Prepare(o.GetSelectQuery())
+	stmt, err := prv.Prepare(o.GetSelectQuery())
 	if err != nil {
 		fmt.Printf("Failed to prepare statement: %s\n", o.GetSelectQuery())
 		return err

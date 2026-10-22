@@ -14,10 +14,20 @@ type FileName struct {
 }
 
 // LoadFileName gets FileName from db, created it required
-func LoadFileName(tx *sql.Tx, name string, createIfNotExists bool) (*FileName, error) {
+func LoadFileName(prv db_entity.StatementProvider, name string, createIfNotExists bool) (*FileName, error) {
 
 	var fileName = &FileName{Name: name}
-	err := db_entity.LoadEntity(tx, createIfNotExists, fileName)
+	err := db_entity.LoadEntity(prv, createIfNotExists, fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return fileName, nil
+}
+
+func LoadFileNameById(prv db_entity.StatementProvider, id int64) (*FileName, error) {
+	var fileName = &FileName{Id: id}
+	err := db_entity.LoadEntity(prv, false, fileName)
 	if err != nil {
 		return nil, err
 	}

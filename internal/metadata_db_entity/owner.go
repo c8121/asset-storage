@@ -21,7 +21,7 @@ func init() {
 	OwnerCache = make(map[string]*Owner)
 }
 
-func LoadOwner(tx *sql.Tx, name string, createIfNotExists bool) (*Owner, error) {
+func LoadOwner(prv db_entity.StatementProvider, name string, createIfNotExists bool) (*Owner, error) {
 
 	owner, ok := OwnerCache[name]
 	if ok {
@@ -29,7 +29,7 @@ func LoadOwner(tx *sql.Tx, name string, createIfNotExists bool) (*Owner, error) 
 	}
 
 	owner = &Owner{Name: name}
-	err := db_entity.LoadEntity(tx, createIfNotExists, owner)
+	err := db_entity.LoadEntity(prv, createIfNotExists, owner)
 	if err == nil {
 		OwnerCache[name] = owner
 	}

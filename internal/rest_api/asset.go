@@ -5,8 +5,9 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db"
+	"github.com/c8121/asset-storage/internal/metadata_db_conn"
+	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
@@ -25,11 +26,15 @@ func GetAsset(c *gin.Context) {
 		return
 	}
 
-	meta, err := metadata.LoadByHash(hash)
-	if err != nil {
+	asset, err := metadata_db_entity.LoadAsset(metadata_db_conn.GetDatabase(), hash)
+	if err != nil || asset == nil {
+		util.LogError(err)
 		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash (not found)")))
 		return
 	}
+
+	fileName, err := metadata_db_entity.LoadFileNameById(metadata_db_conn.GetDatabase(), asset.Name)
+	mimeType, err := metadata_db_entity.LoadMimeTypeById(metadata_db_conn.GetDatabase(), asset.MimeType)
 
 	reader, err := storage.Open(hash)
 	if err != nil {
@@ -39,10 +44,10 @@ func GetAsset(c *gin.Context) {
 	defer util.CloseOrLog(reader)
 
 	c.Status(http.StatusOK)
-	c.Header("Content-Type", meta.MimeType)
+	c.Header("Content-Type", mimeType.Name)
 
-	if len(meta.Origins) > 0 {
-		c.Header("Content-Disposition", "inline; filename=\""+meta.Origins[0].Name+"\"")
+	if fileName != nil && len(fileName.Name) > 0 {
+		c.Header("Content-Disposition", "inline; filename=\""+fileName.Name+"\"")
 	} else {
 		c.Header("Content-Disposition", "inline")
 	}

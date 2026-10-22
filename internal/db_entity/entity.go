@@ -1,7 +1,6 @@
 package db_entity
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 )
@@ -19,14 +18,14 @@ type WithId interface {
 }
 
 // LoadEntity first tries to Load(...), then Insert(...) if insertIfNotExists = true
-func LoadEntity(tx *sql.Tx, insertIfNotExists bool, o any) error {
+func LoadEntity(prv StatementProvider, insertIfNotExists bool, o any) error {
 
 	loadable, ok := o.(Loadable)
 	if !ok {
 		return ErrNotLoadable
 	}
 
-	err := Load(tx, loadable)
+	err := Load(prv, loadable)
 	if errors.Is(err, ErrNotFound) {
 		if insertIfNotExists {
 
@@ -35,7 +34,7 @@ func LoadEntity(tx *sql.Tx, insertIfNotExists bool, o any) error {
 				return ErrNotInsertable
 			}
 
-			err = Insert(tx, insertable)
+			err = Insert(prv, insertable)
 			if err != nil {
 				return err
 			}
@@ -51,7 +50,7 @@ func LoadEntity(tx *sql.Tx, insertIfNotExists bool, o any) error {
 }
 
 // SaveEntity checks if object exists in database (GetId() != 0) and then does Insert or Update
-func SaveEntity(tx *sql.Tx, o any) error {
+func SaveEntity(prv StatementProvider, o any) error {
 
 	withId, ok := o.(WithId)
 	if !ok {
@@ -65,27 +64,27 @@ func SaveEntity(tx *sql.Tx, o any) error {
 		if !ok {
 			return ErrNotInsertable
 		}
-		err = Insert(tx, insertable)
+		err = Insert(prv, insertable)
 	} else {
 		updatable, ok := o.(Updatable)
 		if !ok {
 			return ErrNotUpdatable
 		}
-		err = Update(tx, updatable)
+		err = Update(prv, updatable)
 	}
 
 	return err
 }
 
 // DeleteEntity deletes an entity from database.
-func DeleteEntity(tx *sql.Tx, o any) error {
+func DeleteEntity(prv StatementProvider, o any) error {
 
 	deletable, ok := o.(Deletable)
 	if !ok {
 		return ErrNotDeletable
 	}
 
-	err := Delete(tx, deletable)
+	err := Delete(prv, deletable)
 	if err != nil {
 		return err
 	}

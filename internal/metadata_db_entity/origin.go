@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/c8121/asset-storage/internal/db_entity"
 	"github.com/c8121/asset-storage/internal/util"
 )
 
@@ -17,9 +18,9 @@ type Origin struct {
 	FileTime time.Time
 }
 
-func LoadOriginsByAssetId(tx *sql.Tx, assetId int64) (*[]Origin, error) {
+func LoadOriginsByAssetId(prv db_entity.StatementProvider, assetId int64) (*[]Origin, error) {
 
-	stmt, err := tx.Prepare("SELECT id, asset, name, path, owner, fileTime FROM origin WHERE asset = ?;")
+	stmt, err := prv.Prepare("SELECT id, asset, name, path, owner, fileTime FROM origin WHERE asset = ?;")
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +46,9 @@ func LoadOriginsByAssetId(tx *sql.Tx, assetId int64) (*[]Origin, error) {
 	return list, nil
 }
 
-func RemoveOrigins(tx *sql.Tx, asset *Asset) error {
+func RemoveOrigins(prv db_entity.StatementProvider, asset *Asset) error {
 
-	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ?;")
+	stmt, err := prv.Prepare("DELETE FROM origin WHERE asset = ?;")
 	if err != nil {
 		return err
 	}
@@ -57,9 +58,9 @@ func RemoveOrigins(tx *sql.Tx, asset *Asset) error {
 	return err
 }
 
-func RemoveOriginsByAssetId(tx *sql.Tx, assetId int64) error {
+func RemoveOriginsByAssetId(prv db_entity.StatementProvider, assetId int64) error {
 
-	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ?;")
+	stmt, err := prv.Prepare("DELETE FROM origin WHERE asset = ?;")
 	if err != nil {
 		return err
 	}
@@ -69,9 +70,9 @@ func RemoveOriginsByAssetId(tx *sql.Tx, assetId int64) error {
 	return err
 }
 
-func RemoveOriginsByAssetIdAndPathId(tx *sql.Tx, assetId int64, pathId int64) error {
+func RemoveOriginsByAssetIdAndPathId(prv db_entity.StatementProvider, assetId int64, pathId int64) error {
 
-	stmt, err := tx.Prepare("DELETE FROM origin WHERE asset = ? AND path = ?;")
+	stmt, err := prv.Prepare("DELETE FROM origin WHERE asset = ? AND path = ?;")
 	if err != nil {
 		return err
 	}

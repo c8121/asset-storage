@@ -58,7 +58,7 @@ func ListMimeTypes() ([]MimeType, error) {
 	return items, nil
 }
 
-func LoadMimeType(tx *sql.Tx, name string, createIfNotExists bool) (*MimeType, error) {
+func LoadMimeType(prv db_entity.StatementProvider, name string, createIfNotExists bool) (*MimeType, error) {
 	name = NormalizeName(name)
 	mimeType, ok := mimeTypeCache[name]
 	if ok {
@@ -66,12 +66,22 @@ func LoadMimeType(tx *sql.Tx, name string, createIfNotExists bool) (*MimeType, e
 	}
 
 	mimeType = &MimeType{Name: name}
-	err := db_entity.LoadEntity(tx, createIfNotExists, mimeType)
+	err := db_entity.LoadEntity(prv, createIfNotExists, mimeType)
 	if err == nil {
 		mimeTypeCache[name] = mimeType
 	}
 
 	return mimeType, err
+}
+
+func LoadMimeTypeById(prv db_entity.StatementProvider, id int64) (*MimeType, error) {
+	var mimeType = &MimeType{Id: id}
+	err := db_entity.LoadEntity(prv, false, mimeType)
+	if err != nil {
+		return nil, err
+	}
+
+	return mimeType, nil
 }
 
 func (m *MimeType) GetId() int64 {

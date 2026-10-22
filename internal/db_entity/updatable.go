@@ -13,13 +13,13 @@ type Updatable interface {
 }
 
 // Update updates an existing record in database with contents of given Insertable
-func Update(tx *sql.Tx, o Updatable) error {
+func Update(prv StatementProvider, o Updatable) error {
 
 	if o == nil {
 		return errors.New("object is nil")
 	}
 
-	stmt, err := tx.Prepare(o.GetUpdateQuery())
+	stmt, err := prv.Prepare(o.GetUpdateQuery())
 	if err != nil {
 		return err
 	}

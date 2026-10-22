@@ -14,13 +14,13 @@ type Insertable interface {
 }
 
 // Insert creates new record in database with contents of given Insertable
-func Insert(tx *sql.Tx, o Insertable) error {
+func Insert(prv StatementProvider, o Insertable) error {
 
 	if o == nil {
 		return errors.New("object is nil")
 	}
 
-	stmt, err := tx.Prepare(o.GetInsertQuery())
+	stmt, err := prv.Prepare(o.GetInsertQuery())
 	if err != nil {
 		return err
 	}

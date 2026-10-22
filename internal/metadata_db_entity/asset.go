@@ -19,18 +19,18 @@ type Asset struct {
 	Name     int64     //Latest name
 }
 
-func LoadAsset(db db_entity.StatementProvider, hash string) (*Asset, error) {
+func LoadAsset(prv db_entity.StatementProvider, hash string) (*Asset, error) {
 	var asset = &Asset{Hash: hash}
-	err := db_entity.Load(db, asset)
+	err := db_entity.Load(prv, asset)
 	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
 		return nil, err
 	}
 	return asset, nil
 }
 
-func LoadAssetById(db db_entity.StatementProvider, id int64) (*Asset, error) {
+func LoadAssetById(prv db_entity.StatementProvider, id int64) (*Asset, error) {
 	var asset = &Asset{Id: id}
-	err := db_entity.Load(db, asset)
+	err := db_entity.Load(prv, asset)
 	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
 		return nil, err
 	}
@@ -38,14 +38,14 @@ func LoadAssetById(db db_entity.StatementProvider, id int64) (*Asset, error) {
 }
 
 // AddAsset adds/updates meta-data in database
-func AddAsset(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
+func AddAsset(prv db_entity.StatementProvider, jsonMeta *metadata.JsonAssetMetaData) error {
 
-	asset, err := LoadAsset(tx, jsonMeta.Hash)
+	asset, err := LoadAsset(prv, jsonMeta.Hash)
 	if err != nil {
 		return err
 	}
 
-	mimeType, err := LoadMimeType(tx, jsonMeta.MimeType, true)
+	mimeType, err := LoadMimeType(prv, jsonMeta.MimeType, true)
 	if err != nil {
 		return err
 	}
@@ -55,15 +55,15 @@ func AddAsset(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 	latestOrigin := metadata.GetLatestOrigin(jsonMeta)
 	if latestOrigin != nil {
 		asset.FileTime = latestOrigin.FileTime
-		asset.Name = getFileNameId(tx, latestOrigin.Name)
+		asset.Name = getFileNameId(prv, latestOrigin.Name)
 	}
 
-	err = db_entity.SaveEntity(tx, asset)
+	err = db_entity.SaveEntity(prv, asset)
 	if err != nil {
 		return err
 	}
 
-	err = RemoveOrigins(tx, asset)
+	err = RemoveOrigins(prv, asset)
 	if err != nil {
 		return err
 	}
@@ -72,12 +72,12 @@ func AddAsset(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 
 		var origin = &Origin{
 			Asset:    asset.Id,
-			Name:     getFileNameId(tx, jsonOrigin.Name),
-			Path:     getPathItemId(tx, jsonOrigin.Path),
-			Owner:    getOwnerId(tx, jsonOrigin.Owner),
+			Name:     getFileNameId(prv, jsonOrigin.Name),
+			Path:     getPathItemId(prv, jsonOrigin.Path),
+			Owner:    getOwnerId(prv, jsonOrigin.Owner),
 			FileTime: jsonOrigin.FileTime,
 		}
-		err = db_entity.SaveEntity(tx, origin)
+		err = db_entity.SaveEntity(prv, origin)
 		if err != nil {
 			return err
 		}
@@ -86,8 +86,8 @@ func AddAsset(tx *sql.Tx, jsonMeta *metadata.JsonAssetMetaData) error {
 	return nil
 }
 
-func getFileNameId(tx *sql.Tx, name string) int64 {
-	fileName, err := LoadFileName(tx, name, true)
+func getFileNameId(prv db_entity.StatementProvider, name string) int64 {
+	fileName, err := LoadFileName(prv, name, true)
 	if err != nil {
 		util.LogError(err)
 		return 0
@@ -99,8 +99,8 @@ func getFileNameId(tx *sql.Tx, name string) int64 {
 	return fileName.Id
 }
 
-func getPathItemId(tx *sql.Tx, path string) int64 {
-	pathItem, err := LoadPathItem(tx, path, true)
+func getPathItemId(prv db_entity.StatementProvider, path string) int64 {
+	pathItem, err := LoadPathItem(prv, path, true)
 	if err != nil {
 		util.LogError(err)
 		return 0
@@ -112,8 +112,8 @@ func getPathItemId(tx *sql.Tx, path string) int64 {
 	return pathItem.Id
 }
 
-func getOwnerId(tx *sql.Tx, name string) int64 {
-	owner, err := LoadOwner(tx, name, true)
+func getOwnerId(prv db_entity.StatementProvider, name string) int64 {
+	owner, err := LoadOwner(prv, name, true)
 	if err != nil {
 		util.LogError(err)
 		return 0
@@ -125,19 +125,19 @@ func getOwnerId(tx *sql.Tx, name string) int64 {
 	return owner.Id
 }
 
-func RemoveAsset(tx *sql.Tx, assetId int64, pathId int64) (int, error) {
+func RemoveAsset(prv db_entity.StatementProvider, assetId int64, pathId int64) (int, error) {
 
 	if pathId > 0 {
-		if err := RemoveOriginsByAssetIdAndPathId(tx, assetId, pathId); err != nil {
+		if err := RemoveOriginsByAssetIdAndPathId(prv, assetId, pathId); err != nil {
 			return 9999, err
 		}
 	} else {
-		if err := RemoveOriginsByAssetId(tx, assetId); err != nil {
+		if err := RemoveOriginsByAssetId(prv, assetId); err != nil {
 			return 9999, err
 		}
 	}
 
-	remainingOrigins, err := LoadOriginsByAssetId(tx, assetId)
+	remainingOrigins, err := LoadOriginsByAssetId(prv, assetId)
 	if err != nil {
 		return 9999, err
 	}
@@ -146,7 +146,7 @@ func RemoveAsset(tx *sql.Tx, assetId int64, pathId int64) (int, error) {
 		return len(*remainingOrigins), nil
 	}
 
-	stmt, err := tx.Prepare("DELETE FROM asset WHERE id=?;")
+	stmt, err := prv.Prepare("DELETE FROM asset WHERE id=?;")
 	if err != nil {
 		return 9999, err
 	}

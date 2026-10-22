@@ -13,13 +13,13 @@ type Deletable interface {
 }
 
 // Delete removes an existing record in database
-func Delete(tx *sql.Tx, o Deletable) error {
+func Delete(prv StatementProvider, o Deletable) error {
 
 	if o == nil {
 		return errors.New("object is nil")
 	}
 
-	stmt, err := tx.Prepare(o.GetDeleteQuery())
+	stmt, err := prv.Prepare(o.GetDeleteQuery())
 	if err != nil {
 		return err
 	}

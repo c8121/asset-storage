@@ -63,7 +63,7 @@ func SplitPath(path string) []string {
 }
 
 // LoadPathItem gets PathItem from db, splits path and searches
-func LoadPathItem(tx *sql.Tx, path string, createIfNotExists bool) (*PathItem, error) {
+func LoadPathItem(prv db_entity.StatementProvider, path string, createIfNotExists bool) (*PathItem, error) {
 
 	names := SplitPath(path)
 	var parent int64 = 0
@@ -75,7 +75,7 @@ func LoadPathItem(tx *sql.Tx, path string, createIfNotExists bool) (*PathItem, e
 		cachedItem, ok := pathItemCache[cacheKey]
 		if !ok {
 			pathItem = &PathItem{Parent: parent, Name: name}
-			err := db_entity.LoadEntity(tx, createIfNotExists, pathItem)
+			err := db_entity.LoadEntity(prv, createIfNotExists, pathItem)
 			if err != nil {
 				return nil, err
 			}
@@ -93,7 +93,7 @@ func LoadPathItem(tx *sql.Tx, path string, createIfNotExists bool) (*PathItem, e
 
 // FindPathIds looks for origin-paths in database and
 // returns it as map: asset.Id -> [path.Id,...]
-func FindPathIds(assetIds []int64) (map[int64][]int64, error) {
+func FindPathIds(prv db_entity.StatementProvider, assetIds []int64) (map[int64][]int64, error) {
 
 	var idMap = make(map[int64][]int64, len(assetIds))
 	var chunk = make([]int64, 0)
@@ -116,7 +116,7 @@ func FindPathIds(assetIds []int64) (map[int64][]int64, error) {
 				params = append(params, id)
 			}
 
-			stmt, err := metadata_db_conn.GetDatabase().Prepare(query)
+			stmt, err := prv.Prepare(query)
 			if err != nil {
 				return nil, err
 			}
