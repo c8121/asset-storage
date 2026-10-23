@@ -41,7 +41,7 @@ func LoadAssetById(prv db_entity.StatementProvider, id int64) (*Asset, error) {
 func AddAsset(prv db_entity.StatementProvider, jsonMeta *metadata.JsonAssetMetaData) error {
 
 	asset, err := LoadAsset(prv, jsonMeta.Hash)
-	if err != nil {
+	if err != nil && !errors.Is(err, db_entity.ErrNotFound) {
 		return err
 	}
 
