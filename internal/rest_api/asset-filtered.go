@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/c8121/asset-storage/internal/access_control"
 	"github.com/c8121/asset-storage/internal/filter"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/util"
@@ -19,6 +20,13 @@ func GetFiltered(c *gin.Context) {
 	hash := c.Param("hash")
 	if len(hash) < 32 {
 		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash")))
+		return
+	}
+
+	acc := GetAccessContext(c)
+	ctx := access_control.GetAccessController()
+	if ctx != nil && ctx.CanRead(hash, acc) != nil {
+		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
 		return
 	}
 

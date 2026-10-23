@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/c8121/asset-storage/internal/access_control"
 	"github.com/c8121/asset-storage/internal/faces"
 	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
@@ -22,7 +23,8 @@ func GetFaces(c *gin.Context) {
 	}
 
 	acc := GetAccessContext(c)
-	if !CanReadHash(hash, acc) {
+	ctx := access_control.GetAccessController()
+	if ctx != nil && ctx.CanRead(hash, acc) != nil {
 		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
 		return
 	}
@@ -51,7 +53,8 @@ func DetectFaces(c *gin.Context) {
 	}
 
 	acc := GetAccessContext(c)
-	if !CanReadHash(hash, acc) {
+	ctx := access_control.GetAccessController()
+	if ctx != nil && ctx.CanRead(hash, acc) != nil {
 		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
 		return
 	}

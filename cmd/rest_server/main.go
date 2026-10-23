@@ -36,6 +36,7 @@ func main() {
 	router.SetTrustedProxies(nil)
 
 	rest_api.CreateRoutes(router)
+	rest_api.InitAccessControl()
 
 	if config.CertFile != "" {
 		util.PanicOnError(router.RunTLS(config.ListenAddress, config.CertFile, config.KeyFile), "Failed to start server")

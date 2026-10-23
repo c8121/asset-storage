@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/c8121/asset-storage/internal/access_control"
 	"github.com/c8121/asset-storage/internal/metadata_db"
 	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
@@ -34,7 +35,8 @@ func GetAsset(c *gin.Context) {
 	}
 
 	acc := GetAccessContext(c)
-	if !CanRead(asset.Id, acc) {
+	ctx := access_control.GetAccessController()
+	if ctx != nil && ctx.CanRead(hash, acc) != nil {
 		fmt.Printf("Access dinied to %s\n", hash)
 		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
 		return

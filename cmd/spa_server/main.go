@@ -37,6 +37,7 @@ func main() {
 	router.SetTrustedProxies(nil)
 
 	rest_api.CreateRoutes(router)
+	rest_api.InitAccessControl()
 
 	spa_server.CreateRoutes(router)
 

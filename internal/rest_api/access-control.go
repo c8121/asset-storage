@@ -3,6 +3,7 @@ package rest_api
 import (
 	"fmt"
 
+	"github.com/c8121/asset-storage/internal/access_control"
 	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/users"
@@ -10,44 +11,44 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AccessContext struct {
-	User *users.AuthenticatedUser
+type MetaDataDbAccessController struct {
 }
 
-func GetAccessContext(c *gin.Context) *AccessContext {
-	user, authenticated := c.Get("user")
-	if !authenticated {
+func (ctrl MetaDataDbAccessController) CanRead(assetHash string, ctx *access_control.AccessContext) error {
+
+	asset, err := metadata_db_entity.LoadAsset(metadata_db_conn.GetDatabase(), assetHash)
+	if err != nil || asset == nil {
+		util.LogError(err)
+		return access_control.ErrAccessDenied
+	}
+
+	return ctrl.CanReadId(asset.Id, ctx)
+}
+
+func (ctrl MetaDataDbAccessController) CanReadId(assetId int64, ctx *access_control.AccessContext) error {
+	if ctx == nil {
 		return nil
 	}
-	return &AccessContext{User: user.(*users.AuthenticatedUser)}
-}
-
-func CanRead(assetId int64, ctx *AccessContext) bool {
-
-	if ctx == nil {
-		return true
-	}
 	if ctx.User == nil {
-		return false
+		return access_control.ErrAccessDenied
 	}
 
 	fmt.Printf("Checking permission for asset %d, ctx=%s\n", assetId, ctx.User)
 
-	return true
+	return nil
 }
 
-func CanReadHash(hash string, ctx *AccessContext) bool {
+func InitAccessControl() {
 
-	asset, err := metadata_db_entity.LoadAsset(metadata_db_conn.GetDatabase(), hash)
-	if err != nil || asset == nil {
-		util.LogError(err)
-		return false
+	var ctrl = MetaDataDbAccessController{}
+	access_control.SetAccessController(ctrl)
+
+}
+
+func GetAccessContext(c *gin.Context) *access_control.AccessContext {
+	user, authenticated := c.Get("user")
+	if !authenticated {
+		return nil
 	}
-
-	if !CanRead(asset.Id, ctx) {
-		fmt.Printf("Access denied to %s\n", hash)
-		return false
-	}
-
-	return true
+	return &access_control.AccessContext{User: user.(*users.AuthenticatedUser)}
 }
