@@ -30,16 +30,12 @@ func AddFilesToArchive(h SshHandler) {
 	if err != nil {
 		util.LogError(err)
 		tx = nil
-	} else {
-		defer metadata_db_conn.RollbackOrLog(tx)
 	}
 
 	files := h.GetNewFiles()
 	for _, file := range files {
 
-		fmt.Printf("Adding file %s to archive\n", file)
-		fmt.Printf("Adding file %s to archive\n", filepath.Base(file.LocalPath))
-		fmt.Printf("Adding file %s to archive\n", filepath.Dir(file.UserPath))
+		fmt.Printf("Add file %s to archive\n", file.UserPath)
 
 		stat, err := os.Stat(file.LocalPath)
 		if err != nil {
@@ -50,7 +46,7 @@ func AddFilesToArchive(h SshHandler) {
 		//Add file to storage
 		infos, err := storage.AddFile(file.LocalPath)
 		if err != nil {
-			fmt.Printf("Error adding '%s': %s\n", file, err)
+			fmt.Printf("Error adding '%s': %s\n", file.UserPath, err)
 			continue
 		}
 
@@ -65,7 +61,7 @@ func AddFilesToArchive(h SshHandler) {
 					h.GetUsername(),
 					stat.ModTime())
 				if err != nil {
-					fmt.Printf("Error adding meta-data '%s': %s\n", file, err)
+					fmt.Printf("Error adding meta-data '%s': %s\n", file.LocalPath, err)
 					continue
 				}
 
@@ -78,6 +74,10 @@ func AddFilesToArchive(h SshHandler) {
 				}
 			}
 		}
+	}
+
+	if tx != nil {
+		util.LogError(metadata_db_conn.CommitOrLog(tx))
 	}
 
 }
