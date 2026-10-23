@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/c8121/asset-storage/internal/access_control"
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db_conn"
@@ -43,6 +44,14 @@ func AddFilesToArchive(h SshHandler) {
 			continue
 		}
 
+		path := filepath.Dir(file.UserPath)
+		acc := GetAccessContext(h)
+		ctx := access_control.GetAccessController()
+		if ctx != nil && ctx.CanWritePath(path, acc) != nil {
+			fmt.Printf("Access dinied to path %s\n", path)
+			continue
+		}
+
 		//Add file to storage
 		infos, err := storage.AddFile(file.LocalPath)
 		if err != nil {
@@ -57,7 +66,7 @@ func AddFilesToArchive(h SshHandler) {
 					info.Hash,
 					info.MimeType,
 					filepath.Base(info.SourcePath),
-					filepath.Dir(file.UserPath),
+					path,
 					h.GetUsername(),
 					stat.ModTime())
 				if err != nil {

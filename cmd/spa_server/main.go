@@ -7,6 +7,7 @@ import (
 	"github.com/c8121/asset-storage/internal/filter_commands"
 	"github.com/c8121/asset-storage/internal/fulltext"
 	"github.com/c8121/asset-storage/internal/metadata"
+	"github.com/c8121/asset-storage/internal/metadata_db"
 	"github.com/c8121/asset-storage/internal/rest_api"
 	"github.com/c8121/asset-storage/internal/spa_server"
 	"github.com/c8121/asset-storage/internal/storage"
@@ -37,7 +38,8 @@ func main() {
 	router.SetTrustedProxies(nil)
 
 	rest_api.CreateRoutes(router)
-	rest_api.InitAccessControl()
+
+	metadata_db.InitAccessControl()
 
 	spa_server.CreateRoutes(router)
 

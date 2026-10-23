@@ -10,6 +10,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
+	"github.com/c8121/asset-storage/internal/metadata_db"
 	"github.com/c8121/asset-storage/internal/metadata_sqlite"
 	"github.com/c8121/asset-storage/internal/ssh_server"
 	"github.com/c8121/asset-storage/internal/storage"
@@ -61,6 +62,8 @@ func main() {
 
 	metadata_sqlite.Open()
 	defer metadata_sqlite.Close()
+
+	metadata_db.InitAccessControl()
 
 	sshServerConfig := &ssh_server.SshServerConfig{
 

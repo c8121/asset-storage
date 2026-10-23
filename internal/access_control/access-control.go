@@ -30,6 +30,7 @@ type AccessContext struct {
 
 type AccessController interface {
 	CanRead(assetHash string, ctx *AccessContext) error
+	CanWritePath(path string, ctx *AccessContext) error
 }
 
 var (
