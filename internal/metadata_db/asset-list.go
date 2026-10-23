@@ -178,7 +178,7 @@ func assignPathIds(items *[]AssetListItem) error {
 		assetIds[i] = item.Id
 	}
 
-	idMap, err := metadata_db_entity.FindPathIds(metadata_db_conn.GetDatabase(), assetIds)
+	idMap, err := metadata_db_entity.FindAssetPathIds(metadata_db_conn.GetDatabase(), assetIds)
 	if err != nil {
 		return err
 	}

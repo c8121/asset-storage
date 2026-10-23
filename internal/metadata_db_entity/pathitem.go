@@ -91,9 +91,9 @@ func LoadPathItem(prv db_entity.StatementProvider, path string, createIfNotExist
 	return pathItem, nil
 }
 
-// FindPathIds looks for origin-paths in database and
+// FindAssetPathIds looks for origin-paths in database and
 // returns it as map: asset.Id -> [path.Id,...]
-func FindPathIds(prv db_entity.StatementProvider, assetIds []int64) (map[int64][]int64, error) {
+func FindAssetPathIds(prv db_entity.StatementProvider, assetIds []int64) (map[int64][]int64, error) {
 
 	var idMap = make(map[int64][]int64, len(assetIds))
 	var chunk = make([]int64, 0)
@@ -254,6 +254,11 @@ func (p *PathItem) GetSelectQuery() string {
 	if p.Id != 0 {
 		where = util.JoinStrings(" AND ", where, "id = ?")
 	}
+	if p.Name == "" && p.Parent == 0 && p.Id == 0 {
+		//Find Default root entry
+		where = util.JoinStrings(" AND ", where, "name = ?")
+		where = util.JoinStrings(" AND ", where, "parent = ?")
+	}
 	if where != "" {
 		query = query + " WHERE " + where
 	} else {
@@ -273,6 +278,12 @@ func (p *PathItem) GetSelectQueryArgs() []any {
 	if p.Id != 0 {
 		args = append(args, p.Id)
 	}
+	if p.Name == "" && p.Parent == 0 && p.Id == 0 {
+		//Find Default root entry
+		args = append(args, "")
+		args = append(args, 0)
+	}
+
 	return args
 }
 
