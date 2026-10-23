@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/c8121/asset-storage/internal/config"
+	"github.com/c8121/asset-storage/internal/util"
 )
 
 type (
@@ -84,4 +85,22 @@ func RemoveCollection(uuid string) error {
 	}
 
 	return os.Remove(collectionFile)
+}
+
+// Walk visits every collection (file) in storage and calls given handler function on it.
+func Walk(handler func(path string)) {
+
+	children, err := os.ReadDir(config.AssetCollectionsBaseDir)
+	util.PanicOnError(err, "Failed to read directory")
+
+	for _, child := range children {
+		dir := filepath.Join(config.AssetCollectionsBaseDir, child.Name())
+		files, err := os.ReadDir(dir)
+		util.PanicOnError(err, "Failed to read directory")
+
+		for _, file := range files {
+			filePath := filepath.Join(dir, file.Name())
+			handler(filePath)
+		}
+	}
 }

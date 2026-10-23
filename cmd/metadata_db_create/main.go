@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 
+	"github.com/c8121/asset-storage/internal/collections"
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
+	"github.com/c8121/asset-storage/internal/metadata_db"
 	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/metadata_sqlite"
@@ -25,6 +27,11 @@ func main() {
 	metadata_sqlite.Open()
 	defer metadata_sqlite.Close()
 
+	createFilesMetaDataDb()
+	createCollectionsMetaDataDb()
+}
+
+func createFilesMetaDataDb() {
 	handler := func(path string) {
 
 		tx, err := metadata_db_conn.BeginTransaction()
@@ -47,4 +54,29 @@ func main() {
 	}
 
 	metadata.Walk(handler)
+}
+
+func createCollectionsMetaDataDb() {
+	handler := func(path string) {
+
+		tx, err := metadata_db_conn.BeginTransaction()
+		if err != nil {
+			util.LogError(err)
+			return
+		}
+
+		if collection, err := collections.LoadIfExists(path); err == nil {
+			if err = metadata_db.AddCollection(tx, collection); err == nil {
+				fmt.Printf("Added '%s'\n", path)
+			} else {
+				util.LogError(err)
+			}
+		} else {
+			util.LogError(err)
+		}
+
+		util.LogError(metadata_db_conn.CommitOrLog(tx))
+	}
+
+	collections.Walk(handler)
 }
