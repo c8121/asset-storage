@@ -21,6 +21,7 @@ var (
 	DefaultHostKeyFiles = []string{
 		"~/.ssh/ssh_host_key_rsa",
 		"~/.ssh/id_rsa",
+		"~/.ssh/id_ed25519",
 	}
 
 	hostKeyFile = flag.String("host-key", "", "SSH-Host Key-File")
