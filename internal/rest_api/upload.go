@@ -1,6 +1,7 @@
 package rest_api
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/c8121/asset-storage/internal/access_control"
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db_conn"
@@ -64,6 +66,16 @@ func AddUploadedFile(c *gin.Context) {
 	err := c.BindJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	acc := GetAccessContext(c)
+	if acc != nil && acc.User != nil && len(acc.User.Username) > 0 {
+		req.Owner = acc.User.Username
+	}
+	ctx := access_control.GetAccessController()
+	if ctx != nil && ctx.CanWritePath(req.Path, acc) != nil {
+		c.JSON(http.StatusForbidden, errors.New("Access denied to path"))
 		return
 	}
 
