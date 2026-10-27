@@ -6,7 +6,6 @@ import (
 
 	"github.com/c8121/asset-storage/internal/access_control"
 	"github.com/c8121/asset-storage/internal/faces"
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
@@ -55,11 +54,11 @@ func DetectFaces(c *gin.Context) {
 	acc := GetAccessContext(c)
 	ctx := access_control.GetAccessController()
 	if ctx != nil && ctx.CanRead(hash, acc) != nil {
-		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
+		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("forbidden")))
 		return
 	}
 
-	assetMeta, err := metadata_db_entity.LoadAsset(metadata_db_conn.GetDatabase(), hash)
+	assetMeta, err := metadata_db_entity.LoadAsset(hash)
 	if err != nil {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 		return
@@ -71,22 +70,14 @@ func DetectFaces(c *gin.Context) {
 	} else {
 		fmt.Printf("Found %d faces in %s\n", len(*facesFound), hash)
 
-		tx, err := metadata_db_conn.BeginTransaction()
-		if err != nil {
-			util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
-			return
-		}
-
-		if err = metadata_db_entity.RemoveFaces(tx, assetMeta.Id); err != nil {
+		if err = metadata_db_entity.RemoveFaces(assetMeta.Id); err != nil {
 			util.LogError(err)
 		}
 
-		if list, err := metadata_db_entity.AddFaces(tx, assetMeta.Id, facesFound); err != nil {
+		if list, err := metadata_db_entity.AddFaces(assetMeta.Id, facesFound); err != nil {
 			util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 		} else {
 			c.IndentedJSON(http.StatusOK, list)
 		}
-
-		util.LogError(metadata_db_conn.CommitOrLog(tx))
 	}
 }

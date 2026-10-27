@@ -11,8 +11,6 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
-	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/metadata_sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
@@ -131,16 +129,10 @@ func addFileAndMetadata(path string, stat os.FileInfo) error {
 		return err
 	}
 
-	tx, err := metadata_db_conn.BeginTransaction()
-	if err != nil {
-		util.LogError(err)
-		tx = nil
-	}
-
 	for _, info := range infos {
 		if info.IsNewFile || !config.SkipMetaDataIfExists {
 			//Create/Update meta-data
-			meta, err := metadata.AddMetaData(
+			_, err := metadata.AddMetaData(
 				info.Hash,
 				info.MimeType,
 				filepath.Base(info.SourcePath),
@@ -151,18 +143,8 @@ func addFileAndMetadata(path string, stat os.FileInfo) error {
 				fmt.Printf("Error adding meta-data '%s': %s\n", path, err)
 				return err
 			}
-
-			//Create/Update meta-data-database
-			if tx != nil {
-				err = metadata_db_entity.AddAsset(tx, meta)
-				if err != nil {
-					fmt.Printf("Error adding meta-data to database '%s': %s\n", path, err)
-				}
-			}
 		}
 	}
-
-	util.LogError(metadata_db_conn.CommitOrLog(tx))
 
 	return err
 }

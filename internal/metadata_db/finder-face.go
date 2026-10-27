@@ -1,9 +1,5 @@
 package metadata_db
 
-import (
-	"github.com/c8121/asset-storage/internal/metadata_db_entity"
-)
-
 type FinderByFace struct {
 }
 
@@ -14,7 +10,7 @@ func (f FinderByFace) Find(faceId any) (ScoredIdMap, error) {
 		return nil, nil
 	}
 
-	similarFaces, err := metadata_db_entity.FindSimilarFaces(faceId.(int64), 5)
+	/*similarFaces, err := metadata_db_entity.FindSimilarFaces(faceId.(int64), 5)
 	if err != nil {
 		return nil, err
 	}
@@ -28,5 +24,6 @@ func (f FinderByFace) Find(faceId any) (ScoredIdMap, error) {
 		ids.Add(face.AssetId, 0)
 	}
 
-	return ids, nil
+	return ids, nil*/
+	panic("not implemented")
 }

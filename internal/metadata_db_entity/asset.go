@@ -1,14 +1,13 @@
 package metadata_db_entity
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/c8121/asset-storage/internal/db_entity"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_db_entities"
 )
 
 type Asset struct {
@@ -19,33 +18,45 @@ type Asset struct {
 	Name     int64     //Latest name
 }
 
-func LoadAsset(prv db_entity.StatementProvider, hash string) (*Asset, error) {
+func (p *Asset) GetEntityName() string {
+	return "Asset"
+}
+
+func (a *Asset) GetId() int64 {
+	return a.Id
+}
+
+func (a *Asset) SetId(id int64) {
+	a.Id = id
+}
+
+func LoadAsset(hash string) (*Asset, error) {
 	var asset = &Asset{Hash: hash}
-	err := db_entity.Load(prv, asset)
-	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
+	err := go_db_entities.Load(DbContext, asset, *go_db_entities.NewFilter("Hash", go_db_entities.CompareEqual, hash))
+	if !errors.Is(err, go_db_entities.ErrNotFound) && err != nil {
 		return nil, err
 	}
 	return asset, err
 }
 
-func LoadAssetById(prv db_entity.StatementProvider, id int64) (*Asset, error) {
-	var asset = &Asset{Id: id}
-	err := db_entity.Load(prv, asset)
-	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
+func LoadAssetById(id int64) (*Asset, error) {
+	var asset = &Asset{}
+	err := go_db_entities.Load(DbContext, asset, *go_db_entities.NewIdFilter(id))
+	if !errors.Is(err, go_db_entities.ErrNotFound) && err != nil {
 		return nil, err
 	}
 	return asset, err
 }
 
-// AddAsset adds/updates meta-data in database
-func AddAsset(prv db_entity.StatementProvider, jsonMeta *metadata.JsonAssetMetaData) error {
+// AddAsset adds/updates metadata in database
+func AddAsset(jsonMeta *metadata.JsonAssetMetaData) error {
 
-	asset, err := LoadAsset(prv, jsonMeta.Hash)
-	if err != nil && !errors.Is(err, db_entity.ErrNotFound) {
+	asset, err := LoadAsset(jsonMeta.Hash)
+	if err != nil && !errors.Is(err, go_db_entities.ErrNotFound) {
 		return err
 	}
 
-	mimeType, err := LoadMimeType(prv, jsonMeta.MimeType, true)
+	mimeType, err := LoadMimeType(jsonMeta.MimeType, true)
 	if err != nil {
 		return err
 	}
@@ -55,15 +66,15 @@ func AddAsset(prv db_entity.StatementProvider, jsonMeta *metadata.JsonAssetMetaD
 	latestOrigin := metadata.GetLatestOrigin(jsonMeta)
 	if latestOrigin != nil {
 		asset.FileTime = latestOrigin.FileTime
-		asset.Name = getFileNameId(prv, latestOrigin.Name)
+		asset.Name = getFileNameId(latestOrigin.Name)
 	}
 
-	err = db_entity.SaveEntity(prv, asset)
+	err = go_db_entities.Save(DbContext, asset)
 	if err != nil {
 		return err
 	}
 
-	err = RemoveOrigins(prv, asset)
+	err = RemoveOrigins(asset)
 	if err != nil {
 		return err
 	}
@@ -72,12 +83,12 @@ func AddAsset(prv db_entity.StatementProvider, jsonMeta *metadata.JsonAssetMetaD
 
 		var origin = &Origin{
 			Asset:    asset.Id,
-			Name:     getFileNameId(prv, jsonOrigin.Name),
-			Path:     getPathItemId(prv, jsonOrigin.Path),
-			Owner:    getOwnerId(prv, jsonOrigin.Owner),
+			Name:     getFileNameId(jsonOrigin.Name),
+			Path:     getPathItemId(jsonOrigin.Path),
+			Owner:    getOwnerId(jsonOrigin.Owner),
 			FileTime: jsonOrigin.FileTime,
 		}
-		err = db_entity.SaveEntity(prv, origin)
+		err = go_db_entities.Save(DbContext, origin)
 		if err != nil {
 			return err
 		}
@@ -86,8 +97,8 @@ func AddAsset(prv db_entity.StatementProvider, jsonMeta *metadata.JsonAssetMetaD
 	return nil
 }
 
-func getFileNameId(prv db_entity.StatementProvider, name string) int64 {
-	fileName, err := LoadFileName(prv, name, true)
+func getFileNameId(name string) int64 {
+	fileName, err := LoadFileName(name, true)
 	if err != nil {
 		util.LogError(err)
 		return 0
@@ -99,8 +110,8 @@ func getFileNameId(prv db_entity.StatementProvider, name string) int64 {
 	return fileName.Id
 }
 
-func getPathItemId(prv db_entity.StatementProvider, path string) int64 {
-	pathItem, err := LoadPathItem(prv, path, true)
+func getPathItemId(path string) int64 {
+	pathItem, err := LoadPathItem(path, true)
 	if err != nil {
 		util.LogError(err)
 		return 0
@@ -112,8 +123,8 @@ func getPathItemId(prv db_entity.StatementProvider, path string) int64 {
 	return pathItem.Id
 }
 
-func getOwnerId(prv db_entity.StatementProvider, name string) int64 {
-	owner, err := LoadOwner(prv, name, true)
+func getOwnerId(name string) int64 {
+	owner, err := LoadOwner(name, true)
 	if err != nil {
 		util.LogError(err)
 		return 0
@@ -125,19 +136,19 @@ func getOwnerId(prv db_entity.StatementProvider, name string) int64 {
 	return owner.Id
 }
 
-func RemoveAsset(prv db_entity.StatementProvider, assetId int64, pathId int64) (int, error) {
+func RemoveAsset(assetId int64, pathId int64) (int, error) {
 
 	if pathId > 0 {
-		if err := RemoveOriginsByAssetIdAndPathId(prv, assetId, pathId); err != nil {
+		if err := RemoveOriginsByAssetIdAndPathId(assetId, pathId); err != nil {
 			return 9999, err
 		}
 	} else {
-		if err := RemoveOriginsByAssetId(prv, assetId); err != nil {
+		if err := RemoveOriginsByAssetId(assetId); err != nil {
 			return 9999, err
 		}
 	}
 
-	remainingOrigins, err := LoadOriginsByAssetId(prv, assetId)
+	remainingOrigins, err := LoadOriginsByAssetId(assetId)
 	if err != nil {
 		return 9999, err
 	}
@@ -146,82 +157,11 @@ func RemoveAsset(prv db_entity.StatementProvider, assetId int64, pathId int64) (
 		return len(*remainingOrigins), nil
 	}
 
-	stmt, err := prv.Prepare("DELETE FROM asset WHERE id=?;")
-	if err != nil {
-		return 9999, err
-	}
-	defer util.CloseOrLog(stmt)
-
-	_, err = stmt.Exec(assetId)
+	asset := &Asset{Id: assetId}
+	err = go_db_entities.Delete(DbContext, asset)
 	if err != nil {
 		return 9999, err
 	}
 
 	return 0, nil
-}
-
-func (a *Asset) GetId() int64 {
-	return a.Id
-}
-
-func (a *Asset) GetSelectQuery() string {
-	query := "SELECT id, hash, mimeType, fileTime, name FROM asset"
-	where := ""
-	if a.Hash != "" {
-		where = util.JoinStrings(" AND ", where, "hash = ?")
-	}
-	if a.Id != 0 {
-		where = util.JoinStrings(" AND ", where, "id = ?")
-	}
-	if where != "" {
-		query = query + " WHERE " + where
-	} else {
-		fmt.Printf("Warn: No filter defined for asset\n")
-	}
-	return query
-}
-
-func (a *Asset) GetSelectQueryArgs() []any {
-	args := make([]any, 0)
-	if a.Hash != "" {
-		args = append(args, a.Hash)
-	}
-	if a.Id != 0 {
-		args = append(args, a.Id)
-	}
-	return args
-}
-
-func (a *Asset) Scan(rows *sql.Rows) error {
-	return rows.Scan(&a.Id, &a.Hash, &a.MimeType, &a.FileTime, &a.Name)
-}
-
-func (a *Asset) GetInsertQuery() string {
-	return "INSERT INTO asset(hash, mimeType, fileTime, name) VALUES(?,?,?,?);"
-}
-
-func (a *Asset) ExecInsert(stmt *sql.Stmt) (sql.Result, error) {
-	return stmt.Exec(&a.Hash, &a.MimeType, &a.FileTime, &a.Name)
-}
-
-func (a *Asset) GetUpdateQuery() string {
-	return "UPDATE asset SET hash=?, mimeType=?, fileTime=?, name=? WHERE id = ?;"
-}
-
-func (a *Asset) ExecUpdate(stmt *sql.Stmt) (sql.Result, error) {
-	return stmt.Exec(&a.Hash, &a.MimeType, &a.FileTime, &a.Name, &a.Id)
-}
-
-func (a *Asset) SetId(id int64) {
-	a.Id = id
-}
-
-func (a *Asset) GetCreateQueries() []string {
-	return []string{
-		"CREATE TABLE IF NOT EXISTS asset(id integer PRIMARY KEY, hash TEXT(64), mimeType integer, fileTime DATETIME, name integer);",
-		"CREATE INDEX IF NOT EXISTS idx_asset_hash on asset(hash);",
-		"CREATE INDEX IF NOT EXISTS idx_asset_mimeType on asset(mimeType);",
-		"CREATE INDEX IF NOT EXISTS idx_asset_fileTime on asset(fileTime);",
-		"CREATE INDEX IF NOT EXISTS idx_asset_name on asset(name);",
-	}
 }

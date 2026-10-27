@@ -1,26 +1,33 @@
 package metadata_db_entity
 
 import (
-	"database/sql"
-	"fmt"
 	"time"
-
-	"github.com/c8121/asset-storage/internal/db_entity"
-	"github.com/c8121/asset-storage/internal/util"
 )
 
 type Origin struct {
 	Id       int64
-	Asset    int64
-	Name     int64
-	Path     int64
-	Owner    int64
-	FileTime time.Time
+	Asset    int64     `dbe:"Index"`
+	Name     int64     `dbe:"Index"`
+	Path     int64     `dbe:"Index"`
+	Owner    int64     `dbe:"Index"`
+	FileTime time.Time `dbe:"Index"`
 }
 
-func LoadOriginsByAssetId(prv db_entity.StatementProvider, assetId int64) (*[]Origin, error) {
+func (o *Origin) GetEntityName() string {
+	return "Origin"
+}
 
-	stmt, err := prv.Prepare("SELECT id, asset, name, path, owner, fileTime FROM origin WHERE asset = ?;")
+func (o *Origin) GetId() int64 {
+	return o.Id
+}
+
+func (o *Origin) SetId(id int64) {
+	o.Id = id
+}
+
+func LoadOriginsByAssetId(assetId int64) (*[]Origin, error) {
+
+	/*stmt, err := prv.Prepare("SELECT id, asset, name, path, owner, fileTime FROM origin WHERE asset = ?;")
 	if err != nil {
 		return nil, err
 	}
@@ -43,80 +50,45 @@ func LoadOriginsByAssetId(prv db_entity.StatementProvider, assetId int64) (*[]Or
 		return nil, err
 	}
 
-	return list, nil
+	return list, nil*/
+	panic("implement me")
 }
 
-func RemoveOrigins(prv db_entity.StatementProvider, asset *Asset) error {
+func RemoveOrigins(asset *Asset) error {
 
-	stmt, err := prv.Prepare("DELETE FROM origin WHERE asset = ?;")
+	/*stmt, err := prv.Prepare("DELETE FROM origin WHERE asset = ?;")
 	if err != nil {
 		return err
 	}
 	defer util.CloseOrLog(stmt)
 
 	_, err = stmt.Exec(asset.Id)
-	return err
+	return err*/
+	panic("implement me")
 }
 
-func RemoveOriginsByAssetId(prv db_entity.StatementProvider, assetId int64) error {
+func RemoveOriginsByAssetId(assetId int64) error {
 
-	stmt, err := prv.Prepare("DELETE FROM origin WHERE asset = ?;")
+	/*stmt, err := prv.Prepare("DELETE FROM origin WHERE asset = ?;")
 	if err != nil {
 		return err
 	}
 	defer util.CloseOrLog(stmt)
 
 	_, err = stmt.Exec(assetId)
-	return err
+	return err*/
+	panic("implement me")
 }
 
-func RemoveOriginsByAssetIdAndPathId(prv db_entity.StatementProvider, assetId int64, pathId int64) error {
+func RemoveOriginsByAssetIdAndPathId(assetId int64, pathId int64) error {
 
-	stmt, err := prv.Prepare("DELETE FROM origin WHERE asset = ? AND path = ?;")
+	/*stmt, err := prv.Prepare("DELETE FROM origin WHERE asset = ? AND path = ?;")
 	if err != nil {
 		return err
 	}
 	defer util.CloseOrLog(stmt)
 
 	_, err = stmt.Exec(assetId, pathId)
-	return err
-}
-
-func (o *Origin) GetId() int64 {
-	return o.Id
-}
-
-func (o *Origin) Scan(rows *sql.Rows) error {
-	return rows.Scan(&o.Id, &o.Asset, &o.Name, &o.Path, &o.Owner, &o.FileTime)
-}
-
-func (o *Origin) GetInsertQuery() string {
-	return "INSERT INTO origin(asset, name, path, owner, fileTime) VALUES(?,?,?,?,?);"
-}
-
-func (o *Origin) ExecInsert(stmt *sql.Stmt) (sql.Result, error) {
-	return stmt.Exec(&o.Asset, &o.Name, &o.Path, &o.Owner, &o.FileTime)
-}
-
-func (o *Origin) GetUpdateQuery() string {
-	return "UPDATE origin SET asset=?, name=?, path=?, owner=?, fileTime=? WHERE id = ?;"
-}
-
-func (o *Origin) ExecUpdate(stmt *sql.Stmt) (sql.Result, error) {
-	return stmt.Exec(&o.Asset, &o.Name, &o.Path, &o.Owner, &o.FileTime, &o.Id)
-}
-
-func (o *Origin) SetId(id int64) {
-	o.Id = id
-}
-
-func (o *Origin) GetCreateQueries() []string {
-	return []string{
-		"CREATE TABLE IF NOT EXISTS origin(id integer PRIMARY KEY, asset INTEGER, name INTEGER, path INTEGER, owner INTEGER, fileTime DATETIME);",
-		"CREATE INDEX IF NOT EXISTS idx_origin_asset on origin(asset);",
-		"CREATE INDEX IF NOT EXISTS idx_origin_name on origin(name);",
-		"CREATE INDEX IF NOT EXISTS idx_origin_path on origin(path);",
-		"CREATE INDEX IF NOT EXISTS idx_origin_owner on origin(owner);",
-		"CREATE INDEX IF NOT EXISTS idx_origin_fileTime on origin(fileTime);",
-	}
+	return err*/
+	panic("implement me")
 }

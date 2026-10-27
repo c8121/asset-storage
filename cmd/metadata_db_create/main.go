@@ -7,7 +7,6 @@ import (
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db"
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/metadata_sqlite"
 	"github.com/c8121/asset-storage/internal/util"
@@ -34,14 +33,8 @@ func main() {
 func createFilesMetaDataDb() {
 	handler := func(path string) {
 
-		tx, err := metadata_db_conn.BeginTransaction()
-		if err != nil {
-			util.LogError(err)
-			return
-		}
-
 		if meta, err := metadata.LoadIfExists(path); err == nil {
-			if err = metadata_db_entity.AddAsset(tx, meta); err == nil {
+			if err = metadata_db_entity.AddAsset(meta); err == nil {
 				fmt.Printf("Added '%s'\n", path)
 			} else {
 				util.LogError(err)
@@ -49,8 +42,6 @@ func createFilesMetaDataDb() {
 		} else {
 			util.LogError(err)
 		}
-
-		util.LogError(metadata_db_conn.CommitOrLog(tx))
 	}
 
 	metadata.Walk(handler)
@@ -59,14 +50,8 @@ func createFilesMetaDataDb() {
 func createCollectionsMetaDataDb() {
 	handler := func(path string) {
 
-		tx, err := metadata_db_conn.BeginTransaction()
-		if err != nil {
-			util.LogError(err)
-			return
-		}
-
 		if collection, err := collections.LoadIfExists(path); err == nil {
-			if err = metadata_db.AddCollection(tx, collection); err == nil {
+			if err = metadata_db.AddCollection(collection); err == nil {
 				fmt.Printf("Added '%s'\n", path)
 			} else {
 				util.LogError(err)
@@ -74,8 +59,6 @@ func createCollectionsMetaDataDb() {
 		} else {
 			util.LogError(err)
 		}
-
-		util.LogError(metadata_db_conn.CommitOrLog(tx))
 	}
 
 	collections.Walk(handler)

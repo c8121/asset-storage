@@ -7,7 +7,6 @@ import (
 
 	"github.com/c8121/asset-storage/internal/access_control"
 	"github.com/c8121/asset-storage/internal/metadata_db"
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
@@ -27,7 +26,7 @@ func GetAsset(c *gin.Context) {
 		return
 	}
 
-	asset, err := metadata_db_entity.LoadAsset(metadata_db_conn.GetDatabase(), hash)
+	asset, err := metadata_db_entity.LoadAsset(hash)
 	if err != nil || asset == nil {
 		util.LogError(err)
 		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash (not found)")))
@@ -42,8 +41,8 @@ func GetAsset(c *gin.Context) {
 		return
 	}
 
-	fileName, _ := metadata_db_entity.LoadFileNameById(metadata_db_conn.GetDatabase(), asset.Name)
-	mimeType, _ := metadata_db_entity.LoadMimeTypeById(metadata_db_conn.GetDatabase(), asset.MimeType)
+	fileName, _ := metadata_db_entity.LoadFileNameById(asset.Name)
+	mimeType, _ := metadata_db_entity.LoadMimeTypeById(asset.MimeType)
 
 	reader, err := storage.Open(hash)
 	if err != nil {

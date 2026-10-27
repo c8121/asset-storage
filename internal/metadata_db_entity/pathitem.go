@@ -5,15 +5,26 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/c8121/asset-storage/internal/db_entity"
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_db_entities"
 )
 
 type PathItem struct {
 	Id     int64
 	Parent int64
 	Name   string
+}
+
+func (p *PathItem) GetEntityName() string {
+	return "PathItem"
+}
+
+func (p *PathItem) GetId() int64 {
+	return p.Id
+}
+
+func (p *PathItem) SetId(id int64) {
+	p.Id = id
 }
 
 var (
@@ -63,9 +74,9 @@ func SplitPath(path string) []string {
 }
 
 // LoadPathItem gets PathItem from db, splits path and searches
-func LoadPathItem(prv db_entity.StatementProvider, path string, createIfNotExists bool) (*PathItem, error) {
+func LoadPathItem(path string, createIfNotExists bool) (*PathItem, error) {
 
-	names := SplitPath(path)
+	/*names := SplitPath(path)
 	var parent int64 = 0
 
 	var pathItem *PathItem
@@ -75,7 +86,7 @@ func LoadPathItem(prv db_entity.StatementProvider, path string, createIfNotExist
 		cachedItem, ok := pathItemCache[cacheKey]
 		if !ok {
 			pathItem = &PathItem{Parent: parent, Name: name}
-			err := db_entity.LoadEntity(prv, createIfNotExists, pathItem)
+			err := db_entity.LoadEntity(createIfNotExists, pathItem)
 			if err != nil {
 				return nil, err
 			}
@@ -88,14 +99,52 @@ func LoadPathItem(prv db_entity.StatementProvider, path string, createIfNotExist
 		parent = pathItem.Id
 	}
 
+	return pathItem, nil*/
+	panic("implement me")
+}
+
+func ListPathItems(parentId int) ([]PathItem, error) {
+
+	filter := go_db_entities.NewFilter("Parent", go_db_entities.CompareEqual, parentId)
+	filter.OrderBy = []string{"Name"}
+
+	pathItemSupplier := func() go_db_entities.Entity {
+		return &PathItem{}
+	}
+
+	items, err := go_db_entities.Select(DbContext, pathItemSupplier, *filter)
+	if err != nil {
+		return nil, err
+	}
+
+	pathItems := make([]PathItem, len(items))
+	for i, item := range items {
+		pathItem := item.(*PathItem)
+		pathItems[i] = *pathItem
+	}
+
+	return pathItems, nil
+}
+
+func GetPathItemByName(name string, parentId int) (*PathItem, error) {
+
+	filter := go_db_entities.NewFilter("Name", go_db_entities.CompareEqual, name)
+	filter.Next = go_db_entities.NewFilter("Parent", go_db_entities.CompareEqual, parentId)
+
+	pathItem := &PathItem{}
+	err := go_db_entities.Load(DbContext, pathItem, *filter)
+	if err != nil {
+		return nil, err
+	}
+
 	return pathItem, nil
 }
 
 // FindAssetPathIds looks for origin-paths in database and
 // returns it as map: asset.Id -> [path.Id,...]
-func FindAssetPathIds(prv db_entity.StatementProvider, assetIds []int64) (map[int64][]int64, error) {
+func FindAssetPathIds(assetIds []int64) (map[int64][]int64, error) {
 
-	var idMap = make(map[int64][]int64, len(assetIds))
+	/*var idMap = make(map[int64][]int64, len(assetIds))
 	var chunk = make([]int64, 0)
 
 	for i, assetId := range assetIds {
@@ -148,12 +197,13 @@ func FindAssetPathIds(prv db_entity.StatementProvider, assetIds []int64) (map[in
 		}
 	}
 
-	return idMap, nil
+	return idMap, nil*/
+	panic("implement me")
 }
 
 func GetAssetIdsFromPath(pathId int64) ([]int64, error) {
 
-	list := make([]int64, 0)
+	/*list := make([]int64, 0)
 
 	stmt, err := metadata_db_conn.GetDatabase().Prepare("SELECT DISTINCT asset FROM origin where path = ?;")
 	if err != nil {
@@ -177,13 +227,14 @@ func GetAssetIdsFromPath(pathId int64) ([]int64, error) {
 		return nil, err
 	}
 
-	return list, err
+	return list, err*/
+	panic("implement me")
 
 }
 
 func RemovePathIfEmpty(pathId int64) error {
 
-	tx, err := metadata_db_conn.BeginTransaction()
+	/*tx, err := metadata_db_conn.BeginTransaction()
 	if err != nil {
 		return err
 	}
@@ -211,7 +262,8 @@ func RemovePathIfEmpty(pathId int64) error {
 		return err
 	}
 
-	return metadata_db_conn.CommitOrLog(tx)
+	return metadata_db_conn.CommitOrLog(tx)*/
+	panic("implement me")
 }
 
 func countPathRefs(tx *sql.Tx, pathId int64, sql string) int64 {
@@ -236,85 +288,4 @@ func countPathRefs(tx *sql.Tx, pathId int64, sql string) int64 {
 	}
 
 	return 99999
-}
-
-func (p *PathItem) GetId() int64 {
-	return p.Id
-}
-
-func (p *PathItem) GetSelectQuery() string {
-	query := "SELECT id, parent, name FROM pathItem"
-	where := ""
-	if p.Name != "" {
-		where = util.JoinStrings(" AND ", where, "name = ?")
-	}
-	if p.Parent != 0 {
-		where = util.JoinStrings(" AND ", where, "parent = ?")
-	}
-	if p.Id != 0 {
-		where = util.JoinStrings(" AND ", where, "id = ?")
-	}
-	if p.Name == "" && p.Parent == 0 && p.Id == 0 {
-		//Find Default root entry
-		where = util.JoinStrings(" AND ", where, "name = ?")
-		where = util.JoinStrings(" AND ", where, "parent = ?")
-	}
-	if where != "" {
-		query = query + " WHERE " + where
-	} else {
-		fmt.Printf("Warn: No filter defined for path-item\n")
-	}
-	return query
-}
-
-func (p *PathItem) GetSelectQueryArgs() []any {
-	args := make([]any, 0)
-	if p.Name != "" {
-		args = append(args, p.Name)
-	}
-	if p.Parent != 0 {
-		args = append(args, p.Parent)
-	}
-	if p.Id != 0 {
-		args = append(args, p.Id)
-	}
-	if p.Name == "" && p.Parent == 0 && p.Id == 0 {
-		//Find Default root entry
-		args = append(args, "")
-		args = append(args, 0)
-	}
-
-	return args
-}
-
-func (p *PathItem) Scan(rows *sql.Rows) error {
-	return rows.Scan(&p.Id, &p.Parent, &p.Name)
-}
-
-func (p *PathItem) GetInsertQuery() string {
-	return "INSERT INTO pathItem(parent, name) VALUES(?,?);"
-}
-
-func (p *PathItem) ExecInsert(stmt *sql.Stmt) (sql.Result, error) {
-	return stmt.Exec(&p.Parent, &p.Name)
-}
-
-func (p *PathItem) GetUpdateQuery() string {
-	return "UPDATE pathItem SET parent=?, name=? WHERE id = ?;"
-}
-
-func (p *PathItem) ExecUpdate(stmt *sql.Stmt) (sql.Result, error) {
-	return stmt.Exec(&p.Parent, &p.Name, &p.Id)
-}
-
-func (p *PathItem) SetId(id int64) {
-	p.Id = id
-}
-
-func (a *PathItem) GetCreateQueries() []string {
-	return []string{
-		"CREATE TABLE IF NOT EXISTS pathItem(id integer PRIMARY KEY, parent integer, name TEXT(1024));",
-		"CREATE INDEX IF NOT EXISTS idx_pathItem_parent on pathItem(parent);",
-		"CREATE INDEX IF NOT EXISTS idx_pathItem_name on pathItem(name);",
-	}
 }

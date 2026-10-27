@@ -2,12 +2,10 @@ package metadata_db
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
-	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_db_entities"
 )
 
 type AssetListItem struct {
@@ -67,12 +65,29 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 
 // ListAssetsByIds creates a list of AssetListItem's, loaded by given ScoredIdMap
 func ListAssetsByIds(ids ScoredIdMap, offset int, count int) ([]AssetListItem, error) {
-	var query = "SELECT a.id, a.hash, m.name as mimeType, a.fileTime, f.name" +
-		" FROM asset a " +
-		" INNER JOIN mimeType m ON a.mimeType = m.id " +
-		" INNER JOIN fileName f ON a.name = f.id "
 
-	var params = make([]any, 0)
+	var query = go_db_entities.TableQuery{
+		FieldNames: []string{"Id", "Hash", "FileTime"},
+		Entity:     &metadata_db_entity.Asset{},
+	}
+	query.AddJoin(go_db_entities.TableQueryJoin{
+		TableQuery: &go_db_entities.TableQuery{
+			FieldNames: []string{"Name"},
+			Entity:     &metadata_db_entity.MimeType{},
+		},
+		OnFrom: "MimeType",
+		OnTo:   "Id",
+	})
+	query.AddJoin(go_db_entities.TableQueryJoin{
+		TableQuery: &go_db_entities.TableQuery{
+			FieldNames: []string{"Name"},
+			Entity:     &metadata_db_entity.FileName{},
+		},
+		OnFrom: "MimeType",
+		OnTo:   "Id",
+	})
+
+	query.Filter = &go_db_entities.Filter{}
 
 	if ids != nil {
 		sorted := ids.Sort()
@@ -82,22 +97,22 @@ func ListAssetsByIds(ids ScoredIdMap, offset int, count int) ([]AssetListItem, e
 		}
 		if offset < len(sorted) && endIdx > 0 {
 			slice := sorted[offset:endIdx]
-			//fmt.Printf("Found %d (%d - %d) items\n", len(slice), filter.Offset, endIdx)
-			query += " WHERE a.id in(" +
-				strings.Repeat("?,", len(slice)-1) + "?" +
-				");"
-			for _, id := range slice {
-				//fmt.Printf("Found %d %f\n", id.Id, id.Score)
-				params = append(params, id.Id)
+
+			query.Filter.FieldName = "Asset.Id"
+			ids := make([]int64, len(slice))
+			for i, id := range slice {
+				ids[i] = id.Id
 			}
-			items, err := loadAssetList(query, params...)
+			query.Filter.Value = ids
+
+			items, err := loadAssetList(query)
 			if err != nil {
 				return nil, err
 			}
 			//Retain sorting
 			mapById := listToMap(items)
 			list := make([]AssetListItem, 0, len(items))
-			for _, id := range slice {
+			for _, id := range sorted[offset:endIdx] {
 				item, ok := mapById[id.Id]
 				if ok {
 					list = append(list, item)
@@ -111,16 +126,16 @@ func ListAssetsByIds(ids ScoredIdMap, offset int, count int) ([]AssetListItem, e
 
 		} else {
 			//Nothing found
-			empty := []AssetListItem{}
+			var empty []AssetListItem
 			return empty, nil
 		}
 	} else {
 		//Nothing filtered
-		query += "ORDER BY a.fileTime DESC, a.hash ASC LIMIT ? OFFSET ?;"
-		params = append(params, count)
-		params = append(params, offset)
+		query.Filter.Offset = offset
+		query.Filter.Count = count
+		query.Filter.OrderBy = []string{"Asset.FileTime DESC, Asset.Id DESC"}
 
-		list, err := loadAssetList(query, params...)
+		list, err := loadAssetList(query)
 		if err != nil {
 			return nil, err
 		}
@@ -141,30 +156,24 @@ func listToMap(items []AssetListItem) map[int64]AssetListItem {
 }
 
 // loadAssetList queries the database
-func loadAssetList(query string, params ...any) ([]AssetListItem, error) {
+func loadAssetList(query go_db_entities.TableQuery) ([]AssetListItem, error) {
 
-	//fmt.Printf("Query: %s\n", query)
-
-	stmt, err := metadata_db_conn.GetDatabase().Prepare(query)
+	rows, err := go_db_entities.Query(metadata_db_entity.DbContext, query)
 	if err != nil {
 		return nil, err
 	}
-	defer util.CloseOrLog(stmt)
 
 	var items []AssetListItem
 
-	if rows, err := stmt.Query(params...); err == nil {
-		defer util.CloseOrLog(rows)
-		for rows.Next() {
-			var item AssetListItem
-			if err := rows.Scan(&item.Id, &item.Hash, &item.MimeType, &item.FileTime, &item.Name); err != nil {
-				return nil, err
-			}
-			items = append(items, item)
+	for _, row := range rows {
+		item := AssetListItem{
+			Id:       row[0].(int64),
+			Hash:     row[1].(string),
+			FileTime: row[2].(time.Time),
+			MimeType: row[3].(string),
+			Name:     row[4].(string),
 		}
-
-	} else {
-		return nil, err
+		items = append(items, item)
 	}
 
 	return items, nil
@@ -173,7 +182,7 @@ func loadAssetList(query string, params ...any) ([]AssetListItem, error) {
 // assignPathIds uses FindPathIds and assigns to AssetListItem.PathIds
 func assignPathIds(items *[]AssetListItem) error {
 
-	assetIds := make([]int64, len(*items))
+	/*assetIds := make([]int64, len(*items))
 	for i, item := range *items {
 		assetIds[i] = item.Id
 	}
@@ -189,5 +198,6 @@ func assignPathIds(items *[]AssetListItem) error {
 		copy((*items)[i].PathIds, src)
 	}
 
-	return nil
+	return nil*/
+	panic("not implemented")
 }

@@ -6,7 +6,6 @@ import (
 
 	"github.com/c8121/asset-storage/internal/collections"
 	"github.com/c8121/asset-storage/internal/metadata_db"
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 )
@@ -66,20 +65,11 @@ func AddCollection(c *gin.Context) {
 		return
 	}
 
-	tx, err := metadata_db_conn.BeginTransaction()
-	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
-		return
-	}
-
 	//Create/Update meta-data-database
-	err = metadata_db.AddCollection(tx, collection)
+	err = metadata_db.AddCollection(collection)
 	if err != nil {
 		fmt.Printf("Error adding collection-data to database: %s\n", err)
-		metadata_db_conn.RollbackOrLog(tx)
 	}
-
-	util.LogError(metadata_db_conn.CommitOrLog(tx))
 
 	c.IndentedJSON(http.StatusOK, collection)
 }
@@ -99,22 +89,13 @@ func RemoveCollection(c *gin.Context) {
 		util.LogError(err)
 	}
 
-	tx, err := metadata_db_conn.BeginTransaction()
-	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
-		return
-	}
-
 	collection := &collections.JsonAssetCollection{UUID: uuid}
 
 	// Remove from DB
-	err = metadata_db.RemoveCollection(tx, collection)
+	err = metadata_db.RemoveCollection(collection)
 	if err != nil {
 		fmt.Printf("Error removing collection-data to database: %s\n", err)
-		metadata_db_conn.RollbackOrLog(tx)
 	}
-
-	util.LogError(metadata_db_conn.CommitOrLog(tx))
 
 	c.IndentedJSON(http.StatusOK, collection)
 }

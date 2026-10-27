@@ -1,12 +1,5 @@
 package metadata_db
 
-import (
-	"strings"
-	"time"
-
-	"github.com/c8121/asset-storage/internal/collections"
-)
-
 type FinderByCollection struct {
 }
 
@@ -18,7 +11,7 @@ func (f FinderByCollection) Find(uuid any) (ScoredIdMap, error) {
 		return nil, nil
 	}
 
-	collection, err := collections.LoadById(sUuid)
+	/*collection, err := collections.LoadById(sUuid)
 	if err != nil {
 		return nil, err
 	}
@@ -37,5 +30,6 @@ func (f FinderByCollection) Find(uuid any) (ScoredIdMap, error) {
 		dt := match.(time.Time)
 		score := float32(dt.Unix()) / float32(1000.0)
 		idMap.Set(id, score)
-	}, query, args...)
+	}, query, args...)*/
+	panic("not implemented")
 }

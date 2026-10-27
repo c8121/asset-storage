@@ -1,12 +1,5 @@
 package metadata_db
 
-import (
-	"strings"
-	"time"
-
-	"github.com/c8121/asset-storage/internal/fulltext"
-)
-
 type FinderByFulltext struct {
 }
 
@@ -18,7 +11,7 @@ func (f FinderByFulltext) Find(fulltextQuery any) (ScoredIdMap, error) {
 		return nil, nil
 	}
 
-	hashes, err := fulltext.Find(sQuery, 0, 999)
+	/*hashes, err := fulltext.Find(sQuery, 0, 999)
 	if err != nil {
 		return nil, err
 	}
@@ -42,5 +35,6 @@ func (f FinderByFulltext) Find(fulltextQuery any) (ScoredIdMap, error) {
 		dt := match.(time.Time)
 		score := float32(dt.Unix()) / float32(1000.0)
 		idMap.Set(id, score)
-	}, query, args...)
+	}, query, args...)*/
+	panic("not implemented")
 }

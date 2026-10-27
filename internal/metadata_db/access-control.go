@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/c8121/asset-storage/internal/access_control"
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
 )
@@ -14,7 +13,7 @@ type MetaDataDbAccessController struct {
 
 func (ctrl MetaDataDbAccessController) CanRead(assetHash string, ctx *access_control.AccessContext) error {
 
-	asset, err := metadata_db_entity.LoadAsset(metadata_db_conn.GetDatabase(), assetHash)
+	asset, err := metadata_db_entity.LoadAsset(assetHash)
 	if err != nil || asset == nil {
 		util.LogError(err)
 		return access_control.ErrAccessDenied

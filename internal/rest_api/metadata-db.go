@@ -28,7 +28,7 @@ func ListMimeTypes(c *gin.Context) {
 // ListPathItems is a rest-api handler
 func ListPathItems(c *gin.Context) {
 
-	items, err := metadata_db.ListPathItems(util.Atoi(c.Param("parent"), 0))
+	items, err := metadata_db_entity.ListPathItems(util.Atoi(c.Param("parent"), 0))
 	if err != nil {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 		return

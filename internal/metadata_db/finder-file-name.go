@@ -1,10 +1,5 @@
 package metadata_db
 
-import (
-	"fmt"
-	"strings"
-)
-
 type FinderByFileName struct {
 }
 
@@ -16,7 +11,7 @@ func (f FinderByFileName) Find(name any) (ScoredIdMap, error) {
 		return nil, nil
 	}
 
-	var query = "SELECT a.id, f.name FROM origin o " +
+	/*var query = "SELECT a.id, f.name FROM origin o " +
 		"INNER JOIN fileName f ON f.id = o.name " +
 		"INNER JOIN asset a ON o.asset = a.id " +
 		"WHERE f.name like ?;"
@@ -34,6 +29,7 @@ func (f FinderByFileName) Find(name any) (ScoredIdMap, error) {
 		score := float32(len(sName)) / float32(len(match.(string)))
 		//fmt.Printf("Match: %s, Score: %f\n", match, score)
 		idMap.Add(id, score)
-	}, query, findName)
+	}, query, findName)*/
+	panic("not implemented")
 
 }

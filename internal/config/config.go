@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"slices"
@@ -28,7 +29,7 @@ var (
 	SkipMetaDataIfExists = false
 	CheckHashBeforeAdd   = false
 
-	SpaHttpRoot = filepath.Dir(os.Args[0]) + "/../vue-ui" // Root directory to service SPA from
+	SpaHttpRoot = getWorkingDir() + "/vue-ui" // Root directory to service SPA from
 
 	ListenAddress = "127.0.0.1:9999" //Spa-/Rest-/Ssh-Server in format ip:port
 	CertFile      = ""
@@ -162,6 +163,16 @@ func validateDataDir(path string) {
 		}
 	}
 
+}
+
+func getWorkingDir() string {
+	path, err := os.Getwd()
+	if err != nil {
+		path = filepath.Dir(os.Args[0])
+	}
+
+	log.Printf("Working directory: %s\n", path)
+	return path
 }
 
 // checkObsoleteCmdArgs looks for command-line arguments which are not supported anymore.

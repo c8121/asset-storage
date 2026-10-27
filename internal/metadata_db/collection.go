@@ -1,15 +1,9 @@
 package metadata_db
 
 import (
-	"database/sql"
-	"errors"
 	"time"
 
 	"github.com/c8121/asset-storage/internal/collections"
-	"github.com/c8121/asset-storage/internal/db_entity"
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
-	"github.com/c8121/asset-storage/internal/metadata_db_entity"
-	"github.com/c8121/asset-storage/internal/util"
 )
 
 type CollectionListItem struct {
@@ -25,9 +19,9 @@ type CollectionListFilter struct {
 }
 
 // AddCollection adds/updates collection-data in database
-func AddCollection(tx *sql.Tx, jsonCollection *collections.JsonAssetCollection) error {
+func AddCollection(jsonCollection *collections.JsonAssetCollection) error {
 
-	var collection = &metadata_db_entity.Collection{UUID: jsonCollection.UUID}
+	/*var collection = &metadata_db_entity.Collection{UUID: jsonCollection.UUID}
 	err := db_entity.Load(tx, collection)
 	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
 		return err
@@ -41,15 +35,15 @@ func AddCollection(tx *sql.Tx, jsonCollection *collections.JsonAssetCollection) 
 	err = db_entity.SaveEntity(tx, collection)
 	if err != nil {
 		return err
-	}
+	}*/
 
 	return nil
 }
 
 // RemoveCollection removes collection-data in database
-func RemoveCollection(tx *sql.Tx, jsonCollection *collections.JsonAssetCollection) error {
+func RemoveCollection(jsonCollection *collections.JsonAssetCollection) error {
 
-	var collection = &metadata_db_entity.Collection{UUID: jsonCollection.UUID}
+	/*var collection = &metadata_db_entity.Collection{UUID: jsonCollection.UUID}
 	err := db_entity.Load(tx, collection)
 	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
 		return err
@@ -58,14 +52,14 @@ func RemoveCollection(tx *sql.Tx, jsonCollection *collections.JsonAssetCollectio
 	err = db_entity.DeleteEntity(tx, collection)
 	if err != nil {
 		return err
-	}
+	}*/
 
 	return nil
 }
 
 func ListCollections(filter *CollectionListFilter) ([]CollectionListItem, error) {
 
-	var query = "SELECT id, uuid, name, created" +
+	/*var query = "SELECT id, uuid, name, created" +
 		" FROM collection" +
 		" ORDER BY created DESC" +
 		" LIMIT ? OFFSET ?;"
@@ -74,35 +68,6 @@ func ListCollections(filter *CollectionListFilter) ([]CollectionListItem, error)
 	params = append(params, filter.Count)
 	params = append(params, filter.Offset)
 
-	return loadCollectionList(query, params...)
-}
-
-// loadCollectionList queries the database
-func loadCollectionList(query string, params ...any) ([]CollectionListItem, error) {
-
-	//fmt.Printf("Query: %s\n", query)
-
-	stmt, err := metadata_db_conn.GetDatabase().Prepare(query)
-	if err != nil {
-		return nil, err
-	}
-	defer util.CloseOrLog(stmt)
-
-	var items []CollectionListItem
-
-	if rows, err := stmt.Query(params...); err == nil {
-		defer util.CloseOrLog(rows)
-		for rows.Next() {
-			var item CollectionListItem
-			if err := rows.Scan(&item.Id, &item.UUID, &item.Name, &item.Created); err != nil {
-				return nil, err
-			}
-			items = append(items, item)
-		}
-
-	} else {
-		return nil, err
-	}
-
-	return items, nil
+	return loadCollectionList(query, params...)*/
+	return nil, nil
 }

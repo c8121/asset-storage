@@ -5,7 +5,6 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/faces"
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/metadata_sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
@@ -36,13 +35,7 @@ func main() {
 			return
 		}
 
-		assetMeta, err := metadata_db_entity.LoadAsset(metadata_db_conn.GetDatabase(), hash)
-		if err != nil {
-			util.LogError(err)
-			return
-		}
-
-		tx, err := metadata_db_conn.BeginTransaction()
+		assetMeta, err := metadata_db_entity.LoadAsset(hash)
 		if err != nil {
 			util.LogError(err)
 			return
@@ -62,8 +55,6 @@ func main() {
 				util.LogError(err)
 			}
 		}
-
-		util.LogError(metadata_db_conn.CommitOrLog(tx))
 	}
 
 	storage.Walk(handler)

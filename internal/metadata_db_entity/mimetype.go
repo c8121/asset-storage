@@ -1,18 +1,27 @@
 package metadata_db_entity
 
 import (
-	"database/sql"
-	"fmt"
+	"errors"
 	"strings"
 
-	"github.com/c8121/asset-storage/internal/db_entity"
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
-	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_db_entities"
 )
 
 type MimeType struct {
 	Id   int64
-	Name string
+	Name string `dbe:"Index"`
+}
+
+func (m *MimeType) GetEntityName() string {
+	return "MimeType"
+}
+
+func (m *MimeType) GetId() int64 {
+	return m.Id
+}
+
+func (m *MimeType) SetId(id int64) {
+	m.Id = id
 }
 
 var (
@@ -33,115 +42,60 @@ func NormalizeName(name string) string {
 
 func ListMimeTypes() ([]MimeType, error) {
 
-	stmt, err := metadata_db_conn.GetDatabase().Prepare("SELECT id, name FROM mimeType ORDER BY name, id;")
+	filter := &go_db_entities.Filter{}
+	filter.OrderBy = []string{"Name", "Id"}
+
+	mimeTypeSupplier := func() go_db_entities.Entity {
+		return &MimeType{}
+	}
+
+	items, err := go_db_entities.Select(DbContext, mimeTypeSupplier, *filter)
 	if err != nil {
 		return nil, err
 	}
-	defer util.CloseOrLog(stmt)
 
-	var items []MimeType
-
-	if rows, err := stmt.Query(); err == nil {
-		defer util.CloseOrLog(rows)
-		for rows.Next() {
-			var item MimeType
-			if err := rows.Scan(&item.Id, &item.Name); err != nil {
-				return items, err
-			}
-			items = append(items, item)
-		}
-
-	} else {
-		return items, err
+	mimeTypes := make([]MimeType, len(items))
+	for i, item := range items {
+		mimeType := item.(*MimeType)
+		mimeTypes[i] = *mimeType
 	}
 
-	return items, nil
+	return mimeTypes, nil
 }
 
-func LoadMimeType(prv db_entity.StatementProvider, name string, createIfNotExists bool) (*MimeType, error) {
+func LoadMimeType(name string, createIfNotExists bool) (*MimeType, error) {
+
 	name = NormalizeName(name)
 	mimeType, ok := mimeTypeCache[name]
 	if ok {
 		return mimeType, nil
 	}
 
-	mimeType = &MimeType{Name: name}
-	err := db_entity.LoadEntity(prv, createIfNotExists, mimeType)
-	if err == nil {
-		mimeTypeCache[name] = mimeType
+	mimeType = &MimeType{}
+	err := go_db_entities.Load(DbContext, mimeType, go_db_entities.Filter{
+		FieldName: "Name",
+		Value:     name,
+	})
+	if errors.Is(err, go_db_entities.ErrNotFound) && createIfNotExists {
+		mimeType.Name = name
+		if err = go_db_entities.Save(DbContext, mimeType); err != nil {
+			return nil, err
+		}
+	} else if err != nil {
+		return nil, err
 	}
 
-	return mimeType, err
+	mimeTypeCache[name] = mimeType
+	return mimeType, nil
 }
 
-func LoadMimeTypeById(prv db_entity.StatementProvider, id int64) (*MimeType, error) {
-	var mimeType = &MimeType{Id: id}
-	err := db_entity.LoadEntity(prv, false, mimeType)
+func LoadMimeTypeById(id int64) (*MimeType, error) {
+
+	mimeType := &MimeType{}
+	err := go_db_entities.Load(DbContext, mimeType, *go_db_entities.NewIdFilter(id))
 	if err != nil {
 		return nil, err
 	}
 
 	return mimeType, nil
-}
-
-func (m *MimeType) GetId() int64 {
-	return m.Id
-}
-
-func (m *MimeType) GetSelectQuery() string {
-	query := "SELECT id, name FROM mimeType"
-	where := ""
-	if m.Name != "" {
-		where = util.JoinStrings(" AND ", where, "name = ?")
-	}
-	if m.Id != 0 {
-		where = util.JoinStrings(" AND ", where, "id = ?")
-	}
-	if where != "" {
-		query = query + " WHERE " + where
-	} else {
-		fmt.Printf("Warn: No filter defined for mimetype\n")
-	}
-	return query
-}
-
-func (m *MimeType) GetSelectQueryArgs() []any {
-	args := make([]any, 0)
-	if m.Name != "" {
-		args = append(args, m.Name)
-	}
-	if m.Id != 0 {
-		args = append(args, m.Id)
-	}
-	return args
-}
-
-func (m *MimeType) Scan(rows *sql.Rows) error {
-	return rows.Scan(&m.Id, &m.Name)
-}
-
-func (m *MimeType) GetInsertQuery() string {
-	return "INSERT INTO mimeType(name) VALUES(?);"
-}
-
-func (m *MimeType) ExecInsert(stmt *sql.Stmt) (sql.Result, error) {
-	return stmt.Exec(&m.Name)
-}
-
-func (m *MimeType) GetUpdateQuery() string {
-	return "UPDATE mimeType SET name=? WHERE id = ?;"
-}
-
-func (m *MimeType) ExecUpdate(stmt *sql.Stmt) (sql.Result, error) {
-	return stmt.Exec(&m.Name, &m.Id)
-}
-
-func (m *MimeType) SetId(id int64) {
-	m.Id = id
-}
-
-func (a *MimeType) GetCreateQueries() []string {
-	return []string{
-		"CREATE TABLE IF NOT EXISTS mimeType(id integer PRIMARY KEY, name TEXT(32));",
-	}
 }

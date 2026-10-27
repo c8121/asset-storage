@@ -1,13 +1,7 @@
 package metadata_db_entity
 
 import (
-	"database/sql"
-	"encoding/json"
-	"log"
-
-	"github.com/c8121/asset-storage/internal/db_entity"
 	"github.com/c8121/asset-storage/internal/faces"
-	"github.com/c8121/asset-storage/internal/metadata_db_conn"
 	"github.com/c8121/asset-storage/internal/util"
 
 	_ "gosqlite.org/vec" //Auto-registers the vec0 module on every connection
@@ -20,13 +14,25 @@ type FaceEmbedding struct {
 	Embedding      []float32
 }
 
+func (f *FaceEmbedding) GetEntityName() string {
+	return "Faces"
+}
+
+func (f *FaceEmbedding) GetId() int64 {
+	return f.Id
+}
+
+func (f *FaceEmbedding) SetId(id int64) {
+	f.Id = id
+}
+
 // AddFaces
-func AddFaces(tx *sql.Tx, assetId int64, faces *[]faces.RestApiFace) (*[]FaceEmbedding, error) {
+func AddFaces(assetId int64, faces *[]faces.RestApiFace) (*[]FaceEmbedding, error) {
 
 	list := &[]FaceEmbedding{}
 
 	for _, face := range *faces {
-		faceEmbedding, err := AddFace(tx, assetId, &face)
+		faceEmbedding, err := AddFace(assetId, &face)
 		if err != nil {
 			util.LogError(err)
 		} else {
@@ -38,9 +44,9 @@ func AddFaces(tx *sql.Tx, assetId int64, faces *[]faces.RestApiFace) (*[]FaceEmb
 }
 
 // AddFace
-func AddFace(tx *sql.Tx, assetId int64, face *faces.RestApiFace) (*FaceEmbedding, error) {
+func AddFace(assetId int64, face *faces.RestApiFace) (*FaceEmbedding, error) {
 
-	var faceEmbedding = &FaceEmbedding{
+	/*var faceEmbedding = &FaceEmbedding{
 		AssetId:   assetId,
 		X1:        face.Image[0],
 		Y1:        face.Image[1],
@@ -54,26 +60,28 @@ func AddFace(tx *sql.Tx, assetId int64, face *faces.RestApiFace) (*FaceEmbedding
 		return nil, err
 	}
 
-	return faceEmbedding, nil
+	return faceEmbedding, nil*/
+	return nil, nil
 }
 
-func RemoveFaces(tx *sql.Tx, assetId int64) error {
+func RemoveFaces(assetId int64) error {
 
-	stmt, err := tx.Prepare("DELETE FROM faces WHERE assetId=?;")
+	/*stmt, err := tx.Prepare("DELETE FROM faces WHERE assetId=?;")
 	if err != nil {
 		return err
 	}
 	defer util.CloseOrLog(stmt)
 
 	_, err = stmt.Exec(assetId)
-	return err
+	return err*/
+	return nil
 }
 
 // GetFaces finds all faces that where detected in the given asset by face-api
 // Loads FaceEmbedding-Struct without FaceEmbedding.Embedding (use GetFaceEmbedding to load that)
 func GetFaces(hash string) (*[]FaceEmbedding, error) {
 
-	assetMeta, err := LoadAsset(metadata_db_conn.GetDatabase(), hash)
+	/*assetMeta, err := LoadAsset(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -101,57 +109,59 @@ func GetFaces(hash string) (*[]FaceEmbedding, error) {
 		}
 	}
 
-	return list, nil
+	return list, nil*/
+	return nil, nil
 }
 
 // GetFaceEmbedding loads the stored embedding
 func GetFaceEmbedding(faceId int64) (*FaceEmbedding, error) {
 
-	stmt, err := metadata_db_conn.GetDatabase().Prepare("SELECT id, assetId, vec_to_json(embedding) FROM faces WHERE id=?")
-	if err != nil {
-		return nil, err
-	}
-	defer util.CloseOrLog(stmt)
-
-	rows, err := stmt.Query(faceId)
-	if err != nil {
-		log.Fatal("Query failed:", err)
-	}
-	defer util.CloseOrLog(rows)
-
-	faceEmbedding := &FaceEmbedding{}
-	if rows.Next() {
-		var embeddingJsonString string
-		if err := rows.Scan(&faceEmbedding.Id, &faceEmbedding.AssetId, &embeddingJsonString); err != nil {
-			util.LogError(err)
-		}
-		err = json.Unmarshal([]byte(embeddingJsonString), &faceEmbedding.Embedding)
+	/*stmt, err := metadata_db_conn.GetDatabase().Prepare("SELECT id, assetId, vec_to_json(embedding) FROM faces WHERE id=?")
 		if err != nil {
-			log.Fatal("Failed to parse vector JSON string: ", err)
+			return nil, err
 		}
-		return faceEmbedding, nil
-	}
+		defer util.CloseOrLog(stmt)
 
-	return nil, nil
-}
+		rows, err := stmt.Query(faceId)
+		if err != nil {
+			log.Fatal("Query failed:", err)
+		}
+		defer util.CloseOrLog(rows)
 
-func FindSimilarFaces(faceId int64, max int) (*[]FaceEmbedding, error) {
+		faceEmbedding := &FaceEmbedding{}
+		if rows.Next() {
+			var embeddingJsonString string
+			if err := rows.Scan(&faceEmbedding.Id, &faceEmbedding.AssetId, &embeddingJsonString); err != nil {
+				util.LogError(err)
+			}
+			err = json.Unmarshal([]byte(embeddingJsonString), &faceEmbedding.Embedding)
+			if err != nil {
+				log.Fatal("Failed to parse vector JSON string: ", err)
+			}
+			return faceEmbedding, nil
+		}
 
-	faceEmbedding, err := GetFaceEmbedding(faceId)
-	if err != nil {
-		return nil, err
-	}
-
-	if faceEmbedding == nil {
 		return nil, nil
 	}
 
-	return FindSimilarFacesByEmbedding(&faceEmbedding.Embedding, max)
+	func FindSimilarFaces(faceId int64, max int) (*[]FaceEmbedding, error) {
+
+		faceEmbedding, err := GetFaceEmbedding(faceId)
+		if err != nil {
+			return nil, err
+		}
+
+		if faceEmbedding == nil {
+			return nil, nil
+		}
+
+		return FindSimilarFacesByEmbedding(&faceEmbedding.Embedding, max)*/
+	return nil, nil
 }
 
 func FindSimilarFacesByEmbedding(embedding *[]float32, max int) (*[]FaceEmbedding, error) {
 
-	embeddingJson, err := json.Marshal(embedding)
+	/*embeddingJson, err := json.Marshal(embedding)
 	if err != nil {
 		return nil, err
 	}
@@ -182,30 +192,6 @@ func FindSimilarFacesByEmbedding(embedding *[]float32, max int) (*[]FaceEmbeddin
 		}
 
 	}
-	return list, nil
-}
-
-func (f *FaceEmbedding) GetInsertQuery() string {
-	return "INSERT INTO faces(assetId, x1, y1, x2, y2, embedding) VALUES(?,?,?,?,?,vec_f32(?));"
-}
-
-func (f *FaceEmbedding) ExecInsert(stmt *sql.Stmt) (sql.Result, error) {
-	embeddingJson, err := json.Marshal(f.Embedding)
-	if err != nil {
-		return nil, err
-	}
-	return stmt.Exec(&f.AssetId, &f.X1, &f.Y1, &f.X2, &f.Y2, string(embeddingJson))
-}
-
-func (f *FaceEmbedding) SetId(id int64) {
-	f.Id = id
-}
-
-func (a *FaceEmbedding) GetCreateQueries() []string {
-	return []string{
-		//"DROP TABLE IF EXISTS faces",
-		"CREATE VIRTUAL TABLE IF NOT EXISTS faces USING vec0(id integer PRIMARY KEY, assetId integer, " +
-			"x1 integer, y1 integer, x2 integer, y2 integer, " +
-			"embedding FLOAT[512]);",
-	}
+	return list, nil*/
+	return nil, nil
 }
