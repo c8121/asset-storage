@@ -86,7 +86,8 @@ func LoadPathItem(path string, createIfNotExists bool) (*PathItem, error) {
 		cacheKey := fmt.Sprintf("%d/%s", parent, name)
 		cachedItem, ok := pathItemCache[cacheKey]
 		if !ok {
-			pathItem, err := GetPathItemByName(name, parent)
+			var err error
+			pathItem, err = GetPathItemByName(name, parent)
 			if errors.Is(err, go_db_entities.ErrNotFound) && createIfNotExists {
 				pathItem = &PathItem{Parent: parent, Name: name}
 				if err = go_db_entities.Save(DbContext, pathItem); err != nil {

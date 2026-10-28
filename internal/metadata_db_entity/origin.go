@@ -2,6 +2,8 @@ package metadata_db_entity
 
 import (
 	"time"
+
+	"github.com/c8121/go_db_entities"
 )
 
 type Origin struct {
@@ -56,15 +58,13 @@ func LoadOriginsByAssetId(assetId int64) (*[]Origin, error) {
 
 func RemoveOrigins(asset *Asset) error {
 
-	/*stmt, err := prv.Prepare("DELETE FROM origin WHERE asset = ?;")
+	origin := &Origin{}
+	err := go_db_entities.DeleteBatch(DbContext, origin, go_db_entities.Filter{FieldName: "Asset", Comparison: go_db_entities.CompareEqual, Value: asset.Id})
 	if err != nil {
 		return err
 	}
-	defer util.CloseOrLog(stmt)
 
-	_, err = stmt.Exec(asset.Id)
-	return err*/
-	panic("implement me")
+	return nil
 }
 
 func RemoveOriginsByAssetId(assetId int64) error {

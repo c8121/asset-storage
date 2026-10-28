@@ -94,7 +94,7 @@ func removePath(path string) {
 
 func removePathItem(pathItem *metadata_db_entity.PathItem) {
 
-	children, err := metadata_db.ListPathItems(int(pathItem.Id))
+	children, err := metadata_db_entity.ListPathItems(pathItem.Id)
 	if err != nil {
 		fmt.Printf("Error listing path items: %s\n", err.Error())
 	} else {

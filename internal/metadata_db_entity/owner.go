@@ -1,5 +1,11 @@
 package metadata_db_entity
 
+import (
+	"errors"
+
+	"github.com/c8121/go_db_entities"
+)
+
 type Owner struct {
 	Id   int64
 	Name string `dbe:"Index"`
@@ -27,17 +33,17 @@ func init() {
 
 func LoadOwner(name string, createIfNotExists bool) (*Owner, error) {
 
-	/*owner, ok := OwnerCache[name]
+	owner, ok := OwnerCache[name]
 	if ok {
 		return owner, nil
 	}
 
-	owner = &Owner{Name: name}
-	err := db_entity.LoadEntity(createIfNotExists, owner)
-	if err == nil {
-		OwnerCache[name] = owner
+	owner = &Owner{}
+	err := go_db_entities.Load(DbContext, owner, *go_db_entities.NewFilter("Name", go_db_entities.CompareEqual, name))
+	if !errors.Is(err, go_db_entities.ErrNotFound) && err != nil {
+		return nil, err
 	}
 
-	return owner, err*/
-	panic("implement me")
+	OwnerCache[name] = owner
+	return owner, err
 }

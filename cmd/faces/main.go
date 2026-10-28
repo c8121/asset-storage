@@ -47,11 +47,11 @@ func main() {
 		} else {
 			fmt.Printf("Found %d faces in %s\n", len(*facesFound), hash)
 
-			if err = metadata_db_entity.RemoveFaces(tx, assetMeta.Id); err != nil {
+			if err = metadata_db_entity.RemoveFaces(assetMeta.Id); err != nil {
 				util.LogError(err)
 			}
 
-			if _, err = metadata_db_entity.AddFaces(tx, assetMeta.Id, facesFound); err != nil {
+			if _, err = metadata_db_entity.AddFaces(assetMeta.Id, facesFound); err != nil {
 				util.LogError(err)
 			}
 		}

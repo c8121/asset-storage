@@ -29,7 +29,7 @@ var (
 	SkipMetaDataIfExists = false
 	CheckHashBeforeAdd   = false
 
-	SpaHttpRoot = getWorkingDir() + "/vue-ui" // Root directory to service SPA from
+	SpaHttpRoot = getWorkingDir() + "/../../vue-ui" // Root directory to service SPA from
 
 	ListenAddress = "127.0.0.1:9999" //Spa-/Rest-/Ssh-Server in format ip:port
 	CertFile      = ""

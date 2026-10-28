@@ -10,7 +10,6 @@ import (
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/internal/util"
 )
 
 type SshHandler interface {
@@ -25,12 +24,6 @@ type SshFileInfo struct {
 
 // AddFilesToArchive adds file to storage and creates meta-data
 func AddFilesToArchive(h SshHandler) {
-
-	tx, err := metadata_db_conn.BeginTransaction()
-	if err != nil {
-		util.LogError(err)
-		tx = nil
-	}
 
 	files := h.GetNewFiles()
 	for _, file := range files {
@@ -74,18 +67,11 @@ func AddFilesToArchive(h SshHandler) {
 				}
 
 				//Create/Update meta-data-database
-				if tx != nil {
-					err = metadata_db_entity.AddAsset(tx, meta)
-					if err != nil {
-						fmt.Printf("Error adding meta-data to database '%s': %s\n", file, err)
-					}
+				err = metadata_db_entity.AddAsset(meta)
+				if err != nil {
+					fmt.Printf("Error adding meta-data to database '%s': %s\n", file, err)
 				}
 			}
 		}
 	}
-
-	if tx != nil {
-		util.LogError(metadata_db_conn.CommitOrLog(tx))
-	}
-
 }
