@@ -1,9 +1,9 @@
 package metadata_db_entity
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/c8121/asset-storage/internal/util"
@@ -225,89 +225,68 @@ func FindAssetPathIds(assetIds []int64) (map[int64][]int64, error) {
 
 func GetAssetIdsFromPath(pathId int64) ([]int64, error) {
 
-	/*list := make([]int64, 0)
-
-	stmt, err := metadata_db_conn.GetDatabase().Prepare("SELECT DISTINCT asset FROM origin where path = ?;")
-	if err != nil {
-		return nil, err
+	query := go_db_entities.TableQuery{
+		Entity:     &Origin{},
+		FieldNames: []string{"Asset"},
+		Filter: &go_db_entities.Filter{
+			FieldName: "Path",
+			Value:     pathId,
+			Distinct:  true,
+		},
 	}
-	defer util.CloseOrLog(stmt)
 
-	if rows, err := stmt.Query(pathId); err == nil {
-		defer util.CloseOrLog(rows)
-		for rows.Next() {
-			var assetId int64
-			if err := rows.Scan(&assetId); err != nil {
-				fmt.Printf("Error scanning rows: %s\n", err)
-				return nil, err
-			} else {
-				list = append(list, assetId)
-			}
-		}
-
-	} else {
+	rows, err := go_db_entities.Query(DbContext, query)
+	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 		return nil, err
 	}
 
-	return list, err*/
-	panic("implement me")
+	list := make([]int64, len(rows))
+	for i, row := range rows {
+		list[i] = row[0].(int64)
+	}
+
+	return list, err
 
 }
 
 func RemovePathIfEmpty(pathId int64) error {
 
-	/*tx, err := metadata_db_conn.BeginTransaction()
-	if err != nil {
-		return err
-	}
-
-	cnt := countPathRefs(tx, pathId, "SELECT COUNT(*) FROM pathItem where parent = ?;")
+	cnt := countPathRefs(go_db_entities.TableQuery{
+		FieldNames: []string{"Id"},
+		Entity:     &PathItem{},
+		Filter:     &go_db_entities.Filter{FieldName: "Parent", Value: pathId},
+	})
 	if cnt > 0 {
 		fmt.Printf("Will not remove path %d, it has %d children\n", pathId, cnt)
 		return nil
 	}
 
-	cnt = countPathRefs(tx, pathId, "SELECT COUNT(*) FROM origin where path = ?;")
+	cnt = countPathRefs(go_db_entities.TableQuery{
+		FieldNames: []string{"Id"},
+		Entity:     &Origin{},
+		Filter:     &go_db_entities.Filter{FieldName: "Path", Value: pathId},
+	})
 	if cnt > 0 {
 		fmt.Printf("Will not remove path %d, it is referenced in %d origins\n", pathId, cnt)
 		return nil
 	}
 
 	fmt.Printf("Removing path %d\n", pathId)
-	stmt, err := tx.Prepare("DELETE FROM pathItem where id = ?;")
+	err := go_db_entities.DeleteBatch(DbContext, &PathItem{}, *go_db_entities.NewIdFilter(pathId))
 	if err != nil {
 		return err
 	}
 
-	_, err = stmt.Exec(pathId)
-	if err != nil {
-		return err
-	}
-
-	return metadata_db_conn.CommitOrLog(tx)*/
-	panic("implement me")
+	return nil
 }
 
-func countPathRefs(tx *sql.Tx, pathId int64, sql string) int64 {
+func countPathRefs(query go_db_entities.TableQuery) int {
 
-	stmt, err := tx.Prepare(sql)
-	if err != nil {
-		return 99999
-	}
-	defer util.CloseOrLog(stmt)
-
-	if rows, err := stmt.Query(pathId); err == nil {
-		defer util.CloseOrLog(rows)
-		if rows.Next() {
-			var count int64
-			if err := rows.Scan(&count); err != nil {
-				fmt.Printf("Error scanning rows: %s\n", err)
-				return 99999
-			}
-
-			return count
-		}
+	rows, err := go_db_entities.Query(DbContext, query)
+	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
+		log.Println(err)
+		return 9999
 	}
 
-	return 99999
+	return len(rows)
 }

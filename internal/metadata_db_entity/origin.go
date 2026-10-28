@@ -29,31 +29,22 @@ func (o *Origin) SetId(id int64) {
 
 func LoadOriginsByAssetId(assetId int64) (*[]Origin, error) {
 
-	/*stmt, err := prv.Prepare("SELECT id, asset, name, path, owner, fileTime FROM origin WHERE asset = ?;")
+	originSupplier := func() go_db_entities.Entity {
+		return &Origin{}
+	}
+
+	items, err := go_db_entities.Select(DbContext, originSupplier, *go_db_entities.NewFilter("Asset", go_db_entities.CompareEqual, assetId))
 	if err != nil {
 		return nil, err
 	}
-	defer util.CloseOrLog(stmt)
 
-	list := &[]Origin{}
-
-	if rows, err := stmt.Query(assetId); err == nil {
-		defer util.CloseOrLog(rows)
-		if rows.Next() {
-			var origin Origin
-			if err := origin.Scan(rows); err != nil {
-				fmt.Printf("Error scanning rows: %s\n", err)
-				return nil, err
-			}
-			*list = append(*list, origin)
-		}
-
-	} else {
-		return nil, err
+	origins := make([]Origin, len(items))
+	for i, item := range items {
+		origin := item.(*Origin)
+		origins[i] = *origin
 	}
 
-	return list, nil*/
-	panic("implement me")
+	return &origins, nil
 }
 
 func RemoveOrigins(asset *Asset) error {
@@ -82,13 +73,19 @@ func RemoveOriginsByAssetId(assetId int64) error {
 
 func RemoveOriginsByAssetIdAndPathId(assetId int64, pathId int64) error {
 
-	/*stmt, err := prv.Prepare("DELETE FROM origin WHERE asset = ? AND path = ?;")
+	filter := go_db_entities.Filter{
+		FieldName: "Asset",
+		Value:     assetId,
+		Next: &go_db_entities.Filter{
+			FieldName: "Path",
+			Value:     pathId,
+		},
+	}
+
+	origin := &Origin{}
+	err := go_db_entities.DeleteBatch(DbContext, origin, filter)
 	if err != nil {
 		return err
 	}
-	defer util.CloseOrLog(stmt)
-
-	_, err = stmt.Exec(assetId, pathId)
-	return err*/
-	panic("implement me")
+	return nil
 }

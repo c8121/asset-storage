@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os/user"
@@ -11,6 +12,7 @@ import (
 	"github.com/c8121/asset-storage/internal/metadata_sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_db_entities"
 )
 
 var (
@@ -94,8 +96,8 @@ func removePath(path string) {
 func removePathItem(pathItem *metadata_db_entity.PathItem) {
 
 	children, err := metadata_db_entity.ListPathItems(pathItem.Id)
-	if err != nil {
-		fmt.Printf("Error listing path items: %s\n", err.Error())
+	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
+		fmt.Printf("Error listing path items: %v\n", err.Error())
 	} else {
 		for _, child := range children {
 			removePathItem(&child)
@@ -111,7 +113,7 @@ func removePathItem(pathItem *metadata_db_entity.PathItem) {
 	}
 
 	assetIds, err := metadata_db_entity.GetAssetIdsFromPath(pathItem.Id)
-	if err != nil {
+	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 		fmt.Printf("Error finding assets from path item '%s': %s\n", pathItem.Id, err.Error())
 	} else {
 		for _, assetId := range assetIds {
