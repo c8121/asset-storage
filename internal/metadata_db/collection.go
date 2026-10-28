@@ -1,6 +1,7 @@
 package metadata_db
 
 import (
+	"errors"
 	"time"
 
 	"github.com/c8121/asset-storage/internal/collections"
@@ -23,21 +24,22 @@ type CollectionListFilter struct {
 // AddCollection adds/updates collection-data in database
 func AddCollection(jsonCollection *collections.JsonAssetCollection) error {
 
-	/*var collection = &metadata_db_entity.Collection{UUID: jsonCollection.UUID}
-	err := db_entity.Load(tx, collection)
-	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
+	collection := &metadata_db_entity.Collection{}
+	err := go_db_entities.Load(metadata_db_entity.DbContext, collection, *go_db_entities.NewFilter("UUID", go_db_entities.CompareEqual, jsonCollection.UUID))
+	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 		return err
 	}
 
+	collection.UUID = jsonCollection.UUID
 	collection.Name = jsonCollection.Name
 	if collection.Created.IsZero() {
 		collection.Created = jsonCollection.Created
 	}
 
-	err = db_entity.SaveEntity(tx, collection)
+	err = go_db_entities.Save(metadata_db_entity.DbContext, collection)
 	if err != nil {
 		return err
-	}*/
+	}
 
 	return nil
 }
@@ -45,16 +47,16 @@ func AddCollection(jsonCollection *collections.JsonAssetCollection) error {
 // RemoveCollection removes collection-data in database
 func RemoveCollection(jsonCollection *collections.JsonAssetCollection) error {
 
-	/*var collection = &metadata_db_entity.Collection{UUID: jsonCollection.UUID}
-	err := db_entity.Load(tx, collection)
-	if !errors.Is(err, db_entity.ErrNotFound) && err != nil {
+	collection := &metadata_db_entity.Collection{}
+	err := go_db_entities.Load(metadata_db_entity.DbContext, collection, *go_db_entities.NewFilter("UUID", go_db_entities.CompareEqual, jsonCollection.UUID))
+	if err != nil {
 		return err
 	}
 
-	err = db_entity.DeleteEntity(tx, collection)
+	err = go_db_entities.Delete(metadata_db_entity.DbContext, collection)
 	if err != nil {
 		return err
-	}*/
+	}
 
 	return nil
 }
