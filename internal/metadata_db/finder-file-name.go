@@ -1,5 +1,14 @@
 package metadata_db
 
+import (
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/c8121/asset-storage/internal/metadata_db_entity"
+	"github.com/c8121/go_db_entities"
+)
+
 type FinderByFileName struct {
 }
 
@@ -11,11 +20,6 @@ func (f FinderByFileName) Find(name any) (ScoredIdMap, error) {
 		return nil, nil
 	}
 
-	/*var query = "SELECT a.id, f.name FROM origin o " +
-		"INNER JOIN fileName f ON f.id = o.name " +
-		"INNER JOIN asset a ON o.asset = a.id " +
-		"WHERE f.name like ?;"
-
 	var findName = sName
 	if strings.Contains(findName, "*") {
 		//If an asterisk was given explicitly, only use this, just replace to sql-asterisk
@@ -23,13 +27,26 @@ func (f FinderByFileName) Find(name any) (ScoredIdMap, error) {
 	} else {
 		findName = "%" + strings.ReplaceAll(sName, " ", "%") + "%"
 	}
-	fmt.Printf("findAssetIdsByFileName: %s\n", findName)
+	fmt.Printf("FinderByFileName: %s\n", findName)
+
+	var query = go_db_entities.TableQuery{
+		FieldNames: []string{},
+		Entity:     &metadata_db_entity.FileName{},
+		Filter:     go_db_entities.NewFilter("FileName.Name", go_db_entities.CompareContains, findName),
+	}
+	query.AddJoin(go_db_entities.TableQueryJoin{
+		TableQuery: &go_db_entities.TableQuery{
+			FieldNames: []string{"Id", "FileTime"},
+			Entity:     &metadata_db_entity.Asset{},
+		},
+		OnFrom: "Id",
+		OnTo:   "Name",
+	})
 
 	return findAssetIds(func(id int64, match any, idMap *ScoredIdMap) {
-		score := float32(len(sName)) / float32(len(match.(string)))
-		//fmt.Printf("Match: %s, Score: %f\n", match, score)
-		idMap.Add(id, score)
-	}, query, findName)*/
-	panic("not implemented")
+		dt := match.(time.Time)
+		score := float32(dt.Unix()) / float32(1000.0)
+		idMap.Set(id, score)
+	}, query)
 
 }

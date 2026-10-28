@@ -1,5 +1,13 @@
 package metadata_db
 
+import (
+	"time"
+
+	"github.com/c8121/asset-storage/internal/fulltext"
+	"github.com/c8121/asset-storage/internal/metadata_db_entity"
+	"github.com/c8121/go_db_entities"
+)
+
 type FinderByFulltext struct {
 }
 
@@ -11,7 +19,7 @@ func (f FinderByFulltext) Find(fulltextQuery any) (ScoredIdMap, error) {
 		return nil, nil
 	}
 
-	/*hashes, err := fulltext.Find(sQuery, 0, 999)
+	hashes, err := fulltext.Find(sQuery, 0, 999)
 	if err != nil {
 		return nil, err
 	}
@@ -21,20 +29,15 @@ func (f FinderByFulltext) Find(fulltextQuery any) (ScoredIdMap, error) {
 		return empty, nil
 	}
 
-	var query = "SELECT a.id, a.fileTime FROM asset a " +
-		" WHERE a.hash in(" +
-		strings.Repeat("?,", len(hashes)-1) + "?" +
-		");"
-
-	args := make([]any, len(hashes))
-	for i, hash := range hashes {
-		args[i] = hash
+	var query = go_db_entities.TableQuery{
+		FieldNames: []string{"Id", "FileTime"},
+		Entity:     &metadata_db_entity.Asset{},
+		Filter:     go_db_entities.NewFilter("Hash", go_db_entities.CompareIn, hashes),
 	}
 
 	return findAssetIds(func(id int64, match any, idMap *ScoredIdMap) {
 		dt := match.(time.Time)
 		score := float32(dt.Unix()) / float32(1000.0)
 		idMap.Set(id, score)
-	}, query, args...)*/
-	panic("not implemented")
+	}, query)
 }

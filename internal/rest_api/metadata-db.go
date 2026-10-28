@@ -31,8 +31,7 @@ func ListPathItems(c *gin.Context) {
 
 	parentId, err := strconv.ParseInt(c.Param("parent"), 10, 64)
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
-		return
+		parentId = 0
 	}
 
 	items, err := metadata_db_entity.ListPathItems(parentId)

@@ -1,8 +1,14 @@
 package metadata_db_entity
 
+import (
+	"errors"
+
+	"github.com/c8121/go_db_entities"
+)
+
 type FileName struct {
 	Id   int64
-	Name string `dbe:"Size: 1034, Index"`
+	Name string `dbe:"Size: 1024, Index"`
 }
 
 func (f *FileName) GetEntityName() string {
@@ -20,24 +26,30 @@ func (f *FileName) SetId(id int64) {
 // LoadFileName gets FileName from db, created it required
 func LoadFileName(name string, createIfNotExists bool) (*FileName, error) {
 
-	/*var fileName = &FileName{Name: name}
-	err := db_entity.LoadEntity(createIfNotExists, fileName)
-	if err != nil {
+	fileName := &FileName{}
+	err := go_db_entities.Load(DbContext, fileName, go_db_entities.Filter{
+		FieldName: "Name",
+		Value:     name,
+	})
+	if errors.Is(err, go_db_entities.ErrNotFound) && createIfNotExists {
+		fileName.Name = name
+		if err = go_db_entities.Save(DbContext, fileName); err != nil {
+			return nil, err
+		}
+	} else if err != nil {
 		return nil, err
 	}
 
-	return fileName, nil*/
-	panic("implement me")
+	return fileName, nil
 }
 
 func LoadFileNameById(id int64) (*FileName, error) {
 
-	/*var fileName = &FileName{Id: id}
-	err := db_entity.LoadEntity(false, fileName)
+	fileName := &FileName{}
+	err := go_db_entities.Load(DbContext, fileName, *go_db_entities.NewIdFilter(id))
 	if err != nil {
 		return nil, err
 	}
 
-	return fileName, nil*/
-	panic("implement me")
+	return fileName, nil
 }
