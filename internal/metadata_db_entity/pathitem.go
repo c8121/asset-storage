@@ -144,61 +144,55 @@ func GetPathItemByName(name string, parentId int) (*PathItem, error) {
 // returns it as map: asset.Id -> [path.Id,...]
 func FindAssetPathIds(assetIds []int64) (map[int64][]int64, error) {
 
-	/*var idMap = make(map[int64][]int64, len(assetIds))
+	var idMap = make(map[int64][]int64, len(assetIds))
 	var chunk = make([]int64, 0)
+
+	var query = go_db_entities.TableQuery{
+		FieldNames: []string{"Path"},
+		Entity:     &Origin{},
+	}
+	query.AddJoin(go_db_entities.TableQueryJoin{
+		TableQuery: &go_db_entities.TableQuery{
+			FieldNames: []string{"Id"},
+			Entity:     &Asset{},
+		},
+		OnFrom: "Asset",
+		OnTo:   "Id",
+	})
 
 	for i, assetId := range assetIds {
 
 		chunk = append(chunk, assetId)
 		if len(chunk) == loadPathChunkSize || (i+1) == len(assetIds) {
 
-			var query = "SELECT a.id, o.path" +
-				" FROM origin o " +
-				" INNER JOIN asset a ON o.asset = a.id "
-
-			query += " WHERE a.id in(" +
-				strings.Repeat("?,", len(chunk)-1) + "?" +
-				");"
-
-			var params = make([]any, 0)
-			for _, id := range chunk {
-				params = append(params, id)
+			query.Filter = &go_db_entities.Filter{
+				FieldName: "Asset.Id",
+				Value:     chunk,
 			}
 
-			stmt, err := prv.Prepare(query)
+			rows, err := go_db_entities.Query(DbContext, query)
 			if err != nil {
 				return nil, err
 			}
-			defer util.CloseOrLog(stmt)
 
-			if rows, err := stmt.Query(params...); err == nil {
-				defer util.CloseOrLog(rows)
-				for rows.Next() {
-					var assetId int64
-					var pathId int64
-					if err := rows.Scan(&assetId, &pathId); err != nil {
-						return nil, err
-					}
+			for _, row := range rows {
+				pathId := row[0].(int64)
+				assetId := row[1].(int64)
 
-					list, exists := idMap[assetId]
-					if exists {
-						idMap[assetId] = append(list, pathId)
-					} else {
-						list = make([]int64, 0)
-						idMap[assetId] = append(list, pathId)
-					}
+				list, exists := idMap[assetId]
+				if exists {
+					idMap[assetId] = append(list, pathId)
+				} else {
+					list = make([]int64, 0)
+					idMap[assetId] = append(list, pathId)
 				}
-
-			} else {
-				return nil, err
 			}
 
 			chunk = make([]int64, 0)
 		}
 	}
 
-	return idMap, nil*/
-	panic("implement me")
+	return idMap, nil
 }
 
 func GetAssetIdsFromPath(pathId int64) ([]int64, error) {

@@ -1,6 +1,8 @@
 package metadata_db
 
 import (
+	"errors"
+
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/go_db_entities"
 )
@@ -8,7 +10,7 @@ import (
 func findAssetIds(calcScore func(id int64, match any, idMap *ScoredIdMap), query go_db_entities.TableQuery) (ScoredIdMap, error) {
 
 	rows, err := go_db_entities.Query(metadata_db_entity.DbContext, query)
-	if err != nil {
+	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 		return nil, err
 	}
 

@@ -1,6 +1,7 @@
 package metadata_db
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -47,7 +48,7 @@ func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {
 
 	for finder, value := range finders {
 		foundIds, err := finder.Find(value)
-		if err != nil {
+		if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 			return nil, err
 		}
 		if foundIds != nil {
@@ -83,7 +84,7 @@ func ListAssetsByIds(ids ScoredIdMap, offset int, count int) ([]AssetListItem, e
 			FieldNames: []string{"Name"},
 			Entity:     &metadata_db_entity.FileName{},
 		},
-		OnFrom: "MimeType",
+		OnFrom: "Name",
 		OnTo:   "Id",
 	})
 
@@ -182,12 +183,12 @@ func loadAssetList(query go_db_entities.TableQuery) ([]AssetListItem, error) {
 // assignPathIds uses FindPathIds and assigns to AssetListItem.PathIds
 func assignPathIds(items *[]AssetListItem) error {
 
-	/*assetIds := make([]int64, len(*items))
+	assetIds := make([]int64, len(*items))
 	for i, item := range *items {
 		assetIds[i] = item.Id
 	}
 
-	idMap, err := metadata_db_entity.FindAssetPathIds(metadata_db_conn.GetDatabase(), assetIds)
+	idMap, err := metadata_db_entity.FindAssetPathIds(assetIds)
 	if err != nil {
 		return err
 	}
@@ -198,6 +199,5 @@ func assignPathIds(items *[]AssetListItem) error {
 		copy((*items)[i].PathIds, src)
 	}
 
-	return nil*/
-	panic("not implemented")
+	return nil
 }
