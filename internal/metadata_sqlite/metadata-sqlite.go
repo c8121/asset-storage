@@ -31,6 +31,10 @@ func Open() {
 	util.PanicOnError(err, "Failed to open sqlite database: "+config.AssetMetaDataDb)
 
 	metadata_db_entity.DbContext = go_db_entities.NewContext(db, sqlite.NewQueryBuilder())
+
+	metadata_db_entity.CheckCreateTables()
+
+	fmt.Println("DB Ready")
 }
 
 // Close Disconnect from Database

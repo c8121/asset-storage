@@ -1,12 +1,13 @@
 package rest_api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
-	"github.com/c8121/asset-storage/internal/metadata_db"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_db_entities"
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,7 +36,7 @@ func ListPathItems(c *gin.Context) {
 	}
 
 	items, err := metadata_db_entity.ListPathItems(parentId)
-	if err != nil {
+	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 		return
 	}
@@ -51,7 +52,7 @@ func ListPathItems(c *gin.Context) {
 // FindPathItem is a rest-api handler
 func FindPathItem(c *gin.Context) {
 
-	item, err := metadata_db.FindPathItem(c.PostForm("path"))
+	item, err := metadata_db_entity.FindPathItem(c.PostForm("path"))
 	if err != nil {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 		return

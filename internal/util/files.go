@@ -46,7 +46,9 @@ func SplitPath(path string) []string {
 	p := 0
 	for p < len(path) {
 		if path[p] == '/' || path[p] == '\\' {
-			items = append(items, path[s:p])
+			if p-s > 0 {
+				items = append(items, path[s:p])
+			}
 			s = p + 1
 		}
 		p++

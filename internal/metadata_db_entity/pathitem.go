@@ -145,6 +145,29 @@ func GetPathItemByName(name string, parentId int64) (*PathItem, error) {
 	return pathItem, nil
 }
 
+func FindPathItem(path string) (*PathItem, error) {
+
+	names := util.SplitPath(path)
+
+	var item *PathItem = nil
+	var parentId int64 = 0
+
+	for _, name := range names {
+
+		var err error
+		item, err = GetPathItemByName(name, parentId)
+		if err != nil {
+			return nil, err
+		}
+		if item == nil {
+			return nil, nil
+		}
+		parentId = item.Id
+	}
+
+	return item, nil
+}
+
 // FindAssetPathIds looks for origin-paths in database and
 // returns it as map: asset.Id -> [path.Id,...]
 func FindAssetPathIds(assetIds []int64) (map[int64][]int64, error) {

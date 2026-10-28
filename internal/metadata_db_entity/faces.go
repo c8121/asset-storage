@@ -14,7 +14,7 @@ type FaceEmbedding struct {
 	Id             int64
 	AssetId        int64
 	X1, Y1, X2, Y2 int
-	Embedding      []float32
+	Embedding      []float32 `dbe:"Type: Embedding, Size: 512"`
 }
 
 func (f *FaceEmbedding) GetEntityName() string {

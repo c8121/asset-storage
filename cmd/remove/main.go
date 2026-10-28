@@ -7,7 +7,6 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
-	"github.com/c8121/asset-storage/internal/metadata_db"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
 	"github.com/c8121/asset-storage/internal/metadata_sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
@@ -78,7 +77,7 @@ func removeAsset(hash string) {
 
 func removePath(path string) {
 
-	pathItem, err := metadata_db.FindPathItem(path)
+	pathItem, err := metadata_db_entity.FindPathItem(path)
 	if err != nil {
 		fmt.Printf("Error finding path item '%s': %s\n", path, err.Error())
 		return
