@@ -1,5 +1,13 @@
 package metadata_db
 
+import (
+	"time"
+
+	"github.com/c8121/asset-storage/internal/collections"
+	"github.com/c8121/asset-storage/internal/metadata_db_entity"
+	"github.com/c8121/go_db_entities"
+)
+
 type FinderByCollection struct {
 }
 
@@ -11,25 +19,20 @@ func (f FinderByCollection) Find(uuid any) (ScoredIdMap, error) {
 		return nil, nil
 	}
 
-	/*collection, err := collections.LoadById(sUuid)
+	collection, err := collections.LoadById(sUuid)
 	if err != nil {
 		return nil, err
 	}
 
-	var query = "SELECT a.id, a.fileTime FROM asset a " +
-		" WHERE a.hash in(" +
-		strings.Repeat("?,", len(collection.Assets)-1) + "?" +
-		");"
-
-	args := make([]any, len(collection.Assets))
-	for i, asset := range collection.Assets {
-		args[i] = asset
+	var query = go_db_entities.TableQuery{
+		FieldNames: []string{"Id", "FileTime"},
+		Entity:     &metadata_db_entity.Asset{},
+		Filter:     go_db_entities.NewFilter("Hash", go_db_entities.CompareIn, collection.Assets),
 	}
 
 	return findAssetIds(func(id int64, match any, idMap *ScoredIdMap) {
 		dt := match.(time.Time)
 		score := float32(dt.Unix()) / float32(1000.0)
 		idMap.Set(id, score)
-	}, query, args...)*/
-	panic("not implemented")
+	}, query)
 }

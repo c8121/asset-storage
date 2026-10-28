@@ -1,8 +1,11 @@
 package metadata_db_entity
 
 import (
+	"errors"
+
 	"github.com/c8121/asset-storage/internal/faces"
 	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_db_entities"
 
 	_ "gosqlite.org/vec" //Auto-registers the vec0 module on every connection
 )
@@ -46,7 +49,7 @@ func AddFaces(assetId int64, faces *[]faces.RestApiFace) (*[]FaceEmbedding, erro
 // AddFace
 func AddFace(assetId int64, face *faces.RestApiFace) (*FaceEmbedding, error) {
 
-	/*var faceEmbedding = &FaceEmbedding{
+	var faceEmbedding = &FaceEmbedding{
 		AssetId:   assetId,
 		X1:        face.Image[0],
 		Y1:        face.Image[1],
@@ -55,13 +58,12 @@ func AddFace(assetId int64, face *faces.RestApiFace) (*FaceEmbedding, error) {
 		Embedding: face.Embedding,
 	}
 
-	err := db_entity.Insert(tx, faceEmbedding)
+	err := go_db_entities.Save(DbContext, faceEmbedding)
 	if err != nil {
 		return nil, err
 	}
 
-	return faceEmbedding, nil*/
-	return nil, nil
+	return faceEmbedding, nil
 }
 
 func RemoveFaces(assetId int64) error {
@@ -74,43 +76,34 @@ func RemoveFaces(assetId int64) error {
 
 	_, err = stmt.Exec(assetId)
 	return err*/
-	return nil
+	panic("Not implemented")
 }
 
 // GetFaces finds all faces that where detected in the given asset by face-api
 // Loads FaceEmbedding-Struct without FaceEmbedding.Embedding (use GetFaceEmbedding to load that)
 func GetFaces(hash string) (*[]FaceEmbedding, error) {
 
-	/*assetMeta, err := LoadAsset(hash)
+	assetMeta, err := LoadAsset(hash)
 	if err != nil {
 		return nil, err
 	}
 
-	stmt, err := metadata_db_conn.GetDatabase().Prepare("SELECT id, assetId, x1, y1, x2, y2 FROM faces WHERE assetId=?")
-	if err != nil {
+	itemSupplier := func() go_db_entities.Entity {
+		return &FaceEmbedding{}
+	}
+
+	items, err := go_db_entities.Select(DbContext, itemSupplier, *go_db_entities.NewFilter("AssetId", go_db_entities.CompareEqual, assetMeta.Id))
+	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 		return nil, err
 	}
-	defer util.CloseOrLog(stmt)
 
-	rows, err := stmt.Query(assetMeta.Id)
-	if err != nil {
-		log.Fatal("Query failed:", err)
-	}
-	defer util.CloseOrLog(rows)
-
-	list := &[]FaceEmbedding{}
-
-	for rows.Next() {
-		faceEmbedding := FaceEmbedding{}
-		if err := rows.Scan(&faceEmbedding.Id, &faceEmbedding.AssetId, &faceEmbedding.X1, &faceEmbedding.Y1, &faceEmbedding.X2, &faceEmbedding.Y2); err != nil {
-			util.LogError(err)
-		} else {
-			*list = append(*list, faceEmbedding)
-		}
+	faces := make([]FaceEmbedding, len(items))
+	for i, item := range items {
+		face := item.(*FaceEmbedding)
+		faces[i] = *face
 	}
 
-	return list, nil*/
-	return nil, nil
+	return &faces, nil
 }
 
 // GetFaceEmbedding loads the stored embedding
@@ -142,21 +135,22 @@ func GetFaceEmbedding(faceId int64) (*FaceEmbedding, error) {
 		}
 
 		return nil, nil
+	}*/
+	panic("Not implemented")
+}
+
+func FindSimilarFaces(faceId int64, max int) (*[]FaceEmbedding, error) {
+
+	faceEmbedding, err := GetFaceEmbedding(faceId)
+	if err != nil {
+		return nil, err
 	}
 
-	func FindSimilarFaces(faceId int64, max int) (*[]FaceEmbedding, error) {
+	if faceEmbedding == nil {
+		return nil, nil
+	}
 
-		faceEmbedding, err := GetFaceEmbedding(faceId)
-		if err != nil {
-			return nil, err
-		}
-
-		if faceEmbedding == nil {
-			return nil, nil
-		}
-
-		return FindSimilarFacesByEmbedding(&faceEmbedding.Embedding, max)*/
-	return nil, nil
+	return FindSimilarFacesByEmbedding(&faceEmbedding.Embedding, max)
 }
 
 func FindSimilarFacesByEmbedding(embedding *[]float32, max int) (*[]FaceEmbedding, error) {
@@ -193,5 +187,5 @@ func FindSimilarFacesByEmbedding(embedding *[]float32, max int) (*[]FaceEmbeddin
 
 	}
 	return list, nil*/
-	return nil, nil
+	panic("Not implemented")
 }

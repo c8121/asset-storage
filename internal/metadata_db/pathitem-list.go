@@ -10,7 +10,7 @@ func FindPathItem(path string) (*metadata_db_entity.PathItem, error) {
 	names := util.SplitPath(path)
 
 	var item *metadata_db_entity.PathItem = nil
-	var parentId = 0
+	var parentId int64 = 0
 
 	for _, name := range names {
 
@@ -22,7 +22,7 @@ func FindPathItem(path string) (*metadata_db_entity.PathItem, error) {
 		if item == nil {
 			return nil, nil
 		}
-		parentId = int(item.Id)
+		parentId = item.Id
 	}
 
 	return item, nil

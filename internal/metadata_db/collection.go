@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/c8121/asset-storage/internal/collections"
+	"github.com/c8121/asset-storage/internal/metadata_db_entity"
+	"github.com/c8121/go_db_entities"
 )
 
 type CollectionListItem struct {
@@ -59,15 +61,32 @@ func RemoveCollection(jsonCollection *collections.JsonAssetCollection) error {
 
 func ListCollections(filter *CollectionListFilter) ([]CollectionListItem, error) {
 
-	/*var query = "SELECT id, uuid, name, created" +
-		" FROM collection" +
-		" ORDER BY created DESC" +
-		" LIMIT ? OFFSET ?;"
+	f := go_db_entities.Filter{
+		Offset:  filter.Offset,
+		Count:   filter.Count,
+		OrderBy: []string{"Created DESC"},
+	}
 
-	var params = make([]any, 0)
-	params = append(params, filter.Count)
-	params = append(params, filter.Offset)
+	mimeTypeSupplier := func() go_db_entities.Entity {
+		return &metadata_db_entity.Collection{}
+	}
 
-	return loadCollectionList(query, params...)*/
-	return nil, nil
+	items, err := go_db_entities.Select(metadata_db_entity.DbContext, mimeTypeSupplier, f)
+	if err != nil {
+		return nil, err
+	}
+
+	collections := make([]CollectionListItem, len(items))
+	for i, item := range items {
+		collection := item.(*metadata_db_entity.Collection)
+		listItem := &CollectionListItem{
+			Id:      collection.Id,
+			UUID:    collection.UUID,
+			Name:    collection.Name,
+			Created: collection.Created,
+		}
+		collections[i] = *listItem
+	}
+
+	return collections, nil
 }

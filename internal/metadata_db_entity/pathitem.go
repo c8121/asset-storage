@@ -2,6 +2,7 @@ package metadata_db_entity
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -76,7 +77,7 @@ func SplitPath(path string) []string {
 // LoadPathItem gets PathItem from db, splits path and searches
 func LoadPathItem(path string, createIfNotExists bool) (*PathItem, error) {
 
-	/*names := SplitPath(path)
+	names := SplitPath(path)
 	var parent int64 = 0
 
 	var pathItem *PathItem
@@ -85,9 +86,13 @@ func LoadPathItem(path string, createIfNotExists bool) (*PathItem, error) {
 		cacheKey := fmt.Sprintf("%d/%s", parent, name)
 		cachedItem, ok := pathItemCache[cacheKey]
 		if !ok {
-			pathItem = &PathItem{Parent: parent, Name: name}
-			err := db_entity.LoadEntity(createIfNotExists, pathItem)
-			if err != nil {
+			pathItem, err := GetPathItemByName(name, parent)
+			if errors.Is(err, go_db_entities.ErrNotFound) && createIfNotExists {
+				pathItem = &PathItem{Parent: parent, Name: name}
+				if err = go_db_entities.Save(DbContext, pathItem); err != nil {
+					return nil, err
+				}
+			} else if err != nil {
 				return nil, err
 			}
 			pathItemCache[cacheKey] = pathItem
@@ -99,11 +104,10 @@ func LoadPathItem(path string, createIfNotExists bool) (*PathItem, error) {
 		parent = pathItem.Id
 	}
 
-	return pathItem, nil*/
-	panic("implement me")
+	return pathItem, nil
 }
 
-func ListPathItems(parentId int) ([]PathItem, error) {
+func ListPathItems(parentId int64) ([]PathItem, error) {
 
 	filter := go_db_entities.NewFilter("Parent", go_db_entities.CompareEqual, parentId)
 	filter.OrderBy = []string{"Name"}
@@ -126,7 +130,7 @@ func ListPathItems(parentId int) ([]PathItem, error) {
 	return pathItems, nil
 }
 
-func GetPathItemByName(name string, parentId int) (*PathItem, error) {
+func GetPathItemByName(name string, parentId int64) (*PathItem, error) {
 
 	filter := go_db_entities.NewFilter("Name", go_db_entities.CompareEqual, name)
 	filter.Next = go_db_entities.NewFilter("Parent", go_db_entities.CompareEqual, parentId)

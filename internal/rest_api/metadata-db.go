@@ -2,6 +2,7 @@ package rest_api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/c8121/asset-storage/internal/metadata_db"
 	"github.com/c8121/asset-storage/internal/metadata_db_entity"
@@ -28,7 +29,13 @@ func ListMimeTypes(c *gin.Context) {
 // ListPathItems is a rest-api handler
 func ListPathItems(c *gin.Context) {
 
-	items, err := metadata_db_entity.ListPathItems(util.Atoi(c.Param("parent"), 0))
+	parentId, err := strconv.ParseInt(c.Param("parent"), 10, 64)
+	if err != nil {
+		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		return
+	}
+
+	items, err := metadata_db_entity.ListPathItems(parentId)
 	if err != nil {
 		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
 		return
