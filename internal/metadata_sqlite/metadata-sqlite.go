@@ -30,12 +30,15 @@ func Open() {
 	db, err := sql.Open("sqlite", url)
 	util.PanicOnError(err, "Failed to open sqlite database: "+config.AssetMetaDataDb)
 
+	//Creation of face-embedding-table cannot be done with go_db_entities
 	queryBuilder := sqlite.NewQueryBuilder()
 	queryBuilder.CreateQueryBuilder = &FaceEmbeddingCreateQueryBuilder{
 		defaultCreateQueryBuilder: queryBuilder.CreateQueryBuilder,
 	}
 
 	metadata_db_entity.DbContext = go_db_entities.NewContext(db, queryBuilder, sqlite.NewFieldMapping())
+
+	//Finding face-embeddings cannot be done with go_db_entities
 	metadata_db_entity.FacesDbContext = metadata_db_entity.NewContext(db, FaceEmbeddingQueryBuilder{})
 
 	metadata_db_entity.CheckCreateTables()
