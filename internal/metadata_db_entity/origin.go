@@ -61,15 +61,13 @@ func RemoveOrigins(asset *Asset) error {
 
 func RemoveOriginsByAssetId(assetId int64) error {
 
-	/*stmt, err := prv.Prepare("DELETE FROM origin WHERE asset = ?;")
+	origin := &Origin{}
+	err := go_db_entities.DeleteBatch(DbContext, origin, *go_db_entities.NewIdFilter(assetId))
 	if err != nil {
 		return err
 	}
-	defer util.CloseOrLog(stmt)
 
-	_, err = stmt.Exec(assetId)
-	return err*/
-	panic("implement me")
+	return nil
 }
 
 func RemoveOriginsByAssetIdAndPathId(assetId int64, pathId int64) error {
