@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
@@ -48,6 +49,7 @@ var (
 	cmdCertFile              = flag.String("cert", "", "Certificate file")
 	cmdKeyFile               = flag.String("key", "", "Key file")
 	cmdCharCountPdfToTextOcr = flag.Int("pdf-ocr", 10, "Use OCR when converting PDF to Text, if result does not have more chars")
+	cmdLogVerbose            = flag.Bool("v", false, "Log verbose")
 )
 
 // LoadDefault initializes configuration with defaults,
@@ -133,6 +135,10 @@ func LoadDefault() {
 	if *cmdCharCountPdfToTextOcr >= 0 {
 		PdfToTextCharCountToUseOcr = *cmdCharCountPdfToTextOcr
 		fmt.Printf("Using OCR if for PDF to text conversion if non-OCR result <= %d chars\n", PdfToTextCharCountToUseOcr)
+	}
+
+	if *cmdLogVerbose {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
 }
 
