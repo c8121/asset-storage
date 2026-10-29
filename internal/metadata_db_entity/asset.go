@@ -12,10 +12,10 @@ import (
 
 type Asset struct {
 	Id       int64
-	Hash     string
-	MimeType int64
-	FileTime time.Time //Max of all origins
-	Name     int64     //Latest name
+	Hash     string    `dbe:"Size: 128, Index"`
+	MimeType int64     `dbe:"Index"`
+	FileTime time.Time `dbe:"Index"` //Max of all origins
+	Name     int64     `dbe:"Index"` //Latest name
 }
 
 func (p *Asset) GetEntityName() string {

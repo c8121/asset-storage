@@ -12,8 +12,8 @@ import (
 
 type PathItem struct {
 	Id     int64
-	Parent int64
-	Name   string
+	Parent int64  `dbe:"Index"`
+	Name   string `dbe:"Size: 1024, Index"`
 }
 
 func (p *PathItem) GetEntityName() string {

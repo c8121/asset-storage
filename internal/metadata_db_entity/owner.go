@@ -8,7 +8,7 @@ import (
 
 type Owner struct {
 	Id   int64
-	Name string `dbe:"Index"`
+	Name string `dbe:"Size: 255, Index"`
 }
 
 func (o *Owner) GetEntityName() string {
