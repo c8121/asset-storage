@@ -11,6 +11,8 @@ require (
 	gosqlite.org v0.14.0
 )
 
+replace github.com/c8121/go_db_entities => /home/christianh/Workspace/github/go_db_entities
+
 require (
 	github.com/RoaringBitmap/roaring/v2 v2.14.5 // indirect
 	github.com/bits-and-blooms/bitset v1.24.2 // indirect

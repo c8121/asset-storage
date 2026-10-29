@@ -1,13 +1,36 @@
 package metadata_db_entity
 
 import (
+	"database/sql"
+	"encoding/json"
 	"errors"
+	"log"
 
 	"github.com/c8121/asset-storage/internal/faces"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/c8121/go_db_entities"
 
 	_ "gosqlite.org/vec" //Auto-registers the vec0 module on every connection
+)
+
+type FaceEmbeddingQueryBuilder interface {
+	GetFindSimilarQuery(ctx *FacesContext, embedding *[]float32, max int) string
+}
+
+type FacesContext struct {
+	DB                        *sql.DB
+	FaceEmbeddingQueryBuilder FaceEmbeddingQueryBuilder
+}
+
+func NewContext(database *sql.DB, queryBuilder FaceEmbeddingQueryBuilder) *FacesContext {
+	return &FacesContext{
+		DB:                        database,
+		FaceEmbeddingQueryBuilder: queryBuilder,
+	}
+}
+
+var (
+	FacesDbContext *FacesContext
 )
 
 type FaceEmbedding struct {
@@ -68,15 +91,13 @@ func AddFace(assetId int64, face *faces.RestApiFace) (*FaceEmbedding, error) {
 
 func RemoveFaces(assetId int64) error {
 
-	/*stmt, err := tx.Prepare("DELETE FROM faces WHERE assetId=?;")
+	face := &FaceEmbedding{}
+	err := go_db_entities.DeleteBatch(DbContext, face, go_db_entities.Filter{FieldName: "AssetId", Comparison: go_db_entities.CompareEqual, Value: assetId})
 	if err != nil {
 		return err
 	}
-	defer util.CloseOrLog(stmt)
 
-	_, err = stmt.Exec(assetId)
-	return err*/
-	panic("Not implemented")
+	return nil
 }
 
 // GetFaces finds all faces that where detected in the given asset by face-api
@@ -88,19 +109,28 @@ func GetFaces(hash string) (*[]FaceEmbedding, error) {
 		return nil, err
 	}
 
-	itemSupplier := func() go_db_entities.Entity {
-		return &FaceEmbedding{}
+	query := go_db_entities.TableQuery{
+		FieldNames: []string{"Id", "AssetId", "X1", "Y1", "X2", "Y2"},
+		Entity:     &FaceEmbedding{},
+		Filter:     go_db_entities.NewFilter("AssetId", go_db_entities.CompareEqual, assetMeta.Id),
 	}
 
-	items, err := go_db_entities.Select(DbContext, itemSupplier, *go_db_entities.NewFilter("AssetId", go_db_entities.CompareEqual, assetMeta.Id))
+	rows, err := go_db_entities.Query(DbContext, query)
 	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 		return nil, err
 	}
 
-	faces := make([]FaceEmbedding, len(items))
-	for i, item := range items {
-		face := item.(*FaceEmbedding)
-		faces[i] = *face
+	faces := make([]FaceEmbedding, len(rows))
+	for i, row := range rows {
+		face := FaceEmbedding{
+			Id:      row[0].(int64),
+			AssetId: row[1].(int64),
+			X1:      int(row[2].(int64)),
+			Y1:      int(row[3].(int64)),
+			X2:      int(row[4].(int64)),
+			Y2:      int(row[5].(int64)),
+		}
+		faces[i] = face
 	}
 
 	return &faces, nil
@@ -109,34 +139,13 @@ func GetFaces(hash string) (*[]FaceEmbedding, error) {
 // GetFaceEmbedding loads the stored embedding
 func GetFaceEmbedding(faceId int64) (*FaceEmbedding, error) {
 
-	/*stmt, err := metadata_db_conn.GetDatabase().Prepare("SELECT id, assetId, vec_to_json(embedding) FROM faces WHERE id=?")
-		if err != nil {
-			return nil, err
-		}
-		defer util.CloseOrLog(stmt)
+	faceEmbedding := &FaceEmbedding{}
+	err := go_db_entities.Load(DbContext, faceEmbedding, *go_db_entities.NewIdFilter(faceId))
+	if err != nil {
+		return nil, err
+	}
 
-		rows, err := stmt.Query(faceId)
-		if err != nil {
-			log.Fatal("Query failed:", err)
-		}
-		defer util.CloseOrLog(rows)
-
-		faceEmbedding := &FaceEmbedding{}
-		if rows.Next() {
-			var embeddingJsonString string
-			if err := rows.Scan(&faceEmbedding.Id, &faceEmbedding.AssetId, &embeddingJsonString); err != nil {
-				util.LogError(err)
-			}
-			err = json.Unmarshal([]byte(embeddingJsonString), &faceEmbedding.Embedding)
-			if err != nil {
-				log.Fatal("Failed to parse vector JSON string: ", err)
-			}
-			return faceEmbedding, nil
-		}
-
-		return nil, nil
-	}*/
-	panic("Not implemented")
+	return faceEmbedding, nil
 }
 
 func FindSimilarFaces(faceId int64, max int) (*[]FaceEmbedding, error) {
@@ -155,13 +164,15 @@ func FindSimilarFaces(faceId int64, max int) (*[]FaceEmbedding, error) {
 
 func FindSimilarFacesByEmbedding(embedding *[]float32, max int) (*[]FaceEmbedding, error) {
 
-	/*embeddingJson, err := json.Marshal(embedding)
+	embeddingJson, err := json.Marshal(embedding)
 	if err != nil {
 		return nil, err
 	}
 
-	stmt, err := metadata_db_conn.GetDatabase().Prepare("WITH knn_matches AS (SELECT id, assetId, distance FROM faces WHERE embedding MATCH vec_f32(?) AND k = 99)" +
-		"SELECT id, assetId, distance FROM knn_matches WHERE distance <= 20.0 ORDER BY distance;")
+	db := FacesDbContext.DB
+	sql := FacesDbContext.FaceEmbeddingQueryBuilder.GetFindSimilarQuery(FacesDbContext, embedding, max)
+
+	stmt, err := db.Prepare(sql)
 	if err != nil {
 		return nil, err
 	}
@@ -186,6 +197,5 @@ func FindSimilarFacesByEmbedding(embedding *[]float32, max int) (*[]FaceEmbeddin
 		}
 
 	}
-	return list, nil*/
-	panic("Not implemented")
+	return list, nil
 }

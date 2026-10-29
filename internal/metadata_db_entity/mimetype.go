@@ -50,7 +50,7 @@ func ListMimeTypes() ([]MimeType, error) {
 	}
 
 	items, err := go_db_entities.Select(DbContext, mimeTypeSupplier, *filter)
-	if err != nil {
+	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 		return nil, err
 	}
 

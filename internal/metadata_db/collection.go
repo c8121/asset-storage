@@ -74,7 +74,7 @@ func ListCollections(filter *CollectionListFilter) ([]CollectionListItem, error)
 	}
 
 	items, err := go_db_entities.Select(metadata_db_entity.DbContext, mimeTypeSupplier, f)
-	if err != nil {
+	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 		return nil, err
 	}
 

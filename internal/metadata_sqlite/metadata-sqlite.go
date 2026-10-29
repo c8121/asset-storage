@@ -30,7 +30,16 @@ func Open() {
 	db, err := sql.Open("sqlite", url)
 	util.PanicOnError(err, "Failed to open sqlite database: "+config.AssetMetaDataDb)
 
-	metadata_db_entity.DbContext = go_db_entities.NewContext(db, sqlite.NewQueryBuilder())
+	queryBuilder := sqlite.NewQueryBuilder()
+	queryBuilder.CreateQueryBuilder = &FaceEmbeddingCreateQueryBuilder{
+		defaultCreateQueryBuilder: queryBuilder.CreateQueryBuilder,
+	}
+	queryBuilder.SelectQueryBuilder = &FaceEmbeddingSelectQueryBuilder{
+		defaultSelectQueryBuilder: queryBuilder.SelectQueryBuilder,
+	}
+
+	metadata_db_entity.DbContext = go_db_entities.NewContext(db, queryBuilder, sqlite.NewFieldMapping())
+	metadata_db_entity.FacesDbContext = metadata_db_entity.NewContext(db, FaceEmbeddingQueryBuilder{})
 
 	metadata_db_entity.CheckCreateTables()
 

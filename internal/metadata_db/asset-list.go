@@ -160,7 +160,7 @@ func listToMap(items []AssetListItem) map[int64]AssetListItem {
 func loadAssetList(query go_db_entities.TableQuery) ([]AssetListItem, error) {
 
 	rows, err := go_db_entities.Query(metadata_db_entity.DbContext, query)
-	if err != nil {
+	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 		return nil, err
 	}
 

@@ -1,6 +1,7 @@
 package metadata_db_entity
 
 import (
+	"errors"
 	"time"
 
 	"github.com/c8121/go_db_entities"
@@ -34,7 +35,7 @@ func LoadOriginsByAssetId(assetId int64) (*[]Origin, error) {
 	}
 
 	items, err := go_db_entities.Select(DbContext, originSupplier, *go_db_entities.NewFilter("Asset", go_db_entities.CompareEqual, assetId))
-	if err != nil {
+	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 		return nil, err
 	}
 

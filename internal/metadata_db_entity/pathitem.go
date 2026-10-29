@@ -118,7 +118,7 @@ func ListPathItems(parentId int64) ([]PathItem, error) {
 	}
 
 	items, err := go_db_entities.Select(DbContext, pathItemSupplier, *filter)
-	if err != nil {
+	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 		return nil, err
 	}
 
