@@ -34,9 +34,6 @@ func Open() {
 	queryBuilder.CreateQueryBuilder = &FaceEmbeddingCreateQueryBuilder{
 		defaultCreateQueryBuilder: queryBuilder.CreateQueryBuilder,
 	}
-	queryBuilder.SelectQueryBuilder = &FaceEmbeddingSelectQueryBuilder{
-		defaultSelectQueryBuilder: queryBuilder.SelectQueryBuilder,
-	}
 
 	metadata_db_entity.DbContext = go_db_entities.NewContext(db, queryBuilder, sqlite.NewFieldMapping())
 	metadata_db_entity.FacesDbContext = metadata_db_entity.NewContext(db, FaceEmbeddingQueryBuilder{})

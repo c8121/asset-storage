@@ -4,14 +4,12 @@ go 1.25.1
 
 require (
 	github.com/blevesearch/bleve/v2 v2.6.1
-	github.com/c8121/go_db_entities v0.0.6
+	github.com/c8121/go_db_entities v0.0.7
 	github.com/gabriel-vasile/mimetype v1.4.10
 	github.com/gin-gonic/gin v1.11.0
 	github.com/takumakei/exif-orientation v0.0.0-20200808061749-30cdc5a97a18
 	gosqlite.org v0.14.0
 )
-
-replace github.com/c8121/go_db_entities => /home/christianh/Workspace/github/go_db_entities
 
 require (
 	github.com/RoaringBitmap/roaring/v2 v2.14.5 // indirect
