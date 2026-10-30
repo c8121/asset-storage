@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/c8121/asset-storage/internal/fulltext"
-	"github.com/c8121/asset-storage/internal/metadata_db_entity"
+	"github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/go_db_entities"
 )
 

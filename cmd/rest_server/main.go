@@ -13,7 +13,7 @@ import (
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 
-	"github.com/c8121/asset-storage/internal/metadata_sqlite"
+	"github.com/c8121/asset-storage/internal/metadata_db/sqlite"
 )
 
 func main() {
@@ -30,8 +30,8 @@ func main() {
 	util.LogError(fulltext.Open())
 	defer fulltext.Close()
 
-	metadata_sqlite.Open()
-	defer metadata_sqlite.Close()
+	metadata_db_sqlite.Open()
+	defer metadata_db_sqlite.Close()
 
 	router := gin.Default()
 	router.SetTrustedProxies(nil)

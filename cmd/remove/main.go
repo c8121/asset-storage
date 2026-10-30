@@ -8,8 +8,8 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
-	"github.com/c8121/asset-storage/internal/metadata_db_entity"
-	"github.com/c8121/asset-storage/internal/metadata_sqlite"
+	"github.com/c8121/asset-storage/internal/metadata_db/entity"
+	"github.com/c8121/asset-storage/internal/metadata_db/sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/c8121/go_db_entities"
@@ -32,8 +32,8 @@ func main() {
 
 	config.LoadDefault()
 
-	metadata_sqlite.Open()
-	defer metadata_sqlite.Close()
+	metadata_db_sqlite.Open()
+	defer metadata_db_sqlite.Close()
 
 	if *hash != "" {
 		removeAsset(*hash)

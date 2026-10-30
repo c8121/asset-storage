@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/c8121/asset-storage/internal/metadata_db_entity"
+	"github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/c8121/go_db_entities"
 	"github.com/gin-gonic/gin"

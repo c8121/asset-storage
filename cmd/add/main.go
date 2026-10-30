@@ -11,7 +11,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
-	"github.com/c8121/asset-storage/internal/metadata_sqlite"
+	"github.com/c8121/asset-storage/internal/metadata_db/sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
 )
@@ -43,8 +43,8 @@ func main() {
 	storage.CreateDirectories()
 	metadata.CreateDirectories()
 
-	metadata_sqlite.Open()
-	defer metadata_sqlite.Close()
+	metadata_db_sqlite.Open()
+	defer metadata_db_sqlite.Close()
 
 	for _, file := range files {
 		if file[:1] == "-" {

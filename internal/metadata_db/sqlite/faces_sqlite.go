@@ -1,7 +1,7 @@
-package metadata_sqlite
+package metadata_db_sqlite
 
 import (
-	"github.com/c8121/asset-storage/internal/metadata_db_entity"
+	"github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/go_db_entities"
 )
 
