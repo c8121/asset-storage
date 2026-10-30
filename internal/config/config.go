@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -30,8 +29,6 @@ var (
 	SkipMetaDataIfExists = false
 	CheckHashBeforeAdd   = false
 
-	SpaHttpRoot = getWorkingDir() + "/vue-ui" // Root directory to service SPA from
-
 	ListenAddress = "127.0.0.1:9999" //Spa-/Rest-/Ssh-Server in format ip:port
 	CertFile      = ""
 	KeyFile       = ""
@@ -42,7 +39,6 @@ var (
 	cmdUseGzip               = flag.Bool("gzip", false, "Use GZIP compression")
 	cmdXorKey                = flag.String("xor", "", "XOR Key for content obfusication")
 	cmdMaxMemFileSize        = flag.Int64("maxmem", 0, "Max memory file size in bytes")
-	cmdSpaHttpRoot           = flag.String("spa", "", "HTTP root directory of SPA app")
 	cmdSkipMetaDataIfExists  = flag.Bool("skip-meta", false, "Skip meta data update if file exist")
 	cmdCheckHashBeforeAdd    = flag.Bool("check-hash", false, "Check hash before trying to add file.")
 	cmdListen                = flag.String("listen", "", "Listen Address (ip:port)")
@@ -100,11 +96,6 @@ func LoadDefault() {
 	CheckHashBeforeAdd = *cmdCheckHashBeforeAdd
 	if CheckHashBeforeAdd {
 		fmt.Printf("Checking hash before adding file (this is faster only if most if files already exist.\n")
-	}
-
-	if *cmdSpaHttpRoot != "" {
-		SpaHttpRoot = *cmdSpaHttpRoot
-		fmt.Printf("Using SPA directory: %s\n", SpaHttpRoot)
 	}
 
 	if *cmdXorKey != "" {
@@ -169,16 +160,6 @@ func validateDataDir(path string) {
 		}
 	}
 
-}
-
-func getWorkingDir() string {
-	path, err := os.Getwd()
-	if err != nil {
-		path = filepath.Dir(os.Args[0])
-	}
-
-	log.Printf("Working directory: %s\n", path)
-	return path
 }
 
 // checkObsoleteCmdArgs looks for command-line arguments which are not supported anymore.
