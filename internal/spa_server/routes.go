@@ -3,9 +3,11 @@ package spa_server
 import (
 	"io/fs"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/rest_api"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/c8121/asset-storage/shared/httproot"
@@ -24,7 +26,13 @@ func CreateRoutes(router *gin.Engine) {
 		httproot.VueUI,
 	}
 
-	httpFS := http.FS(httproot.FS)
+	var rootFS fs.FS
+	if config.SpaHttpRoot != "" {
+		rootFS = os.DirFS(config.SpaHttpRoot)
+	} else {
+		rootFS = httproot.FS
+	}
+	httpFS := http.FS(rootFS)
 
 	router.NoRoute(rest_api.AuthRequiredHandler(func(c *gin.Context) {
 
@@ -46,7 +54,7 @@ func CreateRoutes(router *gin.Engine) {
 			} else {
 				fspath = filepath.Join(subDir, strings.TrimPrefix(path, "/"))
 				if fspath != "" {
-					stat, err := fs.Stat(httproot.FS, fspath)
+					stat, err := fs.Stat(rootFS, fspath)
 					if err == nil {
 						if stat.Mode().IsRegular() {
 							c.FileFromFS(fspath, httpFS)

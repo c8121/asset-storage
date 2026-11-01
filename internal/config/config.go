@@ -29,6 +29,8 @@ var (
 	SkipMetaDataIfExists = false
 	CheckHashBeforeAdd   = false
 
+	SpaHttpRoot = "" // Root directory to service SPA from. Using embedded FS if empty.
+
 	ListenAddress = "127.0.0.1:9999" //Spa-/Rest-/Ssh-Server in format ip:port
 	CertFile      = ""
 	KeyFile       = ""
@@ -39,6 +41,7 @@ var (
 	cmdUseGzip               = flag.Bool("gzip", false, "Use GZIP compression")
 	cmdXorKey                = flag.String("xor", "", "XOR Key for content obfusication")
 	cmdMaxMemFileSize        = flag.Int64("maxmem", 0, "Max memory file size in bytes")
+	cmdSpaHttpRoot           = flag.String("spa", "", "HTTP root directory of SPA app")
 	cmdSkipMetaDataIfExists  = flag.Bool("skip-meta", false, "Skip meta data update if file exist")
 	cmdCheckHashBeforeAdd    = flag.Bool("check-hash", false, "Check hash before trying to add file.")
 	cmdListen                = flag.String("listen", "", "Listen Address (ip:port)")
@@ -96,6 +99,11 @@ func LoadDefault() {
 	CheckHashBeforeAdd = *cmdCheckHashBeforeAdd
 	if CheckHashBeforeAdd {
 		fmt.Printf("Checking hash before adding file (this is faster only if most if files already exist.\n")
+	}
+
+	if *cmdSpaHttpRoot != "" {
+		SpaHttpRoot = *cmdSpaHttpRoot
+		fmt.Printf("Using SPA directory: %s\n", SpaHttpRoot)
 	}
 
 	if *cmdXorKey != "" {
