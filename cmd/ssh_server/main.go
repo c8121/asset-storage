@@ -15,6 +15,7 @@ import (
 	"github.com/c8121/asset-storage/internal/ssh_server"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/users"
+	"github.com/c8121/asset-storage/internal/util"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -63,6 +64,7 @@ func main() {
 	metadata_db_sqlite.Open()
 	defer metadata_db_sqlite.Close()
 
+	util.PanicOnError(users.InitLocalFileAppAuthentication(users.DefaultPasswordCost), "failed to init app authentication")
 	metadata_db.InitAccessControl()
 
 	sshServerConfig := &ssh_server.SshServerConfig{
@@ -73,10 +75,14 @@ func main() {
 
 		PasswordCallback: func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
 
+			if users.AppAuthenticator == nil {
+				return nil, fmt.Errorf("no app authenticator")
+			}
+
 			fmt.Printf("Login attempt from %s: %s\n", c.RemoteAddr(), c.User())
 			if len(c.User()) == 0 {
 				return nil, fmt.Errorf("user rejected for %q", c.User())
-			} else if _, err := users.Authenticate(c.User(), pass); err != nil {
+			} else if _, err := users.AppAuthenticator.Authenticate(c.User(), pass); err != nil {
 				return nil, fmt.Errorf("password rejected for %q", c.User())
 			}
 
@@ -107,7 +113,7 @@ func main() {
 
 // create a home-/root-directory for the given user.
 func createVirtualRootDir(username string) (string, error) {
-	root := filepath.Join(config.AssetStorageTempDir, "virtual-users", username)
+	root := filepath.Join(config.AssetStorageTempDir, "virtual-auth", username)
 	if err := os.MkdirAll(root, storage.FilePermissions); err != nil {
 		return "", err
 	}

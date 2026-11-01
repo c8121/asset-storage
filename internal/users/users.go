@@ -1,179 +1,46 @@
 package users
 
 import (
-	"bufio"
-	"errors"
-	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/util"
-	"golang.org/x/crypto/bcrypt"
-)
-
-const (
-	UserFile        = "users"
-	FilePermissions = 0700
+	"github.com/c8121/asset-storage/shared/auth"
 )
 
 var (
-	users map[string]string = nil
+	UserFile                               = "users"
+	AppAuthenticator    auth.Authenticator = nil
+	DefaultPasswordCost                    = 10
 )
 
-type AuthenticatedUser struct {
-	Username string
+func InitAppAuthentication(authenticator auth.Authenticator) {
+	AppAuthenticator = authenticator
 }
 
-// CreateDirectories creates required directories
-func CreateDirectories() {
-	util.CreateDirIfNotExists(config.AssetStorageConfigDir, FilePermissions)
-}
+func InitLocalFileAppAuthentication(pwdCost int) error {
 
-func HasUsers() bool {
-	readUsers()
-	if len(users) == 0 {
-		return false
-	}
+	util.CreateDirIfNotExists(config.AssetStorageConfigDir, auth.DefaultFilePermissions)
 
-	return true
-}
+	usersFile := filepath.Join(config.AssetStorageConfigDir, UserFile)
 
-func UserExists(name string) bool {
-	readUsers()
-
-	_, ok := users[name]
-	return ok
-}
-
-func Authenticate(username string, password []byte) (*AuthenticatedUser, error) {
-
-	if !UserExists(username) {
-		return nil, errors.New("No such user")
-	}
-
-	hash, _ := users[username]
-
-	err := bcrypt.CompareHashAndPassword([]byte(hash), password)
+	authenticator, err := auth.NewLocalFileAuthenticator(usersFile, pwdCost)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	user := &AuthenticatedUser{Username: username}
-	return user, nil
+	err = authenticator.ReadUsers()
+	if err != nil {
+		return err
+	}
+
+	InitAppAuthentication(authenticator)
+	return nil
 }
 
-func AddOrUpdateUser(name string, pwdHash string) {
-	readUsers()
-
-	if len(name) == 0 {
-		fmt.Println("Empty user name not allowed")
-		return
-	}
-
-	name = strings.ToLower(name)
-
-	_, ok := users[name]
-	if ok {
-		fmt.Printf("Update user: %s\n", name)
-	} else {
-		fmt.Printf("Add user: %s\n", name)
-	}
-	users[name] = pwdHash
-}
-
-func readUsers() {
-
-	if users != nil {
-		return
-	}
-	users = make(map[string]string)
-
-	file := filepath.Join(config.AssetStorageConfigDir, UserFile)
-	stat, err := os.Stat(file)
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			fmt.Printf("Cannot read users file")
-		}
-		return //File doesn't exist yet, nothing to read
-	} else if !stat.Mode().IsRegular() {
-		panic("Cannot read users file: Not a file\n")
-	}
-
-	f, err := os.Open(file)
-	if err != nil {
-		fmt.Printf("Cannot open users file: %s\n", err)
-		return
-	}
-	defer util.CloseOrLog(f)
-
-	reader := bufio.NewReaderSize(f, 1000)
-	for {
-		line, _, err := reader.ReadLine()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			fmt.Printf("Failed to read line: %s\n", err)
-			return
-		}
-
-		if len(line) == 0 || line[0] == '#' {
-			continue
-		}
-
-		s := string(line)
-		p := strings.Index(s, "\t")
-		if p < 1 {
-			fmt.Printf("Invalid line: %s\n", s)
-			continue
-		}
-
-		users[strings.ToLower(s[0:p])] = s[p+1:]
-	}
-
-}
-
-func SaveUsers() {
-
-	if users == nil {
-		return
-	}
-
-	file := filepath.Join(config.AssetStorageConfigDir, UserFile)
-	stat, err := os.Stat(file)
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		panic(err)
-	} else if stat != nil && !stat.Mode().IsRegular() {
-		panic("Cannot read users file: Not a file\n")
-	}
-
-	f, err := os.Create(file)
-	if err != nil {
-		panic(err)
-	}
-	defer util.CloseOrLog(f)
-
-	w := bufio.NewWriter(f)
-	for name, hash := range users {
-		_, err := w.WriteString(name + "\t" + hash + "\n")
-		if err != nil {
-			panic(err)
-		}
-	}
-	w.Flush()
-
-	fmt.Printf("Updated user file: %s\n", file)
-}
-
-func CreatePasswordHash(password []byte, pwdCost int) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword(password, pwdCost)
-	if err != nil {
-		fmt.Printf("Cannot create hash: %s\n", err)
-		return "", err
-	}
-
-	return string(hash), nil
+func UsersFileExists() bool {
+	usersFile := filepath.Join(config.AssetStorageConfigDir, UserFile)
+	_, err := os.Stat(usersFile)
+	return err == nil
 }

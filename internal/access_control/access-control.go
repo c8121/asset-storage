@@ -3,7 +3,7 @@ package access_control
 import (
 	"errors"
 
-	"github.com/c8121/asset-storage/internal/users"
+	"github.com/c8121/asset-storage/shared/auth"
 )
 
 /*type AccessLevel int
@@ -25,7 +25,7 @@ var (
 )
 
 type AccessContext struct {
-	User *users.AuthenticatedUser
+	User *auth.AuthenticatedUser
 }
 
 type AccessController interface {

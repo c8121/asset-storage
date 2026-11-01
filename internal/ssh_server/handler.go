@@ -19,7 +19,7 @@ type SshHandler interface {
 
 type SshFileInfo struct {
 	LocalPath string //Absolute path on local file system
-	UserPath  string //Path as visible to the user (child of users virtual-root)
+	UserPath  string //Path as visible to the user (child of auth virtual-root)
 }
 
 // AddFilesToArchive adds file to storage and creates meta-data

@@ -10,6 +10,7 @@ import (
 	"github.com/c8121/asset-storage/internal/metadata_db"
 	"github.com/c8121/asset-storage/internal/rest_api"
 	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/internal/users"
 	"github.com/c8121/asset-storage/internal/util"
 	"github.com/gin-gonic/gin"
 
@@ -33,12 +34,15 @@ func main() {
 	metadata_db_sqlite.Open()
 	defer metadata_db_sqlite.Close()
 
+	if users.UsersFileExists() {
+		util.PanicOnError(users.InitLocalFileAppAuthentication(users.DefaultPasswordCost), "failed to init app authentication")
+	}
+	metadata_db.InitAccessControl()
+
 	router := gin.Default()
 	router.SetTrustedProxies(nil)
 
 	rest_api.CreateRoutes(router)
-
-	metadata_db.InitAccessControl()
 
 	if config.CertFile != "" {
 		util.PanicOnError(router.RunTLS(config.ListenAddress, config.CertFile, config.KeyFile), "Failed to start server")
