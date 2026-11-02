@@ -36,8 +36,8 @@ func GetAsset(c *gin.Context) {
 	acc := GetAccessContext(c)
 	ctx := access_control.GetAccessController()
 	if ctx != nil && ctx.CanRead(hash, acc) != nil {
-		fmt.Printf("Access dinied to %s\n", hash)
-		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
+		fmt.Printf("Access denied to %s\n", hash)
+		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("forbidden")))
 		return
 	}
 
