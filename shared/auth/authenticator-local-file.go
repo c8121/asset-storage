@@ -32,7 +32,7 @@ func NewLocalFileAuthenticator(userFile string, pwdCost int) (*LocalFileAuthenti
 		if !errors.Is(err, os.ErrNotExist) {
 			return nil, err
 		}
-		//User file does not exist... use app without auth
+		//User file does not exist... use app with auth but no users (locked)
 	} else if !stat.Mode().IsRegular() {
 		return nil, fmt.Errorf("%s is not a regular file", userFile)
 	}

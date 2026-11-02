@@ -37,6 +37,7 @@ func main() {
 
 	if users.UsersFileExists() {
 		util.PanicOnError(users.InitLocalFileAppAuthentication(users.DefaultPasswordCost), "failed to init app authentication")
+		//If user file does not exist, app can be used without auth
 	}
 	metadata_db.InitAccessControl()
 

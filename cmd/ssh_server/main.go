@@ -64,6 +64,7 @@ func main() {
 	metadata_db_sqlite.Open()
 	defer metadata_db_sqlite.Close()
 
+	//SSH-Server requires auth
 	util.PanicOnError(users.InitLocalFileAppAuthentication(users.DefaultPasswordCost), "failed to init app authentication")
 	metadata_db.InitAccessControl()
 
