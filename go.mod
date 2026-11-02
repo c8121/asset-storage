@@ -12,6 +12,10 @@ require (
 	gosqlite.org v0.14.0
 )
 
+replace (
+	github.com/c8121/go_vue_spa v0.0.1 => ../go_vue_spa
+)
+
 require (
 	github.com/RoaringBitmap/roaring/v2 v2.30.0 // indirect
 	github.com/bits-and-blooms/bitset v1.28.0 // indirect

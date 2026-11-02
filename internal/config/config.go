@@ -12,7 +12,6 @@ import (
 )
 
 var (
-	// Default values for testing
 	AssetStorageConfigDir     = "/tmp/asset-storage/config"                   // Base directory for config files.
 	AssetStorageBaseDir       = "/tmp/asset-storage/files"                    // Base directory for all assets.
 	AssetStorageTempDir       = "/tmp/asset-storage/tmp"                      // Temporary directory. Should be on same drive as AssetStorageBaseDir
@@ -36,25 +35,25 @@ var (
 	KeyFile       = ""
 
 	PdfToTextCharCountToUseOcr = 10 //Use OCR when converting PDF to Text, if result does not have more chars
-
-	cmdDataDir               = flag.String("data", "", "Data directory for storage, meta-data, db...")
-	cmdUseGzip               = flag.Bool("gzip", false, "Use GZIP compression")
-	cmdXorKey                = flag.String("xor", "", "XOR Key for content obfusication")
-	cmdMaxMemFileSize        = flag.Int64("maxmem", 0, "Max memory file size in bytes")
-	cmdSpaHttpRoot           = flag.String("spa", "", "HTTP root directory of SPA app")
-	cmdSkipMetaDataIfExists  = flag.Bool("skip-meta", false, "Skip meta data update if file exist")
-	cmdCheckHashBeforeAdd    = flag.Bool("check-hash", false, "Check hash before trying to add file.")
-	cmdListen                = flag.String("listen", "", "Listen Address (ip:port)")
-	cmdCertFile              = flag.String("cert", "", "Certificate file")
-	cmdKeyFile               = flag.String("key", "", "Key file")
-	cmdCharCountPdfToTextOcr = flag.Int("pdf-ocr", 10, "Use OCR when converting PDF to Text, if result does not have more chars")
-	cmdLogVerbose            = flag.Bool("v", false, "Log verbose")
 )
 
 // LoadDefault initializes configuration with defaults,
 // paths either with base-directory from command-line argument "-base"
 // or in user-home
 func LoadDefault() {
+
+	cmdDataDir := flag.String("data", "", "Data directory for storage, meta-data, db...")
+	cmdUseGzip := flag.Bool("gzip", false, "Use GZIP compression")
+	cmdXorKey := flag.String("xor", "", "XOR Key for content obfusication")
+	cmdMaxMemFileSize := flag.Int64("maxmem", 0, "Max memory file size in bytes")
+	cmdSpaHttpRoot := flag.String("spa", "", "HTTP root directory of SPA app")
+	cmdSkipMetaDataIfExists := flag.Bool("skip-meta", false, "Skip meta data update if file exist")
+	cmdCheckHashBeforeAdd := flag.Bool("check-hash", false, "Check hash before trying to add file.")
+	cmdListen := flag.String("listen", "", "Listen Address (ip:port)")
+	cmdCertFile := flag.String("cert", "", "Certificate file")
+	cmdKeyFile := flag.String("key", "", "Key file")
+	cmdCharCountPdfToTextOcr := flag.Int("pdf-ocr", 10, "Use OCR when converting PDF to Text, if result does not have more chars")
+	cmdLogVerbose := flag.Bool("v", false, "Log verbose")
 
 	checkObsoleteCmdArgs()
 
@@ -141,15 +140,14 @@ func LoadDefault() {
 	}
 }
 
-// validateDataDir checks is given path is a asset-storage directory.
+// validateDataDir checks is given path is an asset-storage directory.
 // A non-existing path is considered valid so it can be created later.
 func validateDataDir(path string) {
 
 	stat, err := os.Stat(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return
-	}
-	if stat == nil || !stat.IsDir() {
+	} else if stat == nil || !stat.IsDir() {
 		fmt.Printf("%s is not a directory\n", path)
 		os.Exit(1)
 	}
@@ -159,7 +157,7 @@ func validateDataDir(path string) {
 		panic(err)
 	}
 
-	validNames := []string{"config", "files", "tmp", "meta", "db", "collections", "faces", "index", "bin", "vue-ui"}
+	validNames := []string{"config", "files", "tmp", "meta", "db", "collections", "faces", "index", "bin"}
 
 	for _, entry := range entries {
 		if !slices.Contains(validNames, entry.Name()) {

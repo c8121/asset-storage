@@ -8,11 +8,11 @@ import (
 	"github.com/c8121/asset-storage/internal/fulltext"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db"
-	"github.com/c8121/asset-storage/internal/rest_api"
 	"github.com/c8121/asset-storage/internal/spa_server"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/users"
 	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/asset-storage/shared/rest_api"
 	"github.com/gin-gonic/gin"
 
 	"github.com/c8121/asset-storage/internal/metadata_db/sqlite"
