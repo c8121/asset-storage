@@ -5,7 +5,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/access_control"
 	"github.com/c8121/asset-storage/internal/metadata_db/entity"
-	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/util"
 )
 
 type MetaDataDbAccessController struct {

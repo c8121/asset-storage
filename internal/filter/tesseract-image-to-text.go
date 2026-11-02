@@ -9,7 +9,8 @@ import (
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/metadata"
-	"github.com/c8121/asset-storage/internal/util"
+	apputil "github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/util"
 )
 
 type TesseractImageToTextFilter struct {
@@ -24,7 +25,7 @@ func NewTesseractImageToTextFilter() *TesseractImageToTextFilter {
 
 func (f TesseractImageToTextFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
-	lang := util.GetOrDefault(params, "lang", f.DefaultLanguage)
+	lang := apputil.GetOrDefault(params, "lang", f.DefaultLanguage)
 
 	prepareFilter := NewOcrImagePrepareFilter()
 	bytes, _, err := prepareFilter.Apply(assetHash, meta, params)
@@ -86,7 +87,7 @@ func (f TesseractImageToTextFilter) imageTesseractImageToText(input string, lang
 	var env []string
 	env = append(env, "OMP_THREAD_LIMIT=1")
 
-	err = util.RunSilentWithEnv(binary, env, args...)
+	err = filter_commands.RunSilentWithEnv(binary, env, args...)
 	if err != nil {
 		return "", fmt.Errorf("failed to extract text: %w", err)
 	}

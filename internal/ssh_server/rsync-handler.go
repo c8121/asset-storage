@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/util"
 )
 
 func NewVirtualRsyncHandler(rootDirectory string, username string) *VirtualRsyncHandler {

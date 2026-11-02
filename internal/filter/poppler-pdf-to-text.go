@@ -8,7 +8,7 @@ import (
 	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/util"
 )
 
 type PopplerPdfToTextFilter struct {
@@ -72,7 +72,7 @@ func (f PopplerPdfToTextFilter) popplerPdfToText(input string) (string, error) {
 	args = append(args, input)
 	args = append(args, out.Name())
 
-	err = util.RunSilent(binary, args...)
+	err = filter_commands.RunSilent(binary, args...)
 	if err != nil {
 		return "", fmt.Errorf("failed to extract text: %w", err)
 	}

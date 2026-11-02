@@ -8,9 +8,10 @@ import (
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db/entity"
-	"github.com/c8121/asset-storage/internal/util"
+	apputil "github.com/c8121/asset-storage/internal/util"
 	"github.com/c8121/go_db_entities"
 	"github.com/c8121/go_db_entities/sqlite"
+	"github.com/c8121/go_vue_spa/util"
 	_ "gosqlite.org" // Bundles modernc + sqlite-vec
 )
 
@@ -18,7 +19,7 @@ import (
 func Open() {
 
 	dbDir := filepath.Dir(config.AssetMetaDataDb)
-	util.CreateDirIfNotExists(dbDir, metadata.FilePermissions)
+	apputil.CreateDirIfNotExists(dbDir, metadata.FilePermissions)
 
 	url := "file:" + config.AssetMetaDataDb +
 		"?_pragma=journal_mode(wal)" +

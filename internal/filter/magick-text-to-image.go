@@ -12,7 +12,8 @@ import (
 	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/internal/util"
+	apputil "github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/util"
 )
 
 type ImageMagickTextToImageFilter struct {
@@ -37,10 +38,10 @@ func NewImageMagickTextToImageFilter() *ImageMagickTextToImageFilter {
 
 func (f ImageMagickTextToImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
-	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", strconv.Itoa(f.DefaultWidth)))
-	height, _ := strconv.Atoi(util.GetOrDefault(params, "height", "0"))
-	tempFileNamePattern := util.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)
-	mimeType := util.GetOrDefault(params, "mimeType", f.DefaultMimeType)
+	width, _ := strconv.Atoi(apputil.GetOrDefault(params, "width", strconv.Itoa(f.DefaultWidth)))
+	height, _ := strconv.Atoi(apputil.GetOrDefault(params, "height", "0"))
+	tempFileNamePattern := apputil.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)
+	mimeType := apputil.GetOrDefault(params, "mimeType", f.DefaultMimeType)
 
 	in, err := storage.FindByHash(assetHash)
 	if err != nil {
@@ -109,7 +110,7 @@ func (f ImageMagickTextToImageFilter) imageMagickTextToImage(input string, outpu
 
 	args = append(args, output)
 
-	return util.RunSilent(binary, args...)
+	return filter_commands.RunSilent(binary, args...)
 }
 
 func headText(input string, numLines int, maxLineLen int) (string, error) {

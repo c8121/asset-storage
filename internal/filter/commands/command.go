@@ -1,7 +1,7 @@
-package util
+package filter_commands
 
 import (
-	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"strings"
@@ -30,10 +30,9 @@ func RunSilentWithEnv(name string, env []string, args ...string) error {
 	cmd.Stderr = &e
 	err := cmd.Run()
 	if err != nil {
-		fmt.Printf("Command failed: %s\n%s\n", o.String(), e.String())
+		slog.Error("Command failed", "stdout", o.String(), "stderr", e.String())
 		return err
 	}
-	//fmt.Printf("Command: %s\n%s\n", o.String(), e.String())
 
 	return nil
 }

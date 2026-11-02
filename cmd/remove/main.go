@@ -11,8 +11,9 @@ import (
 	"github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/asset-storage/internal/metadata_db/sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/internal/util"
+	apputil "github.com/c8121/asset-storage/internal/util"
 	"github.com/c8121/go_db_entities"
+	"github.com/c8121/go_vue_spa/util"
 )
 
 var (
@@ -55,7 +56,7 @@ func removeAsset(hash string) {
 	fmt.Printf("Removing asset %s, id=%d\n", hash, assetMeta.Id)
 
 	if !*force {
-		if !util.CliConfirm("Remove asset " + hash) {
+		if !apputil.CliConfirm("Remove asset " + hash) {
 			return
 		}
 	}
@@ -107,7 +108,7 @@ func removePathItem(pathItem *metadata_db_entity.PathItem) {
 	fmt.Printf("Removing path '%s', id=%d\n", pathItem.Name, pathItem.Id)
 
 	if !*force {
-		if !util.CliConfirm("Remove path '" + pathItem.Name + "' including all assets") {
+		if !apputil.CliConfirm("Remove path '" + pathItem.Name + "' including all assets") {
 			return
 		}
 	}

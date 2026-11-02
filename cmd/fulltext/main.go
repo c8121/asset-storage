@@ -10,7 +10,7 @@ import (
 	"github.com/c8121/asset-storage/internal/fulltext"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/util"
 )
 
 var (

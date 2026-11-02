@@ -15,7 +15,7 @@ import (
 	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/util"
 	"github.com/disintegration/imaging"
 	"golang.org/x/image/draw"
 
@@ -139,5 +139,5 @@ func imageMagickPdfToOcrImage(input string, output string) error {
 
 	args = append(args, output)
 
-	return util.RunSilent(binary, args...)
+	return filter_commands.RunSilent(binary, args...)
 }

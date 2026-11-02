@@ -14,7 +14,8 @@ import (
 
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/internal/util"
+	apputil "github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/util"
 	orientation "github.com/takumakei/exif-orientation"
 	"golang.org/x/image/draw"
 
@@ -35,12 +36,12 @@ func NewImageFilter() *ImageFilter {
 
 func (f ImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
-	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", f.DefaultWidth))
+	width, _ := strconv.Atoi(apputil.GetOrDefault(params, "width", f.DefaultWidth))
 
-	cropX1, _ := strconv.Atoi(util.GetOrDefault(params, "x1", "0"))
-	cropY1, _ := strconv.Atoi(util.GetOrDefault(params, "y1", "0"))
-	cropX2, _ := strconv.Atoi(util.GetOrDefault(params, "x2", "0"))
-	cropY2, _ := strconv.Atoi(util.GetOrDefault(params, "y2", "0"))
+	cropX1, _ := strconv.Atoi(apputil.GetOrDefault(params, "x1", "0"))
+	cropY1, _ := strconv.Atoi(apputil.GetOrDefault(params, "y1", "0"))
+	cropX2, _ := strconv.Atoi(apputil.GetOrDefault(params, "x2", "0"))
+	cropY2, _ := strconv.Atoi(apputil.GetOrDefault(params, "y2", "0"))
 
 	reader, err := storage.Open(assetHash)
 	if err != nil {

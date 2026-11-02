@@ -9,7 +9,8 @@ import (
 	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/internal/util"
+	appuitl "github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/util"
 )
 
 type ImageMagickPdfToImageFilter struct {
@@ -30,11 +31,11 @@ func NewImageMagickPdfToImageFilter() *ImageMagickPdfToImageFilter {
 
 func (f ImageMagickPdfToImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
-	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", strconv.Itoa(f.DefaultWidth)))
-	height, _ := strconv.Atoi(util.GetOrDefault(params, "height", "0"))
-	density, _ := strconv.Atoi(util.GetOrDefault(params, "density", strconv.Itoa(f.DefaultDensity)))
-	tempFileNamePattern := util.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)
-	mimeType := util.GetOrDefault(params, "mimeType", f.DefaultMimeType)
+	width, _ := strconv.Atoi(appuitl.GetOrDefault(params, "width", strconv.Itoa(f.DefaultWidth)))
+	height, _ := strconv.Atoi(appuitl.GetOrDefault(params, "height", "0"))
+	density, _ := strconv.Atoi(appuitl.GetOrDefault(params, "density", strconv.Itoa(f.DefaultDensity)))
+	tempFileNamePattern := appuitl.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)
+	mimeType := appuitl.GetOrDefault(params, "mimeType", f.DefaultMimeType)
 
 	in, err := storage.FindByHash(assetHash)
 	if err != nil {
@@ -95,5 +96,5 @@ func (f ImageMagickPdfToImageFilter) imageMagickPdfToImage(input string, output 
 
 	args = append(args, output)
 
-	return util.RunSilent(binary, args...)
+	return filter_commands.RunSilent(binary, args...)
 }

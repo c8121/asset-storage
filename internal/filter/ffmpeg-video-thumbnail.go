@@ -10,7 +10,8 @@ import (
 	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/internal/util"
+	apputil "github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/util"
 )
 
 type FFmpegVideoThumbnailFilter struct {
@@ -36,10 +37,10 @@ func (f FFmpegVideoThumbnailFilter) Apply(assetHash string, meta *metadata.JsonA
 		return nil, "", fmt.Errorf("mime-type not supported: %s", meta.MimeType)
 	}
 
-	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", f.DefaultWidth))
-	videoPosition := util.GetOrDefault(params, "videoPosition", f.DefaultVideoPosition)
-	tempFileNamePattern := util.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)
-	mimeType := util.GetOrDefault(params, "mimeType", f.DefaultMimeType)
+	width, _ := strconv.Atoi(apputil.GetOrDefault(params, "width", f.DefaultWidth))
+	videoPosition := apputil.GetOrDefault(params, "videoPosition", f.DefaultVideoPosition)
+	tempFileNamePattern := apputil.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)
+	mimeType := apputil.GetOrDefault(params, "mimeType", f.DefaultMimeType)
 
 	in, err := storage.FindByHash(assetHash)
 	if err != nil {
@@ -86,12 +87,12 @@ func ffmpegThumb(inputFilePath string, outputFilePath string, width int, height 
 	args = append(args, "-i", inputFilePath)
 
 	args = append(args, "-vf")
-	args = append(args, fmt.Sprintf("scale=%d:%d", util.Iif(width > 0, width, -1), util.Iif(height > 0, height, -1)))
+	args = append(args, fmt.Sprintf("scale=%d:%d", apputil.Iif(width > 0, width, -1), apputil.Iif(height > 0, height, -1)))
 
 	args = append(args, "-frames:v", "1")
 	args = append(args, "-update", "true")
 
 	args = append(args, outputFilePath)
 
-	return util.RunSilent(binary, args...)
+	return filter_commands.RunSilent(binary, args...)
 }

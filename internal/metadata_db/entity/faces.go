@@ -7,8 +7,8 @@ import (
 	"log"
 
 	"github.com/c8121/asset-storage/internal/faces"
-	"github.com/c8121/asset-storage/internal/util"
 	"github.com/c8121/go_db_entities"
+	"github.com/c8121/go_vue_spa/util"
 
 	_ "gosqlite.org/vec" //Auto-registers the vec0 module on every connection
 )

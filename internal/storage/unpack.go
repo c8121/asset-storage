@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/util"
 )
 
 // IsUnpackable checks if file can be unpacked.

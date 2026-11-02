@@ -6,7 +6,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/c8121/asset-storage/internal/util"
 	"github.com/c8121/go_db_entities"
 )
 
@@ -147,7 +146,7 @@ func GetPathItemByName(name string, parentId int64) (*PathItem, error) {
 
 func FindPathItem(path string) (*PathItem, error) {
 
-	names := util.SplitPath(path)
+	names := SplitPath(path)
 
 	var item *PathItem = nil
 	var parentId int64 = 0

@@ -9,7 +9,8 @@ import (
 	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/internal/util"
+	apputil "github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/util"
 )
 
 type ImageMagickResizeFilter struct {
@@ -28,10 +29,10 @@ func NewImageMagickResizeFilter() *ImageMagickResizeFilter {
 
 func (f ImageMagickResizeFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
-	width, _ := strconv.Atoi(util.GetOrDefault(params, "width", f.DefaultWidth))
-	height, _ := strconv.Atoi(util.GetOrDefault(params, "height", "0"))
-	tempFileNamePattern := util.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)
-	mimeType := util.GetOrDefault(params, "mimeType", f.DefaultMimeType)
+	width, _ := strconv.Atoi(apputil.GetOrDefault(params, "width", f.DefaultWidth))
+	height, _ := strconv.Atoi(apputil.GetOrDefault(params, "height", "0"))
+	tempFileNamePattern := apputil.GetOrDefault(params, "fileNamePattern", f.DefaultFileNamePattern)
+	mimeType := apputil.GetOrDefault(params, "mimeType", f.DefaultMimeType)
 
 	in, err := storage.FindByHash(assetHash)
 	if err != nil {
@@ -88,5 +89,5 @@ func imageMagickResize(inputFilePath string, outputFilePath string, width int, h
 
 	args = append(args, outputFilePath)
 
-	return util.RunSilent(binary, args...)
+	return filter_commands.RunSilent(binary, args...)
 }

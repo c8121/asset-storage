@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/util"
 	"github.com/pkg/sftp"
 )
 
