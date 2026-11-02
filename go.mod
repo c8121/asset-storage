@@ -5,6 +5,7 @@ go 1.26.0
 require (
 	github.com/blevesearch/bleve/v2 v2.6.1
 	github.com/c8121/go_db_entities v0.0.8
+	github.com/c8121/go_vue_spa v0.0.1
 	github.com/gabriel-vasile/mimetype v1.4.16
 	github.com/gin-gonic/gin v1.12.0
 	github.com/takumakei/exif-orientation v0.0.0-20200808061749-30cdc5a97a18
@@ -76,7 +77,7 @@ require (
 	golang.org/x/image v0.47.0
 	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
-	golang.org/x/term v0.47.0
+	golang.org/x/term v0.47.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	modernc.org/libc v1.79.1 // indirect

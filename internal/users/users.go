@@ -6,17 +6,16 @@ import (
 
 	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/util"
-	"github.com/c8121/asset-storage/shared/auth"
+	"github.com/c8121/go_vue_spa/auth"
 )
 
 var (
-	UserFile                               = "users"
-	AppAuthenticator    auth.Authenticator = nil
-	DefaultPasswordCost                    = 10
+	UserFile            = "users"
+	DefaultPasswordCost = 10
 )
 
 func InitAppAuthentication(authenticator auth.Authenticator) {
-	AppAuthenticator = authenticator
+	auth.SetAuthenticator(authenticator)
 }
 
 func InitLocalFileAppAuthentication(pwdCost int) error {

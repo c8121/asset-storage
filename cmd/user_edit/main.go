@@ -1,10 +1,14 @@
 package main
 
 import (
+	"errors"
 	"flag"
+	"fmt"
+	"os"
 
 	"github.com/c8121/asset-storage/internal/config"
-	auth "github.com/c8121/asset-storage/shared/auth/cli"
+	"github.com/c8121/asset-storage/internal/users"
+	"github.com/c8121/go_vue_spa/auth/cli"
 )
 
 func main() {
@@ -15,5 +19,11 @@ func main() {
 
 	config.LoadDefault()
 
-	auth.CliLocalFileUserEdit(*username, *addUser, *pwdCost)
+	err := users.InitLocalFileAppAuthentication(*pwdCost)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		fmt.Println(err)
+		return
+	}
+
+	auth.CliLocalFileUserEdit(*username, *addUser)
 }

@@ -2,68 +2,35 @@ package spa_server
 
 import (
 	"io/fs"
-	"net/http"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/c8121/asset-storage/internal/config"
-	"github.com/c8121/asset-storage/internal/rest_api"
-	"github.com/c8121/asset-storage/internal/util"
-	"github.com/c8121/asset-storage/shared/httproot"
+	apphttproot "github.com/c8121/asset-storage/shared/httproot"
+	"github.com/c8121/go_vue_spa"
+	"github.com/c8121/go_vue_spa/httproot"
 	"github.com/gin-gonic/gin"
-)
-
-const (
-	DefaultDocument = "index.html"
 )
 
 // CreateRoutes looks for all files/directories in config.SpaHttpRoot and creates static routes.
 func CreateRoutes(router *gin.Engine) {
 
-	subDirs := []string{
-		httproot.AppDir,
-		httproot.VueUI,
-	}
-
+	//APP resources
 	var rootFS fs.FS
 	if config.SpaHttpRoot != "" {
 		rootFS = os.DirFS(config.SpaHttpRoot)
 	} else {
-		rootFS = httproot.FS
+		rootFS = apphttproot.FS
 	}
-	httpFS := http.FS(rootFS)
 
-	router.NoRoute(rest_api.AuthRequiredHandler(func(c *gin.Context) {
+	resources := make([]go_vue_spa.Resource, 0)
+	resources = append(resources, go_vue_spa.Resource{
+		RootFs:     httproot.FS,
+		SubDirName: httproot.VueUI,
+	})
+	resources = append(resources, go_vue_spa.Resource{
+		RootFs:     rootFS,
+		SubDirName: apphttproot.AppDir,
+	})
 
-		path := c.Request.URL.Path
-
-		for _, subDir := range subDirs {
-
-			var fspath string
-			if path == "/" {
-				fspath = filepath.Join(subDir, DefaultDocument)
-				file, err := httpFS.Open(fspath)
-				if err == nil {
-					defer util.CloseOrLog(file)
-					stat, err := file.Stat()
-					if err == nil {
-						http.ServeContent(c.Writer, c.Request, stat.Name(), stat.ModTime(), file)
-					}
-				}
-			} else {
-				fspath = filepath.Join(subDir, strings.TrimPrefix(path, "/"))
-				if fspath != "" {
-					stat, err := fs.Stat(rootFS, fspath)
-					if err == nil {
-						if stat.Mode().IsRegular() {
-							c.FileFromFS(fspath, httpFS)
-							return
-						}
-					}
-				}
-			}
-		}
-	}))
-
+	go_vue_spa.CreateRoutesFromFS(router, resources)
 }

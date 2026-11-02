@@ -1,7 +1,7 @@
 package faces
 
 import (
-	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/notifications"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -11,7 +11,7 @@ func CheckFaceRestServiceAvailable() bool {
 	_, err := client.R().
 		Get(CheckFaceRestServiceEndpoint)
 	if err != nil {
-		util.AppNotifications.AddNotification("Face REST API is not available: " + GetFaceRestServiceEndpoint + " (" + err.Error() + ")")
+		notifications.AppNotifications.AddNotification("Face REST API is not available: " + GetFaceRestServiceEndpoint + " (" + err.Error() + ")")
 		return false
 	}
 

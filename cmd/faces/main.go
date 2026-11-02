@@ -9,6 +9,7 @@ import (
 	"github.com/c8121/asset-storage/internal/metadata_db/sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/notifications"
 )
 
 func main() {
@@ -19,7 +20,7 @@ func main() {
 	defer metadata_db_sqlite.Close()
 
 	if !faces.CheckFaceRestServiceAvailable() {
-		util.PrintNotifications()
+		notifications.AppNotifications.PrintNotifications()
 		return
 	}
 

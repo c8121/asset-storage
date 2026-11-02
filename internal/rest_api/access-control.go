@@ -2,7 +2,7 @@ package rest_api
 
 import (
 	"github.com/c8121/asset-storage/internal/access_control"
-	"github.com/c8121/asset-storage/shared/auth"
+	"github.com/c8121/go_vue_spa/auth"
 	"github.com/gin-gonic/gin"
 )
 

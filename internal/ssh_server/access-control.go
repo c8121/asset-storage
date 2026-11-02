@@ -2,7 +2,7 @@ package ssh_server
 
 import (
 	"github.com/c8121/asset-storage/internal/access_control"
-	"github.com/c8121/asset-storage/shared/auth"
+	"github.com/c8121/go_vue_spa/auth"
 )
 
 func GetAccessContext(h SshHandler) *access_control.AccessContext {

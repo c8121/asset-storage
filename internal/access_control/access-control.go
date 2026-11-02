@@ -3,7 +3,7 @@ package access_control
 import (
 	"errors"
 
-	"github.com/c8121/asset-storage/shared/auth"
+	"github.com/c8121/go_vue_spa/auth"
 )
 
 /*type AccessLevel int
@@ -21,7 +21,7 @@ type AccessControlEntry struct {
 }*/
 
 var (
-	ErrAccessDenied = errors.New("Access denied")
+	ErrAccessDenied = errors.New("access denied")
 )
 
 type AccessContext struct {

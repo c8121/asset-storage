@@ -3,47 +3,47 @@ package filter_commands
 import (
 	"fmt"
 
-	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/notifications"
 )
 
 func CheckAndNotify() {
 
 	path := FindFFmpegBin()
 	if path == "" {
-		util.AppNotifications.AddNotification("FFmpeg is not installed. To generate video-thumbs and images, please install FFmpeg")
+		notifications.AppNotifications.AddNotification("FFmpeg is not installed. To generate video-thumbs and images, please install FFmpeg")
 	} else {
-		util.AppNotifications.AddNotification("Using FFmpeg from " + path)
+		notifications.AppNotifications.AddNotification("Using FFmpeg from " + path)
 	}
 
 	path = FindImageMagickBin()
 	if path == "" {
-		util.AppNotifications.AddNotification("ImageMagick is not installed. To support more image formats, please install ImageMagick")
+		notifications.AppNotifications.AddNotification("ImageMagick is not installed. To support more image formats, please install ImageMagick")
 	} else {
-		util.AppNotifications.AddNotification("Using ImageMagick from " + path)
+		notifications.AppNotifications.AddNotification("Using ImageMagick from " + path)
 	}
 
 	path = FindTesseractBin()
 	if path == "" {
-		util.AppNotifications.AddNotification("Tesseract-OCR is not installed. To support image to text conversion, please install Tesseract-OCR")
+		notifications.AppNotifications.AddNotification("Tesseract-OCR is not installed. To support image to text conversion, please install Tesseract-OCR")
 	} else {
-		util.AppNotifications.AddNotification("Using Tesseract from " + path)
+		notifications.AppNotifications.AddNotification("Using Tesseract from " + path)
 	}
 
 	path = FindPopplerPdfBin()
 	if path == "" {
-		util.AppNotifications.AddNotification("Poppler pdftotext is not installed. To support pdf to text conversion, please install pdftotext")
+		notifications.AppNotifications.AddNotification("Poppler pdftotext is not installed. To support pdf to text conversion, please install pdftotext")
 	} else {
-		util.AppNotifications.AddNotification("Using pdftotext from " + path)
+		notifications.AppNotifications.AddNotification("Using pdftotext from " + path)
 	}
 
 	path = FindPandocBin()
 	if path == "" {
-		util.AppNotifications.AddNotification("Pandoc is not installed. To support doc to text conversion, please install pandoc")
+		notifications.AppNotifications.AddNotification("Pandoc is not installed. To support doc to text conversion, please install pandoc")
 	} else {
-		util.AppNotifications.AddNotification("Using pandoc from " + path)
+		notifications.AppNotifications.AddNotification("Using pandoc from " + path)
 	}
 
-	for _, msg := range util.AppNotifications.Messages {
+	for _, msg := range notifications.AppNotifications.Messages {
 		fmt.Println(msg)
 	}
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/users"
 	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/go_vue_spa/auth"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -76,14 +77,14 @@ func main() {
 
 		PasswordCallback: func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
 
-			if users.AppAuthenticator == nil {
+			if auth.GetAuthenticator() == nil {
 				return nil, fmt.Errorf("no app authenticator")
 			}
 
 			fmt.Printf("Login attempt from %s: %s\n", c.RemoteAddr(), c.User())
 			if len(c.User()) == 0 {
 				return nil, fmt.Errorf("user rejected for %q", c.User())
-			} else if _, err := users.AppAuthenticator.Authenticate(c.User(), pass); err != nil {
+			} else if _, err := auth.GetAuthenticator().Authenticate(c.User(), pass); err != nil {
 				return nil, fmt.Errorf("password rejected for %q", c.User())
 			}
 
