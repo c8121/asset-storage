@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/c8121/asset-storage/internal/config"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -63,14 +63,14 @@ func Open(assetHash string) (StorageReader, error) {
 	if path, err := FindByHash(assetHash); err == nil {
 
 		var reader StorageReader
-		if config.UseGzip {
+		if config.AppConfig.UseGzip {
 			reader, err = NewZipFileReader(path)
 		} else {
 			reader, err = NewFileReader(path)
 		}
 
 		if err == nil {
-			if len(config.XorKey) > 0 {
+			if len(config.AppConfig.XorKey) > 0 {
 				return NewXorReader(reader), nil
 			}
 			return reader, nil

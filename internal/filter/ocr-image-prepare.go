@@ -11,10 +11,10 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 	"github.com/disintegration/imaging"
 	"golang.org/x/image/draw"
@@ -45,7 +45,7 @@ func (f OcrImagePrepareFilter) Apply(assetHash string, meta *metadata.JsonAssetM
 
 		//Convert PDF to image
 
-		out, err := os.CreateTemp(config.AssetStorageTempDir, "asset-ocr*.png")
+		out, err := os.CreateTemp(config.AppConfig.AssetStorageTempDir, "asset-ocr*.png")
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to create temp file: %w", err)
 		}

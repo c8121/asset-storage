@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/c8121/asset-storage/internal/config"
+	"github.com/c8121/asset-storage/shared/config"
 )
 
 // XorWriter wraps a StorageWriter, xor's bytes on Write(...)
@@ -41,5 +41,5 @@ func (w *XorWriter) Remove() error {
 
 // NewXorWriter creates a new XorWriter, wrapping the given StorageWriter
 func NewXorWriter(sw StorageWriter) *XorWriter {
-	return &XorWriter{sw, &Xor{config.XorKey, len(config.XorKey), 0}, false}
+	return &XorWriter{sw, &Xor{config.AppConfig.XorKey, len(config.AppConfig.XorKey), 0}, false}
 }

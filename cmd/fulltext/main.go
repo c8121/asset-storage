@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/filter"
 	"github.com/c8121/asset-storage/internal/fulltext"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/shared/boostrap"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -19,12 +19,8 @@ var (
 
 func main() {
 
-	config.LoadDefault()
-
-	fulltext.CreateDirectories()
-
-	util.LogError(fulltext.Open())
-	defer fulltext.Close()
+	boostrap.InitAssetStorageApp()
+	defer boostrap.FinalizeAssetStorageApp()
 
 	if *query != "" {
 		searchIndex(*query)

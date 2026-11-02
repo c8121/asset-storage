@@ -5,11 +5,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
 	appuitl "github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -42,7 +42,7 @@ func (f ImageMagickPdfToImageFilter) Apply(assetHash string, meta *metadata.Json
 		return nil, "", fmt.Errorf("cannot find asset: %w", err)
 	}
 
-	out, err := os.CreateTemp(config.AssetStorageTempDir, tempFileNamePattern)
+	out, err := os.CreateTemp(config.AppConfig.AssetStorageTempDir, tempFileNamePattern)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to create temp file: %w", err)
 	}

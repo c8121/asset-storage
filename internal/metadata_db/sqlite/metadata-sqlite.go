@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db/entity"
 	apputil "github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_db_entities"
 	"github.com/c8121/go_db_entities/sqlite"
 	"github.com/c8121/go_vue_spa/util"
@@ -18,18 +18,18 @@ import (
 // Open Connect to SQLite database file + init
 func Open() {
 
-	dbDir := filepath.Dir(config.AssetMetaDataDb)
+	dbDir := filepath.Dir(config.AppConfig.AssetMetaDataDb)
 	apputil.CreateDirIfNotExists(dbDir, metadata.FilePermissions)
 
-	url := "file:" + config.AssetMetaDataDb +
+	url := "file:" + config.AppConfig.AssetMetaDataDb +
 		"?_pragma=journal_mode(wal)" +
 		"&_pragma=busy_timeout(2500)" +
 		"&_pragma=synchronous(normal)" +
 		"&_txlock=immediate"
 
-	fmt.Printf("Open DB %s\n", config.AssetMetaDataDb)
+	fmt.Printf("Open DB %s\n", config.AppConfig.AssetMetaDataDb)
 	db, err := sql.Open("sqlite", url)
-	util.PanicOnError(err, "Failed to open sqlite database: "+config.AssetMetaDataDb)
+	util.PanicOnError(err, "Failed to open sqlite database: "+config.AppConfig.AssetMetaDataDb)
 
 	//Creation of face-embedding-table cannot be done with go_db_entities
 	queryBuilder := sqlite.NewQueryBuilder()
@@ -49,6 +49,6 @@ func Open() {
 
 // Close Disconnect from Database
 func Close() {
-	fmt.Printf("Close DB %s\n", config.AssetMetaDataDb)
+	fmt.Printf("Close DB %s\n", config.AppConfig.AssetMetaDataDb)
 	util.CloseOrLog(metadata_db_entity.DbContext)
 }

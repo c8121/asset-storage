@@ -3,6 +3,8 @@ package storage
 import (
 	"bytes"
 	"os"
+
+	"github.com/c8121/go_vue_spa/util"
 )
 
 type StorageMemFileWriter struct {
@@ -26,7 +28,7 @@ func (writer *StorageMemFileWriter) Move(path string) error {
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer util.CloseOrLog(out)
 
 	_, err = out.Write(writer.buf.Bytes())
 	return err

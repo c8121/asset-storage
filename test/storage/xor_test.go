@@ -5,9 +5,9 @@ import (
 	"io"
 	"testing"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/asset-storage/shared/config"
+	"github.com/c8121/go_vue_spa/util"
 )
 
 type TestReaderWriter struct {
@@ -90,7 +90,7 @@ func readerTest(t *testing.T) {
 
 func encodeTest(t *testing.T, s string, k string) {
 
-	config.XorKey = []byte(k)
+	config.AppConfig.XorKey = []byte(k)
 
 	in := []byte(s)
 

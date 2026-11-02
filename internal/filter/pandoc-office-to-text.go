@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -62,7 +62,7 @@ func (f PandocOfficeToTextFilter) pandocOfficeToText(input string, format string
 		return "", fmt.Errorf("pandoc not found (searching in %v)", filter_commands.PandocBinPaths)
 	}
 
-	out, err := os.CreateTemp(config.AssetStorageTempDir, "pandoc-*.txt")
+	out, err := os.CreateTemp(config.AppConfig.AssetStorageTempDir, "pandoc-*.txt")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file: %w", err)
 	}

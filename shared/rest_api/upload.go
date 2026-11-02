@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/c8121/asset-storage/internal/access_control"
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 	"github.com/gin-gonic/gin"
 )
@@ -78,7 +78,7 @@ func AddUploadedFile(c *gin.Context) {
 		return
 	}
 
-	path := filepath.Join(config.AssetStorageTempDir, req.TempName)
+	path := filepath.Join(config.AppConfig.AssetStorageTempDir, req.TempName)
 
 	//Add file to storage
 	infos, err := storage.AddFile(path)
@@ -90,7 +90,7 @@ func AddUploadedFile(c *gin.Context) {
 	var list = make([]metadata.JsonAssetMetaData, 0)
 
 	for _, info := range infos {
-		if info.IsNewFile || !config.SkipMetaDataIfExists {
+		if info.IsNewFile || !config.AppConfig.SkipMetaDataIfExists {
 
 			addedFileName := filepath.Base(info.SourcePath)
 			if addedFileName == req.TempName {

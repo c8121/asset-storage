@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -79,7 +79,7 @@ func LoadByHash(assetHash string) (*JsonAssetMetaData, error) {
 func GetMetaDataFilePath(assetHash string) string {
 	name := fmt.Sprintf("%s%s", assetHash[2:], ".json")
 	path := filepath.Join(
-		config.AssetMetaDataBaseDir,
+		config.AppConfig.AssetMetaDataBaseDir,
 		assetHash[:2],
 		name)
 	return path
@@ -88,11 +88,11 @@ func GetMetaDataFilePath(assetHash string) string {
 // Walk visits every asset (file) in storage and calls given handler function on it.
 func Walk(handler func(path string)) {
 
-	children, err := os.ReadDir(config.AssetMetaDataBaseDir)
+	children, err := os.ReadDir(config.AppConfig.AssetMetaDataBaseDir)
 	util.PanicOnError(err, "Failed to read directory")
 
 	for _, child := range children {
-		dir := filepath.Join(config.AssetMetaDataBaseDir, child.Name())
+		dir := filepath.Join(config.AppConfig.AssetMetaDataBaseDir, child.Name())
 		files, err := os.ReadDir(dir)
 		util.PanicOnError(err, "Failed to read directory")
 

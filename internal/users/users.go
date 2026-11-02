@@ -4,8 +4,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/auth"
 )
 
@@ -20,9 +20,9 @@ func InitAppAuthentication(authenticator auth.Authenticator) {
 
 func InitLocalFileAppAuthentication(pwdCost int) error {
 
-	util.CreateDirIfNotExists(config.AssetStorageConfigDir, auth.DefaultFilePermissions)
+	util.CreateDirIfNotExists(config.AppConfig.AssetStorageConfigDir, auth.DefaultFilePermissions)
 
-	usersFile := filepath.Join(config.AssetStorageConfigDir, UserFile)
+	usersFile := filepath.Join(config.AppConfig.AssetStorageConfigDir, UserFile)
 
 	authenticator, err := auth.NewLocalFileAuthenticator(usersFile, pwdCost)
 	if err != nil {
@@ -39,7 +39,7 @@ func InitLocalFileAppAuthentication(pwdCost int) error {
 }
 
 func UsersFileExists() bool {
-	usersFile := filepath.Join(config.AssetStorageConfigDir, UserFile)
+	usersFile := filepath.Join(config.AppConfig.AssetStorageConfigDir, UserFile)
 	_, err := os.Stat(usersFile)
 	return err == nil
 }

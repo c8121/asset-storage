@@ -3,7 +3,7 @@ package storage
 import (
 	"io"
 
-	"github.com/c8121/asset-storage/internal/config"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -31,5 +31,5 @@ func (r *XorReader) Close() error {
 
 // NewXorReader creates a new XorReader, wrapping the given StorageReader
 func NewXorReader(sr StorageReader) *XorReader {
-	return &XorReader{sr, &Xor{config.XorKey, len(config.XorKey), 0}}
+	return &XorReader{sr, &Xor{config.AppConfig.XorKey, len(config.AppConfig.XorKey), 0}}
 }

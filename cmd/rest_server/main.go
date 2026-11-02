@@ -1,38 +1,19 @@
 package main
 
 import (
-	"github.com/c8121/asset-storage/internal/collections"
-	"github.com/c8121/asset-storage/internal/config"
-	"github.com/c8121/asset-storage/internal/faces"
-	"github.com/c8121/asset-storage/internal/filter/commands"
-	"github.com/c8121/asset-storage/internal/fulltext"
-	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db"
-	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/users"
+	"github.com/c8121/asset-storage/shared/boostrap"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/asset-storage/shared/rest_api"
 	"github.com/c8121/go_vue_spa/util"
 	"github.com/gin-gonic/gin"
-
-	"github.com/c8121/asset-storage/internal/metadata_db/sqlite"
 )
 
 func main() {
 
-	config.LoadDefault()
-	storage.CreateDirectories()
-	metadata.CreateDirectories()
-	collections.CreateDirectories()
-	fulltext.CreateDirectories()
-
-	filter_commands.CheckAndNotify()
-	faces.CheckFaceRestServiceAvailable()
-
-	util.LogError(fulltext.Open())
-	defer fulltext.Close()
-
-	metadata_db_sqlite.Open()
-	defer metadata_db_sqlite.Close()
+	boostrap.InitAssetStorageApp()
+	defer boostrap.FinalizeAssetStorageApp()
 
 	if users.UsersFileExists() {
 		util.PanicOnError(users.InitLocalFileAppAuthentication(users.DefaultPasswordCost), "failed to init app authentication")
@@ -41,13 +22,13 @@ func main() {
 	metadata_db.InitAccessControl()
 
 	router := gin.Default()
-	router.SetTrustedProxies(nil)
+	util.LogError(router.SetTrustedProxies(nil))
 
 	rest_api.CreateRoutes(router)
 
-	if config.CertFile != "" {
-		util.PanicOnError(router.RunTLS(config.ListenAddress, config.CertFile, config.KeyFile), "Failed to start server")
+	if config.AppConfig.CertFile != "" {
+		util.PanicOnError(router.RunTLS(config.AppConfig.ListenAddress, config.AppConfig.CertFile, config.AppConfig.KeyFile), "Failed to start server")
 	} else {
-		util.PanicOnError(router.Run(config.ListenAddress), "Failed to start server")
+		util.PanicOnError(router.Run(config.AppConfig.ListenAddress), "Failed to start server")
 	}
 }

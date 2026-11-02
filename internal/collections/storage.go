@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/c8121/asset-storage/internal/config"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -22,14 +22,10 @@ type (
 	}
 )
 
-const (
-	FilePermissions = 0744
-)
-
 // Save Create dir if not exists and save JSON
 func (collection *JsonAssetCollection) Save(path string) error {
 
-	err := os.MkdirAll(filepath.Dir(path), FilePermissions)
+	err := os.MkdirAll(filepath.Dir(path), config.AppConfig.FilePermissions)
 	if err != nil {
 		fmt.Printf("Error creating directory %s: %v\n", path, err)
 		return err
@@ -40,7 +36,7 @@ func (collection *JsonAssetCollection) Save(path string) error {
 		return err
 	}
 
-	return os.WriteFile(path, jsonBytes, FilePermissions)
+	return os.WriteFile(path, jsonBytes, config.AppConfig.FilePermissions)
 }
 
 // LoadIfExists Load JSON-file, if exists.
@@ -71,7 +67,7 @@ func LoadById(uuid string) (*JsonAssetCollection, error) {
 func GetCollectionFilePath(uuid string) string {
 	name := fmt.Sprintf("%s%s", uuid[2:], ".json")
 	path := filepath.Join(
-		config.AssetCollectionsBaseDir,
+		config.AppConfig.AssetCollectionsBaseDir,
 		uuid[:2],
 		name)
 	return path
@@ -90,11 +86,11 @@ func RemoveCollection(uuid string) error {
 // Walk visits every collection (file) in storage and calls given handler function on it.
 func Walk(handler func(path string)) {
 
-	children, err := os.ReadDir(config.AssetCollectionsBaseDir)
+	children, err := os.ReadDir(config.AppConfig.AssetCollectionsBaseDir)
 	util.PanicOnError(err, "Failed to read directory")
 
 	for _, child := range children {
-		dir := filepath.Join(config.AssetCollectionsBaseDir, child.Name())
+		dir := filepath.Join(config.AppConfig.AssetCollectionsBaseDir, child.Name())
 		files, err := os.ReadDir(dir)
 		util.PanicOnError(err, "Failed to read directory")
 

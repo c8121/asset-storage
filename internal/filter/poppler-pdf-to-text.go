@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -37,7 +37,7 @@ func (f PopplerPdfToTextFilter) Apply(assetHash string, meta *metadata.JsonAsset
 		return nil, "", fmt.Errorf("failed to extract text: %w", err)
 	}
 
-	if len(bytes) < config.PdfToTextCharCountToUseOcr {
+	if len(bytes) < config.AppConfig.PdfToTextCharCountToUseOcr {
 		fmt.Printf("Result of pdftotext has %d chars.\n", len(bytes))
 		if filter_commands.FindImageMagickBin() == "" {
 			fmt.Printf("Cannot use OCR, ImageMagick not found\n")
@@ -61,7 +61,7 @@ func (f PopplerPdfToTextFilter) popplerPdfToText(input string) (string, error) {
 		return "", fmt.Errorf("pdftotext not found (searching in %v)", filter_commands.PopplerPdfBinPaths)
 	}
 
-	out, err := os.CreateTemp(config.AssetStorageTempDir, "poppler-pdftotext-*.txt")
+	out, err := os.CreateTemp(config.AppConfig.AssetStorageTempDir, "poppler-pdftotext-*.txt")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file: %w", err)
 	}

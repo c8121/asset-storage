@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/users"
+	"github.com/c8121/asset-storage/shared/boostrap"
 	"github.com/c8121/go_vue_spa/auth/cli"
 )
 
@@ -17,7 +17,8 @@ func main() {
 	addUser := flag.Bool("a", false, "Add new user")
 	pwdCost := flag.Int("cost", 10, "Password hash cost")
 
-	config.LoadDefault()
+	boostrap.InitAssetStorageApp()
+	defer boostrap.FinalizeAssetStorageApp()
 
 	err := users.InitLocalFileAppAuthentication(*pwdCost)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {

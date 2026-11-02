@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 
 	"github.com/c8121/asset-storage/internal/access_control"
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/shared/config"
 )
 
 type SshHandler interface {
@@ -52,7 +52,7 @@ func AddFilesToArchive(h SshHandler) {
 		}
 
 		for _, info := range infos {
-			if info.IsNewFile || !config.SkipMetaDataIfExists {
+			if info.IsNewFile || !config.AppConfig.SkipMetaDataIfExists {
 				//Create/Update meta-data
 				meta, err := metadata.AddMetaData(
 					info.Hash,

@@ -7,8 +7,8 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/mapping"
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -25,8 +25,7 @@ var (
 )
 
 const (
-	FilePermissions = 0744
-	IndexName       = "index.bleve"
+	IndexName = "index.bleve"
 
 	batchSize = 100
 )
@@ -38,7 +37,7 @@ func Open() error {
 		return nil
 	}
 
-	indexPath := filepath.Join(config.AssetFulltextIndexBaseDir, IndexName)
+	indexPath := filepath.Join(config.AppConfig.AssetFulltextIndexBaseDir, IndexName)
 	var err error
 
 	index, err = bleve.Open(indexPath)

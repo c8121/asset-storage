@@ -8,13 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/c8121/asset-storage/internal/config"
-	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db"
-	"github.com/c8121/asset-storage/internal/metadata_db/sqlite"
 	"github.com/c8121/asset-storage/internal/ssh_server"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/internal/users"
+	"github.com/c8121/asset-storage/shared/boostrap"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/auth"
 	"github.com/c8121/go_vue_spa/util"
 	"golang.org/x/crypto/ssh"
@@ -32,7 +31,8 @@ var (
 
 func main() {
 
-	config.LoadDefault()
+	boostrap.InitAssetStorageApp()
+	defer boostrap.FinalizeAssetStorageApp()
 
 	if *hostKeyFile == "" {
 
@@ -59,19 +59,13 @@ func main() {
 		return
 	}
 
-	storage.CreateDirectories()
-	metadata.CreateDirectories()
-
-	metadata_db_sqlite.Open()
-	defer metadata_db_sqlite.Close()
-
 	//SSH-Server requires auth
 	util.PanicOnError(users.InitLocalFileAppAuthentication(users.DefaultPasswordCost), "failed to init app authentication")
 	metadata_db.InitAccessControl()
 
 	sshServerConfig := &ssh_server.SshServerConfig{
 
-		ListenAddress: config.ListenAddress,
+		ListenAddress: config.AppConfig.ListenAddress,
 
 		HostKeyFile: *hostKeyFile,
 
@@ -115,7 +109,7 @@ func main() {
 
 // create a home-/root-directory for the given user.
 func createVirtualRootDir(username string) (string, error) {
-	root := filepath.Join(config.AssetStorageTempDir, "virtual-auth", username)
+	root := filepath.Join(config.AppConfig.AssetStorageTempDir, "virtual-auth", username)
 	if err := os.MkdirAll(root, storage.FilePermissions); err != nil {
 		return "", err
 	}

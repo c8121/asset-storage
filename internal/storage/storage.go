@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/c8121/asset-storage/internal/config"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 	"github.com/gabriel-vasile/mimetype"
 )
@@ -43,7 +43,7 @@ func copyToStorage(reader io.Reader, size int64) (*AddedFileInfo, error) {
 	defer util.CloseOrLog(writer)
 
 	var outWriter StorageWriter
-	if len(config.XorKey) > 0 {
+	if len(config.AppConfig.XorKey) > 0 {
 		outWriter = NewXorWriter(writer)
 	} else {
 		outWriter = writer
@@ -96,7 +96,7 @@ func copyToStorage(reader io.Reader, size int64) (*AddedFileInfo, error) {
 
 	destName := info.Hash[2:]
 	destDir := filepath.Join(
-		config.AssetStorageBaseDir,
+		config.AppConfig.AssetStorageBaseDir,
 		TimePeriodName(),
 		info.Hash[:2])
 
@@ -126,7 +126,7 @@ func copyToStorage(reader io.Reader, size int64) (*AddedFileInfo, error) {
 // Walk visits every asset (file) in storage and calls given handler function on it.
 func Walk(handler func(path string)) {
 
-	timePeriodDirs, err := os.ReadDir(config.AssetStorageBaseDir)
+	timePeriodDirs, err := os.ReadDir(config.AppConfig.AssetStorageBaseDir)
 	if errors.Is(err, os.ErrNotExist) {
 		return
 	}
@@ -134,7 +134,7 @@ func Walk(handler func(path string)) {
 
 	for _, timePeriodEntry := range timePeriodDirs {
 
-		path := filepath.Join(config.AssetStorageBaseDir, timePeriodEntry.Name())
+		path := filepath.Join(config.AppConfig.AssetStorageBaseDir, timePeriodEntry.Name())
 		children, err := os.ReadDir(path)
 		util.PanicOnError(err, "Failed to read directory")
 
@@ -163,7 +163,7 @@ func FindByHash(hashHex string) (string, error) {
 	//Fast check first: Check if file exists in current time-period
 	destName := hashHex[2:]
 	destDir := filepath.Join(
-		config.AssetStorageBaseDir,
+		config.AppConfig.AssetStorageBaseDir,
 		TimePeriodName(),
 		hashHex[:2])
 
@@ -175,14 +175,14 @@ func FindByHash(hashHex string) (string, error) {
 	}
 
 	//Evaluate all time-period dirs
-	dirs, err := os.ReadDir(config.AssetStorageBaseDir)
+	dirs, err := os.ReadDir(config.AppConfig.AssetStorageBaseDir)
 	if errors.Is(err, os.ErrNotExist) {
 		return destPath, err
 	}
 	util.PanicOnError(err, "Failed to read directory")
 	for _, file := range dirs {
 		destDir = filepath.Join(
-			config.AssetStorageBaseDir,
+			config.AppConfig.AssetStorageBaseDir,
 			file.Name(),
 			hashHex[:2])
 		destPath = filepath.Join(
@@ -252,13 +252,13 @@ func newTempWriter(size int64) (StorageWriter, error) {
 	var writer StorageWriter
 	var err error
 
-	if config.UseGzip {
-		if size <= config.MaxMemFileSize {
+	if config.AppConfig.UseGzip {
+		if size <= config.AppConfig.MaxMemFileSize {
 			writer, err = NewMemZipFileWriter(size)
 		} else {
 			writer, err = NewTempZipFileWriter()
 		}
-	} else if size <= config.MaxMemFileSize {
+	} else if size <= config.AppConfig.MaxMemFileSize {
 		writer, err = NewMemFileWriter(size)
 	} else {
 		writer, err = NewTempFileWriter()

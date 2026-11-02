@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/c8121/asset-storage/internal/config"
+	"github.com/c8121/asset-storage/shared/config"
 )
 
 type StorageZipFileWriter struct {
@@ -63,7 +63,7 @@ func (writer *StorageZipFileWriter) Remove() error {
 }
 
 func NewTempZipFileWriter() (*StorageZipFileWriter, error) {
-	file, err := os.CreateTemp(config.AssetStorageTempDir, "asset-*.tmp")
+	file, err := os.CreateTemp(config.AppConfig.AssetStorageTempDir, "asset-*.tmp")
 	if err != nil {
 		return nil, err
 	}

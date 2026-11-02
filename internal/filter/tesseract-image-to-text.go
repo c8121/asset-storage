@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/metadata"
 	apputil "github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -33,7 +33,7 @@ func (f TesseractImageToTextFilter) Apply(assetHash string, meta *metadata.JsonA
 		return nil, "", fmt.Errorf("cannot find asset: %w", err)
 	}
 
-	tmpFile, err := os.CreateTemp(config.AssetStorageTempDir, "tesseract-prep*")
+	tmpFile, err := os.CreateTemp(config.AppConfig.AssetStorageTempDir, "tesseract-prep*")
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to create temp file: %w", err)
 	}
@@ -68,7 +68,7 @@ func (f TesseractImageToTextFilter) imageTesseractImageToText(input string, lang
 		return "", fmt.Errorf("tesseract not found (searching in %v)", filter_commands.TesseractBinPaths)
 	}
 
-	out, err := os.CreateTemp(config.AssetStorageTempDir, "tesseract*")
+	out, err := os.CreateTemp(config.AppConfig.AssetStorageTempDir, "tesseract*")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file: %w", err)
 	}
@@ -92,7 +92,7 @@ func (f TesseractImageToTextFilter) imageTesseractImageToText(input string, lang
 		return "", fmt.Errorf("failed to extract text: %w", err)
 	}
 
-	entries, err := os.ReadDir(config.AssetStorageTempDir)
+	entries, err := os.ReadDir(config.AppConfig.AssetStorageTempDir)
 	if err != nil {
 		return "", fmt.Errorf("failed to read dir: %w", err)
 	}
@@ -100,7 +100,7 @@ func (f TesseractImageToTextFilter) imageTesseractImageToText(input string, lang
 	outFileName := filepath.Base(out.Name())
 	for _, entry := range entries {
 		if strings.HasPrefix(entry.Name(), outFileName) {
-			return filepath.Join(config.AssetStorageTempDir, entry.Name()), nil
+			return filepath.Join(config.AppConfig.AssetStorageTempDir, entry.Name()), nil
 		}
 	}
 

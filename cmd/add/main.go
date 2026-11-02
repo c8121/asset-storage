@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/metadata"
-	"github.com/c8121/asset-storage/internal/metadata_db/sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/shared/boostrap"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -39,12 +39,8 @@ func main() {
 		panic(currentUserErr)
 	}
 
-	config.LoadDefault()
-	storage.CreateDirectories()
-	metadata.CreateDirectories()
-
-	metadata_db_sqlite.Open()
-	defer metadata_db_sqlite.Close()
+	boostrap.InitAssetStorageApp()
+	defer boostrap.FinalizeAssetStorageApp()
 
 	for _, file := range files {
 		if file[:1] == "-" {
@@ -109,7 +105,7 @@ func addFileAndMetadata(path string, stat os.FileInfo) error {
 	//Check hash before adding
 	//Faster only if most of the files already exists as it only calculates the hash in memory.
 	//Slower if most of the files are new because file will be read twice.
-	if config.CheckHashBeforeAdd {
+	if config.AppConfig.CheckHashBeforeAdd {
 		hash, err := storage.HashFromContent(path)
 		if err != nil {
 			util.LogError(err)
@@ -130,7 +126,7 @@ func addFileAndMetadata(path string, stat os.FileInfo) error {
 	}
 
 	for _, info := range infos {
-		if info.IsNewFile || !config.SkipMetaDataIfExists {
+		if info.IsNewFile || !config.AppConfig.SkipMetaDataIfExists {
 			//Create/Update meta-data
 			_, err := metadata.AddMetaData(
 				info.Hash,

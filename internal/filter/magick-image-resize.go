@@ -5,11 +5,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
 	apputil "github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -39,7 +39,7 @@ func (f ImageMagickResizeFilter) Apply(assetHash string, meta *metadata.JsonAsse
 		return nil, "", fmt.Errorf("cannot find asset: %w", err)
 	}
 
-	out, err := os.CreateTemp(config.AssetStorageTempDir, tempFileNamePattern)
+	out, err := os.CreateTemp(config.AppConfig.AssetStorageTempDir, tempFileNamePattern)
 	if err != nil {
 		return nil, "", fmt.Errorf("Failed to create temp file: %w", err)
 	}

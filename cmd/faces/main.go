@@ -3,21 +3,18 @@ package main
 import (
 	"fmt"
 
-	"github.com/c8121/asset-storage/internal/config"
 	"github.com/c8121/asset-storage/internal/faces"
 	"github.com/c8121/asset-storage/internal/metadata_db/entity"
-	"github.com/c8121/asset-storage/internal/metadata_db/sqlite"
 	"github.com/c8121/asset-storage/internal/storage"
+	"github.com/c8121/asset-storage/shared/boostrap"
 	"github.com/c8121/go_vue_spa/notifications"
 	"github.com/c8121/go_vue_spa/util"
 )
 
 func main() {
 
-	config.LoadDefault()
-
-	metadata_db_sqlite.Open()
-	defer metadata_db_sqlite.Close()
+	boostrap.InitAssetStorageApp()
+	defer boostrap.FinalizeAssetStorageApp()
 
 	if !faces.CheckFaceRestServiceAvailable() {
 		notifications.AppNotifications.PrintNotifications()
