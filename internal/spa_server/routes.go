@@ -28,8 +28,9 @@ func CreateRoutes(router *gin.Engine) {
 		SubDirName: httproot.VueUI,
 	})
 	resources = append(resources, go_vue_spa.Resource{
-		RootFs:     rootFS,
-		SubDirName: apphttproot.AppDir,
+		RootFs:          rootFS,
+		SubDirName:      apphttproot.AppDir,
+		DefaultDocument: "asset-storage.html",
 	})
 
 	go_vue_spa.CreateRoutesFromFS(router, resources)
