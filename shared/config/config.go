@@ -46,22 +46,22 @@ var (
 
 func NewConfigFromFlags() *Config {
 
-	cmdDataDir := flag.String("data", "", "Data directory for storage, meta-data, db...")
-	cmdUseGzip := flag.Bool("gzip", false, "Use GZIP compression")
-	cmdXorKey := flag.String("xor", "", "XOR Key for content obfuscation")
-	cmdMaxMemFileSize := flag.Int64("maxmem", 0, "Max memory file size in bytes")
-	cmdSpaHttpRoot := flag.String("spa", "", "HTTP root directory of SPA app")
-	cmdSkipMetaDataIfExists := flag.Bool("skip-meta", false, "Skip meta data update if file exist")
-	cmdCheckHashBeforeAdd := flag.Bool("check-hash", false, "Check hash before trying to add file.")
-	cmdListen := flag.String("listen", "", "Listen Address (ip:port)")
-	cmdCertFile := flag.String("cert", "", "Certificate file")
-	cmdKeyFile := flag.String("key", "", "Key file")
-	cmdCharCountPdfToTextOcr := flag.Int("pdf-ocr", 10, "Use OCR when converting PDF to Text, if result does not have more chars")
-	cmdLogVerbose := flag.Bool("v", false, "Log verbose")
+	flagSet := flag.NewFlagSet("asset-storage", flag.ExitOnError)
 
-	checkObsoleteCmdArgs()
+	cmdDataDir := flagSet.String("data", "", "Data directory for storage, meta-data, db...")
+	cmdUseGzip := flagSet.Bool("gzip", false, "Use GZIP compression")
+	cmdXorKey := flagSet.String("xor", "", "XOR Key for content obfuscation")
+	cmdMaxMemFileSize := flagSet.Int64("maxmem", 0, "Max memory file size in bytes")
+	cmdSpaHttpRoot := flagSet.String("spa", "", "HTTP root directory of SPA app")
+	cmdSkipMetaDataIfExists := flagSet.Bool("skip-meta", false, "Skip meta data update if file exist")
+	cmdCheckHashBeforeAdd := flagSet.Bool("check-hash", false, "Check hash before trying to add file.")
+	cmdListen := flagSet.String("listen", "", "Listen Address (ip:port)")
+	cmdCertFile := flagSet.String("cert", "", "Certificate file")
+	cmdKeyFile := flagSet.String("key", "", "Key file")
+	cmdCharCountPdfToTextOcr := flagSet.Int("pdf-ocr", 10, "Use OCR when converting PDF to Text, if result does not have more chars")
+	cmdLogVerbose := flagSet.Bool("v", false, "Log verbose")
 
-	flag.Parse()
+	flagSet.Parse(os.Args[1:])
 
 	config := &Config{}
 
@@ -182,17 +182,4 @@ func validateDataDir(path string) {
 		}
 	}
 
-}
-
-// checkObsoleteCmdArgs looks for command-line arguments which are not supported anymore.
-func checkObsoleteCmdArgs() {
-
-	obsoleteBase := flag.String("base", "", "")
-
-	flag.Parse()
-
-	if *obsoleteBase != "" {
-		fmt.Println("Argument 'base' is obsolete. Use 'data' instead, pointing directly to the data directory")
-		os.Exit(1)
-	}
 }
