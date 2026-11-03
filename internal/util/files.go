@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 )
@@ -14,7 +15,7 @@ func CreateDirIfNotExists(path string, perm fs.FileMode) {
 		if err := os.MkdirAll(path, perm); err != nil {
 			panic(fmt.Errorf("failed to create database directory"))
 		} else {
-			fmt.Printf("Created directory: %s\n", path)
+			slog.Info("Created directory", "path", path)
 		}
 	}
 }
@@ -33,6 +34,6 @@ func FindFile(paths []string) string {
 		}
 	}
 
-	fmt.Printf("No files found in %s\n", paths)
+	slog.Info("No files found", "paths", paths)
 	return ""
 }

@@ -1,4 +1,4 @@
-package metadata_db_sqlite
+package bootstrap
 
 import (
 	"database/sql"
@@ -6,7 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/c8121/asset-storage/internal/metadata"
-	"github.com/c8121/asset-storage/internal/metadata_db/entity"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata_db/entity"
+	metadata_db_sqlite "github.com/c8121/asset-storage/internal/metadata_db/sqlite"
 	apputil "github.com/c8121/asset-storage/internal/util"
 	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_db_entities"
@@ -16,7 +17,7 @@ import (
 )
 
 // Open Connect to SQLite database file + init
-func Open() {
+func OpenDatabase() {
 
 	dbDir := filepath.Dir(config.AppConfig.AssetMetaDataDb)
 	apputil.CreateDirIfNotExists(dbDir, metadata.FilePermissions)
@@ -33,14 +34,14 @@ func Open() {
 
 	//Creation of face-embedding-table cannot be done with go_db_entities
 	queryBuilder := sqlite.NewQueryBuilder()
-	queryBuilder.CreateQueryBuilder = &FaceEmbeddingCreateQueryBuilder{
-		defaultCreateQueryBuilder: queryBuilder.CreateQueryBuilder,
+	queryBuilder.CreateQueryBuilder = &metadata_db_sqlite.FaceEmbeddingCreateQueryBuilder{
+		DefaultCreateQueryBuilder: queryBuilder.CreateQueryBuilder,
 	}
 
 	metadata_db_entity.DbContext = go_db_entities.NewContext(db, queryBuilder, sqlite.NewFieldMapping())
 
 	//Finding face-embeddings cannot be done with go_db_entities
-	metadata_db_entity.FacesDbContext = metadata_db_entity.NewContext(db, FaceEmbeddingQueryBuilder{})
+	metadata_db_entity.FacesDbContext = metadata_db_entity.NewContext(db, metadata_db_sqlite.FaceEmbeddingQueryBuilder{})
 
 	metadata_db_entity.CheckCreateTables()
 
@@ -48,7 +49,7 @@ func Open() {
 }
 
 // Close Disconnect from Database
-func Close() {
+func CloseDatabase() {
 	fmt.Printf("Close DB %s\n", config.AppConfig.AssetMetaDataDb)
 	util.CloseOrLog(metadata_db_entity.DbContext)
 }

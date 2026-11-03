@@ -4,17 +4,17 @@ import (
 	"fmt"
 
 	"github.com/c8121/asset-storage/internal/faces"
-	"github.com/c8121/asset-storage/internal/metadata_db/entity"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/shared/boostrap"
+	"github.com/c8121/asset-storage/shared/bootstrap"
 	"github.com/c8121/go_vue_spa/notifications"
 	"github.com/c8121/go_vue_spa/util"
 )
 
 func main() {
 
-	boostrap.InitAssetStorageApp()
-	defer boostrap.FinalizeAssetStorageApp()
+	bootstrap.InitAssetStorageApp()
+	defer bootstrap.FinalizeAssetStorageApp()
 
 	if !faces.CheckFaceRestServiceAvailable() {
 		notifications.AppNotifications.PrintNotifications()

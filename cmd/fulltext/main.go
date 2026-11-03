@@ -9,7 +9,7 @@ import (
 	"github.com/c8121/asset-storage/internal/fulltext"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/shared/boostrap"
+	"github.com/c8121/asset-storage/shared/bootstrap"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -19,8 +19,8 @@ var (
 
 func main() {
 
-	boostrap.InitAssetStorageApp()
-	defer boostrap.FinalizeAssetStorageApp()
+	bootstrap.InitAssetStorageApp()
+	defer bootstrap.FinalizeAssetStorageApp()
 
 	if *query != "" {
 		searchIndex(*query)

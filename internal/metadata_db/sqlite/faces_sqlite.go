@@ -1,7 +1,7 @@
 package metadata_db_sqlite
 
 import (
-	"github.com/c8121/asset-storage/internal/metadata_db/entity"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/go_db_entities"
 )
 
@@ -14,7 +14,7 @@ func (b FaceEmbeddingQueryBuilder) GetFindSimilarQuery(ctx *metadata_db_entity.F
 }
 
 type FaceEmbeddingCreateQueryBuilder struct {
-	defaultCreateQueryBuilder go_db_entities.CreateQueryBuilder
+	DefaultCreateQueryBuilder go_db_entities.CreateQueryBuilder
 }
 
 func (b FaceEmbeddingCreateQueryBuilder) GetCreateQueries(c *go_db_entities.Context, e go_db_entities.Entity) []string {
@@ -27,5 +27,5 @@ func (b FaceEmbeddingCreateQueryBuilder) GetCreateQueries(c *go_db_entities.Cont
 		}
 	}
 
-	return b.defaultCreateQueryBuilder.GetCreateQueries(c, e)
+	return b.DefaultCreateQueryBuilder.GetCreateQueries(c, e)
 }

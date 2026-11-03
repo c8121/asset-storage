@@ -7,10 +7,10 @@ import (
 	"os/user"
 
 	"github.com/c8121/asset-storage/internal/metadata"
-	"github.com/c8121/asset-storage/internal/metadata_db/entity"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/asset-storage/internal/storage"
 	apputil "github.com/c8121/asset-storage/internal/util"
-	"github.com/c8121/asset-storage/shared/boostrap"
+	"github.com/c8121/asset-storage/shared/bootstrap"
 	"github.com/c8121/go_db_entities"
 	"github.com/c8121/go_vue_spa/util"
 )
@@ -30,8 +30,8 @@ func main() {
 		panic(currentUserErr)
 	}
 
-	boostrap.InitAssetStorageApp()
-	defer boostrap.FinalizeAssetStorageApp()
+	bootstrap.InitAssetStorageApp()
+	defer bootstrap.FinalizeAssetStorageApp()
 
 	if *hash != "" {
 		removeAsset(*hash)

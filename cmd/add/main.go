@@ -11,7 +11,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/storage"
-	"github.com/c8121/asset-storage/shared/boostrap"
+	"github.com/c8121/asset-storage/shared/bootstrap"
 	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 )
@@ -39,8 +39,8 @@ func main() {
 		panic(currentUserErr)
 	}
 
-	boostrap.InitAssetStorageApp()
-	defer boostrap.FinalizeAssetStorageApp()
+	bootstrap.InitAssetStorageApp()
+	defer bootstrap.FinalizeAssetStorageApp()
 
 	for _, file := range files {
 		if file[:1] == "-" {

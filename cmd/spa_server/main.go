@@ -4,7 +4,7 @@ import (
 	"github.com/c8121/asset-storage/internal/metadata_db"
 	"github.com/c8121/asset-storage/internal/spa_server"
 	"github.com/c8121/asset-storage/internal/users"
-	"github.com/c8121/asset-storage/shared/boostrap"
+	"github.com/c8121/asset-storage/shared/bootstrap"
 	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/asset-storage/shared/rest_api"
 	"github.com/c8121/go_vue_spa/util"
@@ -13,8 +13,8 @@ import (
 
 func main() {
 
-	boostrap.InitAssetStorageApp()
-	defer boostrap.FinalizeAssetStorageApp()
+	bootstrap.InitAssetStorageApp()
+	defer bootstrap.FinalizeAssetStorageApp()
 
 	if users.UsersFileExists() {
 		util.PanicOnError(users.InitLocalFileAppAuthentication(users.DefaultPasswordCost), "failed to init app authentication")

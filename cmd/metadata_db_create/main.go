@@ -6,8 +6,8 @@ import (
 	"github.com/c8121/asset-storage/internal/collections"
 	"github.com/c8121/asset-storage/internal/metadata"
 	"github.com/c8121/asset-storage/internal/metadata_db"
-	"github.com/c8121/asset-storage/internal/metadata_db/entity"
-	"github.com/c8121/asset-storage/shared/boostrap"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata_db/entity"
+	"github.com/c8121/asset-storage/shared/bootstrap"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -20,8 +20,8 @@ import (
 
 func main() {
 
-	boostrap.InitAssetStorageApp()
-	defer boostrap.FinalizeAssetStorageApp()
+	bootstrap.InitAssetStorageApp()
+	defer bootstrap.FinalizeAssetStorageApp()
 
 	createFilesMetaDataDb()
 	createCollectionsMetaDataDb()
