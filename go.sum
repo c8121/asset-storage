@@ -48,8 +48,8 @@ github.com/bytedance/sonic v1.15.5 h1:gKWTBfYCIQpQHZ7LpwGf9Gj3N88ZN0G/GaB3EQhiGX
 github.com/bytedance/sonic v1.15.5/go.mod h1:nn7CoK5W+LKbl22XGJrXg6SwzaFAcVs89miqzkqDwOU=
 github.com/bytedance/sonic/loader v0.5.3 h1:ziVGAbXQtLoaot/M6YQxntGkekxz6B/DyuJVwnTbMAA=
 github.com/bytedance/sonic/loader v0.5.3/go.mod h1:AR4NYCk5DdzZizZ5djGqQ92eEhCCcdf5x77udYiSJRo=
-github.com/c8121/go_db_entities v0.0.8 h1:TGbz3Su6umrZjQp6kyYgbCZKmu7FkpGwY8nBgJS+UFo=
-github.com/c8121/go_db_entities v0.0.8/go.mod h1:UlDgkSCTS9OxaoJjRHAtRVJyHPsmrBWUV76hlHjqKPY=
+github.com/c8121/go_db_entities v0.0.9 h1:bjfR3IR90wQzG+g/cTwqnvSIXXNtl08UFX3h0hmiYao=
+github.com/c8121/go_db_entities v0.0.9/go.mod h1:UlDgkSCTS9OxaoJjRHAtRVJyHPsmrBWUV76hlHjqKPY=
 github.com/c8121/go_vue_spa v0.0.2 h1:TrEzoyHZp7mzvaqqnk0Z3Zwz9QbxNZ8uPlCo8ZkI2vA=
 github.com/c8121/go_vue_spa v0.0.2/go.mod h1:yheEYVzEmVZu++AJK1qiuety9fxPzoStuK2zStcc37g=
 github.com/cloudwego/base64x v0.1.7 h1:NppS+Fgzg5ovhn4NkUXaDT3x9jldgH5ToMCqzBSi2zI=

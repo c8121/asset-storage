@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/blevesearch/bleve/v2 v2.6.1
-	github.com/c8121/go_db_entities v0.0.8
+	github.com/c8121/go_db_entities v0.0.9
 	github.com/c8121/go_vue_spa v0.0.2
 	github.com/gabriel-vasile/mimetype v1.4.16
 	github.com/gin-gonic/gin v1.12.0

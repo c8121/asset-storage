@@ -77,14 +77,7 @@ func NewConfigFromFlags() *Config {
 	validateDataDir(useDataDir)
 
 	slog.Info("Init path", "data", useDataDir)
-
-	config.AssetStorageConfigDir = filepath.Join(useDataDir, "config")
-	config.AssetStorageBaseDir = filepath.Join(useDataDir, "files")
-	config.AssetStorageTempDir = filepath.Join(useDataDir, "tmp")
-	config.AssetMetaDataBaseDir = filepath.Join(useDataDir, "meta")
-	config.AssetMetaDataDb = filepath.Join(useDataDir, "db/asset-metadata.sqlite")
-	config.AssetCollectionsBaseDir = filepath.Join(useDataDir, "collections")
-	config.AssetFulltextIndexBaseDir = filepath.Join(useDataDir, "index")
+	SetDirectories(config, useDataDir)
 
 	config.FilePermissions = 0744
 
@@ -154,6 +147,16 @@ func NewConfigFromFlags() *Config {
 	}
 
 	return config
+}
+
+func SetDirectories(config *Config, baseDir string) {
+	config.AssetStorageConfigDir = filepath.Join(baseDir, "config")
+	config.AssetStorageBaseDir = filepath.Join(baseDir, "files")
+	config.AssetStorageTempDir = filepath.Join(baseDir, "tmp")
+	config.AssetMetaDataBaseDir = filepath.Join(baseDir, "meta")
+	config.AssetMetaDataDb = filepath.Join(baseDir, "db/asset-metadata.sqlite")
+	config.AssetCollectionsBaseDir = filepath.Join(baseDir, "collections")
+	config.AssetFulltextIndexBaseDir = filepath.Join(baseDir, "index")
 }
 
 // validateDataDir checks is given path is an asset-storage directory.
