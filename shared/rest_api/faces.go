@@ -1,12 +1,12 @@
 package rest_api
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/c8121/asset-storage/internal/access_control"
 	"github.com/c8121/asset-storage/internal/faces"
-	"github.com/c8121/asset-storage/internal/metadata_db/entity"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/go_vue_spa/util"
 	"github.com/gin-gonic/gin"
 )
@@ -17,20 +17,20 @@ func GetFaces(c *gin.Context) {
 
 	hash := c.Param("hash")
 	if len(hash) < 32 {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash")))
+		util.AboutWithStatus(c, http.StatusNotFound, "invalid hash", nil)
 		return
 	}
 
 	acc := GetAccessContext(c)
 	ctx := access_control.GetAccessController()
 	if ctx != nil && ctx.CanRead(hash, acc) != nil {
-		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
+		util.AboutWithStatus(c, http.StatusForbidden, "forbidden", nil)
 		return
 	}
 
 	facesFound, err := metadata_db_entity.GetFaces(hash)
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("failed to get faces: %s", err)))
+		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to get faces", err)
 		return
 	}
 
@@ -47,28 +47,28 @@ func DetectFaces(c *gin.Context) {
 
 	hash := c.Param("hash")
 	if len(hash) < 32 {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash")))
+		util.AboutWithStatus(c, http.StatusNotFound, "invalid hash", nil)
 		return
 	}
 
 	acc := GetAccessContext(c)
 	ctx := access_control.GetAccessController()
 	if ctx != nil && ctx.CanRead(hash, acc) != nil {
-		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("forbidden")))
+		util.AboutWithStatus(c, http.StatusForbidden, "forbidden", nil)
 		return
 	}
 
 	assetMeta, err := metadata_db_entity.LoadAsset(hash)
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to load face", err)
 		return
 	}
 
 	facesFound, err := faces.DetectFaces(hash)
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to detect faces", err)
 	} else {
-		fmt.Printf("Found %d faces in %s\n", len(*facesFound), hash)
+		slog.Info("Found faces", "count", len(*facesFound), "hash", hash)
 
 		if err = metadata_db_entity.RemoveFaces(assetMeta.Id); err != nil {
 			util.LogError(err)

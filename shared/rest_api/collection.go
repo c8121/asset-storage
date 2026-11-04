@@ -2,6 +2,7 @@ package rest_api
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/c8121/asset-storage/internal/collections"
@@ -25,13 +26,13 @@ func GetCollection(c *gin.Context) {
 
 	uuid := c.Param("uuid")
 	if len(uuid) < 32 {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid uuid")))
+		util.AboutWithStatus(c, http.StatusNotFound, "invalid uuid", nil)
 		return
 	}
 
 	collection, err := collections.LoadById(uuid)
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid uuid (not found)")))
+		util.AboutWithStatus(c, http.StatusNotFound, "invalid uuid", err)
 		return
 	}
 
@@ -44,12 +45,12 @@ func AddCollection(c *gin.Context) {
 	var req UpdateCollectionRequest
 	err := c.BindJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
+		util.AboutWithStatus(c, http.StatusInternalServerError, "Failed to parse request", err)
 		return
 	}
 
 	if len(req.Assets) == 0 {
-		c.JSON(http.StatusBadRequest, "No asset hashes given")
+		util.AboutWithStatus(c, http.StatusBadRequest, "No asset hashes given", nil)
 		return
 	}
 
@@ -61,14 +62,14 @@ func AddCollection(c *gin.Context) {
 		req.Assets)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
+		util.AboutWithStatus(c, http.StatusInternalServerError, "Failed to add collection", err)
 		return
 	}
 
 	//Create/Update meta-data-database
 	err = metadata_db.AddCollection(collection)
 	if err != nil {
-		fmt.Printf("Error adding collection-data to database: %s\n", err)
+		slog.Warn("Error adding collection-data to database", "error", err)
 	}
 
 	c.IndentedJSON(http.StatusOK, collection)
@@ -79,7 +80,7 @@ func RemoveCollection(c *gin.Context) {
 
 	uuid := c.PostForm("UUID")
 	if len(uuid) < 32 {
-		c.JSON(http.StatusBadRequest, "UUID missing or invalid")
+		util.AboutWithStatus(c, http.StatusNotFound, "invalid uuid", nil)
 		return
 	}
 
@@ -94,7 +95,7 @@ func RemoveCollection(c *gin.Context) {
 	// Remove from DB
 	err = metadata_db.RemoveCollection(collection)
 	if err != nil {
-		fmt.Printf("Error removing collection-data to database: %s\n", err)
+		slog.Warn("Error removing collection-data to database", "error", err)
 	}
 
 	c.IndentedJSON(http.StatusOK, collection)
@@ -116,7 +117,7 @@ func ListCollections(c *gin.Context) {
 
 	items, err := metadata_db.ListCollections(listFilter)
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		util.AboutWithStatus(c, http.StatusInternalServerError, "Failed to load collections", err)
 		return
 	}
 

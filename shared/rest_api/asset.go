@@ -7,7 +7,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/access_control"
 	"github.com/c8121/asset-storage/internal/metadata_db"
-	"github.com/c8121/asset-storage/internal/metadata_db/entity"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/go_vue_spa/util"
 	"github.com/gin-gonic/gin"
@@ -22,22 +22,20 @@ func GetAsset(c *gin.Context) {
 
 	hash := c.Param("hash")
 	if len(hash) < 32 {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash")))
+		util.AboutWithStatus(c, http.StatusNotFound, "invalid hash", nil)
 		return
 	}
 
 	asset, err := metadata_db_entity.LoadAsset(hash)
 	if err != nil || asset == nil {
-		util.LogError(err)
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash (not found)")))
+		util.AboutWithStatus(c, http.StatusNotFound, "invalid hash", err)
 		return
 	}
 
 	acc := GetAccessContext(c)
 	ctx := access_control.GetAccessController()
 	if ctx != nil && ctx.CanRead(hash, acc) != nil {
-		fmt.Printf("Access denied to %s\n", hash)
-		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("forbidden")))
+		util.AboutWithStatus(c, http.StatusForbidden, "forbidden", nil)
 		return
 	}
 
@@ -46,7 +44,7 @@ func GetAsset(c *gin.Context) {
 
 	reader, err := storage.Open(hash)
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to open", err)
 		return
 	}
 	defer util.CloseOrLog(reader)
@@ -71,11 +69,14 @@ func GetAsset(c *gin.Context) {
 		if n == 0 && err == io.EOF {
 			break
 		}
-		util.PanicOnIoError(err, "Failed to read file")
+		if err != nil && err != io.EOF {
+			util.AboutWithStatus(c, http.StatusInternalServerError, "failed to read", err)
+			return
+		}
 
 		if _, err = c.Writer.Write(buf[:n]); err != nil {
-			util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
-			break
+			util.AboutWithStatus(c, http.StatusInternalServerError, "failed to write", err)
+			return
 		}
 		c.Writer.Flush()
 	}
@@ -97,7 +98,7 @@ func ListAssets(c *gin.Context) {
 
 	items, err := metadata_db.ListAssets(listFilter)
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusInternalServerError, err))
+		util.AboutWithStatus(c, http.StatusInternalServerError, "Failed to load entities", err)
 		return
 	}
 

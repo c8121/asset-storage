@@ -19,34 +19,34 @@ func GetFiltered(c *gin.Context) {
 
 	hash := c.Param("hash")
 	if len(hash) < 32 {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash")))
+		util.AboutWithStatus(c, http.StatusNotFound, "invalid hash", nil)
 		return
 	}
 
 	acc := GetAccessContext(c)
 	ctx := access_control.GetAccessController()
 	if ctx != nil && ctx.CanRead(hash, acc) != nil {
-		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
+		util.AboutWithStatus(c, http.StatusForbidden, "forbidden", nil)
 		return
 	}
 
 	filterName := c.Param("filter")
 	if len(filterName) < 1 {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("no filter name given")))
+		util.AboutWithStatus(c, http.StatusNotFound, "no filter name given", nil)
 		return
 	}
 
 	filterParamsReader := c.Request.Body
 	b, err := io.ReadAll(filterParamsReader)
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("failed to read request body")))
+		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to read request body", err)
 		return
 	}
 	filterParams := paramsToMap(string(b))
 
 	meta, err := metadata.LoadByHash(hash)
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash (not found)")))
+		util.AboutWithStatus(c, http.StatusNotFound, "invalid hash", err)
 		return
 	}
 

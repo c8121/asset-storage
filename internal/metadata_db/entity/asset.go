@@ -18,7 +18,7 @@ type Asset struct {
 	Name     int64     `dbe:"Index"` //Latest name
 }
 
-func (p *Asset) GetEntityName() string {
+func (a *Asset) GetEntityName() string {
 	return "Asset"
 }
 

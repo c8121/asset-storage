@@ -1,9 +1,8 @@
 package rest_api
 
 import (
-	"errors"
-	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,7 +10,7 @@ import (
 
 	"github.com/c8121/asset-storage/internal/access_control"
 	"github.com/c8121/asset-storage/internal/metadata"
-	"github.com/c8121/asset-storage/internal/metadata_db/entity"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/asset-storage/internal/storage"
 	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
@@ -35,7 +34,7 @@ func ReceiveUpload(c *gin.Context) {
 	//Read binary file, save as temp-file
 	w, err := storage.NewTempFileWriter()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
+		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to create writer", err)
 		return
 	}
 	defer util.CloseOrLog(w)
@@ -46,11 +45,14 @@ func ReceiveUpload(c *gin.Context) {
 		if n == 0 && err == io.EOF {
 			break
 		}
-		util.PanicOnIoError(err, "Failed to read body")
+		if err != nil && err != io.EOF {
+			util.AboutWithStatus(c, http.StatusInternalServerError, "failed to read", err)
+			return
+		}
 
 		_, err = w.Write(buf[:n])
 		if err != nil {
-			c.JSON(http.StatusBadRequest, err.Error())
+			util.AboutWithStatus(c, http.StatusInternalServerError, "failed to write", err)
 			return
 		}
 	}
@@ -64,7 +66,7 @@ func AddUploadedFile(c *gin.Context) {
 	var req AddUploadedFileRequest
 	err := c.BindJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
+		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to read request", err)
 		return
 	}
 
@@ -74,7 +76,7 @@ func AddUploadedFile(c *gin.Context) {
 	}
 	ctx := access_control.GetAccessController()
 	if ctx != nil && ctx.CanWritePath(req.Path, acc) != nil {
-		c.JSON(http.StatusForbidden, errors.New("Access denied to path"))
+		util.AboutWithStatus(c, http.StatusForbidden, "forbidden", nil)
 		return
 	}
 
@@ -83,7 +85,7 @@ func AddUploadedFile(c *gin.Context) {
 	//Add file to storage
 	infos, err := storage.AddFile(path)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
+		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to add file", err)
 		return
 	}
 
@@ -97,7 +99,7 @@ func AddUploadedFile(c *gin.Context) {
 				addedFileName = req.Name
 			} else {
 				//Added file was unpackable and contained multiple other files
-				fmt.Printf("Unpacked %s from %s\n", addedFileName, req.Name)
+				slog.Info("Unpacked", "file", addedFileName, "request", req.Name)
 			}
 
 			//Create/Update meta-data
@@ -109,7 +111,7 @@ func AddUploadedFile(c *gin.Context) {
 				req.Owner,
 				req.FileTime)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, err.Error())
+				util.AboutWithStatus(c, http.StatusInternalServerError, "failed to add meta-data", err)
 				return
 			}
 
@@ -118,7 +120,7 @@ func AddUploadedFile(c *gin.Context) {
 			//Create/Update meta-data-database
 			err = metadata_db_entity.AddAsset(meta)
 			if err != nil {
-				fmt.Printf("Error adding meta-data to database '%s': %s\n", path, err)
+				slog.Warn("Error adding meta-data to database", "path", path, "error", err)
 			}
 
 		}

@@ -22,20 +22,20 @@ func GetPreview(c *gin.Context) {
 
 	hash := c.Param("hash")
 	if len(hash) < 32 {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash")))
+		util.AboutWithStatus(c, http.StatusNotFound, "invalid hash", nil)
 		return
 	}
 
 	acc := GetAccessContext(c)
 	ctx := access_control.GetAccessController()
 	if ctx != nil && ctx.CanRead(hash, acc) != nil {
-		util.LogError(c.AbortWithError(http.StatusForbidden, fmt.Errorf("Forbidden")))
+		util.AboutWithStatus(c, http.StatusForbidden, "forbidden", nil)
 		return
 	}
 
 	meta, err := metadata.LoadByHash(hash)
 	if err != nil {
-		util.LogError(c.AbortWithError(http.StatusNotFound, fmt.Errorf("invalid hash (not found)")))
+		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to read request body", err)
 		return
 	}
 
