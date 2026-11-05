@@ -2,7 +2,7 @@ package rest_api
 
 import (
 	"fmt"
-	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -30,19 +30,12 @@ func GetFiltered(c *gin.Context) {
 		return
 	}
 
-	filterName := c.Param("filter")
-	if len(filterName) < 1 {
+	filterParam := c.Param("filter")
+	if len(filterParam) < 1 {
 		util.AboutWithStatus(c, http.StatusNotFound, "no filter name given", nil)
 		return
 	}
-
-	filterParamsReader := c.Request.Body
-	b, err := io.ReadAll(filterParamsReader)
-	if err != nil {
-		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to read request body", err)
-		return
-	}
-	filterParams := paramsToMap(string(b))
+	filterName, filterParams := parseFilterParam(filterParam)
 
 	meta, err := metadata.LoadByHash(hash)
 	if err != nil {
@@ -54,7 +47,7 @@ func GetFiltered(c *gin.Context) {
 		c.Data(http.StatusOK, mimeType, bytes)
 		return
 	} else {
-		util.LogError(c.AbortWithError(http.StatusNotFound, err))
+		util.AboutWithStatus(c, http.StatusNotFound, "failed to get filtered asset", err)
 	}
 }
 
@@ -71,15 +64,16 @@ func filterAsset(assetHash string, meta *metadata.JsonAssetMetaData, filterName 
 
 }
 
-// paramsToMap splits query parameters: name=value&...
-func paramsToMap(s string) map[string]string {
+// parseFilterParam splits filter parameter: filterName:name|param=value|...
+func parseFilterParam(s string) (string, map[string]string) {
 
-	m := make(map[string]string)
+	filter := ""
+	params := make(map[string]string)
 
 	p := 0
 	for p > -1 {
 		nvp := ""
-		e := strings.Index(s[p:], "&")
+		e := strings.Index(s[p:], "|")
 		if e > -1 {
 			nvp = s[p:e]
 			p = e + 1
@@ -91,7 +85,7 @@ func paramsToMap(s string) map[string]string {
 		k := ""
 		v := ""
 		var err error
-		i := strings.Index(nvp, "=")
+		i := strings.Index(nvp, ":")
 		if i > -1 {
 			k, err = url.QueryUnescape(nvp[:i])
 			v, err = url.QueryUnescape(nvp[i+1:])
@@ -100,12 +94,15 @@ func paramsToMap(s string) map[string]string {
 			v = ""
 		}
 		if err == nil {
-			//fmt.Printf("%s %s: %s = '%s'\n", s, nvp, k, v)
-			m[k] = v
+			if k == "filterName" {
+				filter = v
+			} else {
+				params[k] = v
+			}
 		} else {
-			util.LogError(fmt.Errorf("failed to decode parameter: %s, %w\n", nvp, err))
+			slog.Warn("Invalid filter string", "nvp", nvp, "error", err)
 		}
 	}
 
-	return m
+	return filter, params
 }

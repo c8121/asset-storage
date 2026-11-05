@@ -242,7 +242,14 @@
                     }
                     case 'assetDownloadClick': {
                         const asset = arguments[2];
-                        window.open('/assets/' + asset.Hash);
+                        const url = '/assets/' + asset.Hash;
+                        window.open(url);
+                        break;
+                    }
+                    case 'assetFilteredDownloadClick': {
+                        const req = arguments[2];
+                        const url = '/assets/filter/' + this.createDownloadFilterReuqestUrl(req) + "/" + req.asset.Hash;
+                        window.open(url);
                         break;
                     }
                     case 'assetPathClick': {
@@ -440,7 +447,21 @@
                         self.resetListFilter();
                         self.$refs.listView.loadAssets();
                     });
-            }
+            },
+
+            createDownloadFilterReuqestUrl(request) {
+                let paramsString = "filterName:" + request.filter;
+                if(request.params) {
+                    for(const param of request.params) {
+                        const v = ("" + param.value).trim()
+                        if(param.value !== "") {
+                            paramsString += "|" + param.name + ":" + param.value
+                        }
+                    }
+                }
+                paramsString = encodeURI(paramsString);
+                return paramsString;
+            },
         },
 
         mounted() {

@@ -1,7 +1,7 @@
 package rest_api
 
 import (
-	"github.com/c8121/go_vue_spa/auth/gin"
+	auth "github.com/c8121/go_vue_spa/auth/gin"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,7 +15,6 @@ func CreateRoutes(router *gin.Engine) {
 	router.GET("/assets/metadata/:hash", auth.UserAuthRequiredHandler(GetMetaData))
 
 	router.GET("/assets/filter/:filter/:hash", auth.UserAuthRequiredHandler(GetFiltered))
-	router.POST("/assets/filter/:filter/:hash", auth.UserAuthRequiredHandler(GetFiltered))
 
 	router.POST("/assets/upload", auth.UserAuthRequiredHandler(ReceiveUpload))
 	router.POST("/assets/upload/add", auth.UserAuthRequiredHandler(AddUploadedFile))

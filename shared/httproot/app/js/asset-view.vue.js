@@ -183,10 +183,11 @@ export default {
             if(!self.filterName) {
                 this.$emit('componentEvent', 'assetDownloadClick', 'asset-view', this.value);
             } else {
-                self.$refs.filterRequest.action =
-                    "/assets/filter/" + self.filterName +
-                    "/" + self.value.Hash;
-                self.$refs.filterRequest.submit();
+                this.$emit('componentEvent', 'assetFilteredDownloadClick', 'asset-view', {
+                    asset: this.value, 
+                    filter: this.filterName, 
+                    params: this.filterParams
+                });
             }
         },
 
