@@ -44,9 +44,9 @@ var (
 	AppConfig *Config = nil
 )
 
-func NewConfigFromFlags() *Config {
+func NewConfigFromFlags(errorHandling flag.ErrorHandling) *Config {
 
-	flagSet := flag.NewFlagSet("asset-storage", flag.ExitOnError)
+	flagSet := flag.NewFlagSet("asset-storage", errorHandling)
 
 	cmdDataDir := flagSet.String("data", "", "Data directory for storage, meta-data, db...")
 	cmdUseGzip := flagSet.Bool("gzip", false, "Use GZIP compression")

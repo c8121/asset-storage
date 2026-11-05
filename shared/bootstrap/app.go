@@ -1,6 +1,8 @@
 package bootstrap
 
 import (
+	"flag"
+
 	"github.com/c8121/asset-storage/internal/faces"
 	filter_commands "github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/fulltext"
@@ -11,7 +13,7 @@ import (
 
 func InitAssetStorageApp() {
 
-	config.AppConfig = config.NewConfigFromFlags()
+	config.AppConfig = config.NewConfigFromFlags(flag.ExitOnError)
 
 	CreateAppDir(config.AppConfig.AssetStorageBaseDir)
 	CreateAppDir(config.AppConfig.AssetStorageTempDir)
