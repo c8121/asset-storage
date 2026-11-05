@@ -36,7 +36,9 @@ export default {
 
             pathIdFilter: '',
 
-            notifications: []
+            notifications: [],
+
+            downloadCallback: (url) => {window.open(url);}
         }
     },
 
@@ -48,7 +50,8 @@ export default {
                     this.activeAsset = arguments[2];
                     this.setToastVisible(this.activeAssetToast, this.activeAsset !== null);
                     if(sender === 'asset-view') {
-                        window.open('/assets/' + this.activeAsset.Hash);
+                        const url = '/assets/' + this.activeAsset.Hash;
+                        this.downloadCallback(url);
                     }
                     break;
                 }
@@ -67,13 +70,13 @@ export default {
                 case 'assetDownloadClick': {
                     const asset = arguments[2];
                     const url = '/assets/' + asset.Hash;
-                    window.open(url);
+                    this.downloadCallback(url);
                     break;
                 }
                 case 'assetFilteredDownloadClick': {
                     const req = arguments[2];
                     const url = '/assets/filter/' + this.createDownloadFilterReuqestUrl(req) + "/" + req.asset.Hash;
-                    window.open(url);
+                    this.downloadCallback(url);
                     break;
                 }
                 case 'assetPathClick': {
@@ -289,6 +292,13 @@ export default {
     },
 
     mounted() {
+
+        console.log("Attributes", this.$attrs);
+        if(this.$attrs.downloadCallback) {
+            this.downloadCallback = this.$attrs.downloadCallback;
+            console.log("Replace downloadCallback", this.downloadCallback);
+        }
+
         this.activeAssetToast = this.$refs["activeAssetToast"];
         this.setToastVisible(this.activeAssetToast, false);
         this.selectedAssetsToast = this.$refs["selectedAssetsToast"];
