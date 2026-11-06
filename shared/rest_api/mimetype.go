@@ -12,7 +12,7 @@ func ListMimeTypes(c *gin.Context) {
 
 	items, err := metadata_db_entity.ListMimeTypes()
 	if err != nil {
-		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to load mime-types", err)
+		util.AbortWithStatus(c, http.StatusInternalServerError, "failed to load mime-types", err)
 		return
 	}
 

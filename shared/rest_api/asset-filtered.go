@@ -19,27 +19,27 @@ func GetFiltered(c *gin.Context) {
 
 	hash := c.Param("hash")
 	if len(hash) < 32 {
-		util.AboutWithStatus(c, http.StatusNotFound, "invalid hash", nil)
+		util.AbortWithStatus(c, http.StatusNotFound, "invalid hash", nil)
 		return
 	}
 
 	acc := GetAccessContext(c)
 	ctx := access_control.GetAccessController()
 	if ctx != nil && ctx.CanRead(hash, acc) != nil {
-		util.AboutWithStatus(c, http.StatusForbidden, "forbidden", nil)
+		util.AbortWithStatus(c, http.StatusForbidden, "forbidden", nil)
 		return
 	}
 
 	filterParam := c.Param("filter")
 	if len(filterParam) < 1 {
-		util.AboutWithStatus(c, http.StatusNotFound, "no filter name given", nil)
+		util.AbortWithStatus(c, http.StatusNotFound, "no filter name given", nil)
 		return
 	}
 	filterName, filterParams := parseFilterParam(filterParam)
 
 	meta, err := metadata.LoadByHash(hash)
 	if err != nil {
-		util.AboutWithStatus(c, http.StatusNotFound, "invalid hash", err)
+		util.AbortWithStatus(c, http.StatusNotFound, "invalid hash", err)
 		return
 	}
 
@@ -47,7 +47,7 @@ func GetFiltered(c *gin.Context) {
 		c.Data(http.StatusOK, mimeType, bytes)
 		return
 	} else {
-		util.AboutWithStatus(c, http.StatusNotFound, "failed to get filtered asset", err)
+		util.AbortWithStatus(c, http.StatusNotFound, "failed to get filtered asset", err)
 	}
 }
 

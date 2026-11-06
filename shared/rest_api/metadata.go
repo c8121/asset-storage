@@ -14,20 +14,20 @@ func GetMetaData(c *gin.Context) {
 
 	hash := c.Param("hash")
 	if len(hash) < 32 {
-		util.AboutWithStatus(c, http.StatusNotFound, "invalid hash", nil)
+		util.AbortWithStatus(c, http.StatusNotFound, "invalid hash", nil)
 		return
 	}
 
 	acc := GetAccessContext(c)
 	ctx := access_control.GetAccessController()
 	if ctx != nil && ctx.CanRead(hash, acc) != nil {
-		util.AboutWithStatus(c, http.StatusForbidden, "forbidden", nil)
+		util.AbortWithStatus(c, http.StatusForbidden, "forbidden", nil)
 		return
 	}
 
 	meta, err := metadata.LoadByHash(hash)
 	if err != nil {
-		util.AboutWithStatus(c, http.StatusNotFound, "invalid hash", err)
+		util.AbortWithStatus(c, http.StatusNotFound, "invalid hash", err)
 		return
 	}
 

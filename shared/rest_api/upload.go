@@ -35,7 +35,7 @@ func ReceiveUpload(c *gin.Context) {
 	//Read binary file, save as temp-file
 	w, err := storage.NewTempFileWriter()
 	if err != nil {
-		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to create writer", err)
+		util.AbortWithStatus(c, http.StatusInternalServerError, "failed to create writer", err)
 		return
 	}
 	defer util.CloseOrLog(w)
@@ -47,13 +47,13 @@ func ReceiveUpload(c *gin.Context) {
 			break
 		}
 		if err != nil && err != io.EOF {
-			util.AboutWithStatus(c, http.StatusInternalServerError, "failed to read", err)
+			util.AbortWithStatus(c, http.StatusInternalServerError, "failed to read", err)
 			return
 		}
 
 		_, err = w.Write(buf[:n])
 		if err != nil {
-			util.AboutWithStatus(c, http.StatusInternalServerError, "failed to write", err)
+			util.AbortWithStatus(c, http.StatusInternalServerError, "failed to write", err)
 			return
 		}
 	}
@@ -67,7 +67,7 @@ func AddUploadedFile(c *gin.Context) {
 	var req AddUploadedFileRequest
 	err := c.BindJSON(&req)
 	if err != nil {
-		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to read request", err)
+		util.AbortWithStatus(c, http.StatusInternalServerError, "failed to read request", err)
 		return
 	}
 
@@ -77,12 +77,12 @@ func AddUploadedFile(c *gin.Context) {
 	}
 	ctx := access_control.GetAccessController()
 	if ctx != nil && ctx.CanWritePath(req.Path, acc) != nil {
-		util.AboutWithStatus(c, http.StatusForbidden, "forbidden", nil)
+		util.AbortWithStatus(c, http.StatusForbidden, "forbidden", nil)
 		return
 	}
 
 	if strings.Contains(req.TempName, "..") || strings.ContainsAny(req.TempName, "/\\") {
-		util.AboutWithStatus(c, http.StatusBadRequest, "invalid request", nil)
+		util.AbortWithStatus(c, http.StatusBadRequest, "invalid request", nil)
 		return
 	}
 
@@ -91,7 +91,7 @@ func AddUploadedFile(c *gin.Context) {
 	//Add file to storage
 	infos, err := storage.AddFile(path)
 	if err != nil {
-		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to add file", err)
+		util.AbortWithStatus(c, http.StatusInternalServerError, "failed to add file", err)
 		return
 	}
 
@@ -117,7 +117,7 @@ func AddUploadedFile(c *gin.Context) {
 				req.Owner,
 				req.FileTime)
 			if err != nil {
-				util.AboutWithStatus(c, http.StatusInternalServerError, "failed to add meta-data", err)
+				util.AbortWithStatus(c, http.StatusInternalServerError, "failed to add meta-data", err)
 				return
 			}
 

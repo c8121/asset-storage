@@ -65,16 +65,7 @@ func NewConfigFromFlags(errorHandling flag.ErrorHandling) *Config {
 
 	config := &Config{}
 
-	useDataDir := *cmdDataDir
-	if useDataDir == "" {
-		if userHome, err := os.UserHomeDir(); err != nil {
-			panic("failed to get user home directory")
-		} else {
-			useDataDir = filepath.Join(userHome, "asset-storage")
-		}
-	}
-
-	validateDataDir(useDataDir)
+	useDataDir := ResolveDataDir(*cmdDataDir)
 
 	slog.Info("Init path", "data", useDataDir)
 	SetDirectories(config, useDataDir)
@@ -149,6 +140,18 @@ func NewConfigFromFlags(errorHandling flag.ErrorHandling) *Config {
 	return config
 }
 
+func NewConfigFromPath(path string) *Config {
+
+	config := &Config{}
+
+	validateDataDir(path)
+
+	SetDirectories(config, path)
+
+	return config
+
+}
+
 func SetDirectories(config *Config, baseDir string) {
 	config.AssetStorageConfigDir = filepath.Join(baseDir, "config")
 	config.AssetStorageBaseDir = filepath.Join(baseDir, "files")
@@ -157,6 +160,20 @@ func SetDirectories(config *Config, baseDir string) {
 	config.AssetMetaDataDb = filepath.Join(baseDir, "db/asset-metadata.sqlite")
 	config.AssetCollectionsBaseDir = filepath.Join(baseDir, "collections")
 	config.AssetFulltextIndexBaseDir = filepath.Join(baseDir, "index")
+}
+
+func ResolveDataDir(dataDir string) string {
+	if dataDir == "" {
+		if userHome, err := os.UserHomeDir(); err != nil {
+			panic("failed to get user home directory")
+		} else {
+			return filepath.Join(userHome, "asset-storage")
+		}
+	}
+
+	validateDataDir(dataDir)
+
+	return dataDir
 }
 
 // validateDataDir checks is given path is an asset-storage directory.

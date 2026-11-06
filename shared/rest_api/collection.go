@@ -26,13 +26,13 @@ func GetCollection(c *gin.Context) {
 
 	uuid := c.Param("uuid")
 	if len(uuid) < 32 {
-		util.AboutWithStatus(c, http.StatusNotFound, "invalid uuid", nil)
+		util.AbortWithStatus(c, http.StatusNotFound, "invalid uuid", nil)
 		return
 	}
 
 	collection, err := collections.LoadById(uuid)
 	if err != nil {
-		util.AboutWithStatus(c, http.StatusNotFound, "invalid uuid", err)
+		util.AbortWithStatus(c, http.StatusNotFound, "invalid uuid", err)
 		return
 	}
 
@@ -45,12 +45,12 @@ func AddCollection(c *gin.Context) {
 	var req UpdateCollectionRequest
 	err := c.BindJSON(&req)
 	if err != nil {
-		util.AboutWithStatus(c, http.StatusInternalServerError, "Failed to parse request", err)
+		util.AbortWithStatus(c, http.StatusInternalServerError, "Failed to parse request", err)
 		return
 	}
 
 	if len(req.Assets) == 0 {
-		util.AboutWithStatus(c, http.StatusBadRequest, "No asset hashes given", nil)
+		util.AbortWithStatus(c, http.StatusBadRequest, "No asset hashes given", nil)
 		return
 	}
 
@@ -62,7 +62,7 @@ func AddCollection(c *gin.Context) {
 		req.Assets)
 
 	if err != nil {
-		util.AboutWithStatus(c, http.StatusInternalServerError, "Failed to add collection", err)
+		util.AbortWithStatus(c, http.StatusInternalServerError, "Failed to add collection", err)
 		return
 	}
 
@@ -80,7 +80,7 @@ func RemoveCollection(c *gin.Context) {
 
 	uuid := c.PostForm("UUID")
 	if len(uuid) < 32 {
-		util.AboutWithStatus(c, http.StatusNotFound, "invalid uuid", nil)
+		util.AbortWithStatus(c, http.StatusNotFound, "invalid uuid", nil)
 		return
 	}
 
@@ -117,7 +117,7 @@ func ListCollections(c *gin.Context) {
 
 	items, err := metadata_db.ListCollections(listFilter)
 	if err != nil {
-		util.AboutWithStatus(c, http.StatusInternalServerError, "Failed to load collections", err)
+		util.AbortWithStatus(c, http.StatusInternalServerError, "Failed to load collections", err)
 		return
 	}
 

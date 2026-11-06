@@ -22,20 +22,20 @@ func GetAsset(c *gin.Context) {
 
 	hash := c.Param("hash")
 	if len(hash) < 32 {
-		util.AboutWithStatus(c, http.StatusNotFound, "invalid hash", nil)
+		util.AbortWithStatus(c, http.StatusNotFound, "invalid hash", nil)
 		return
 	}
 
 	asset, err := metadata_db_entity.LoadAsset(hash)
 	if err != nil || asset == nil {
-		util.AboutWithStatus(c, http.StatusNotFound, "invalid hash", err)
+		util.AbortWithStatus(c, http.StatusNotFound, "invalid hash", err)
 		return
 	}
 
 	acc := GetAccessContext(c)
 	ctx := access_control.GetAccessController()
 	if ctx != nil && ctx.CanRead(hash, acc) != nil {
-		util.AboutWithStatus(c, http.StatusForbidden, "forbidden", nil)
+		util.AbortWithStatus(c, http.StatusForbidden, "forbidden", nil)
 		return
 	}
 
@@ -44,7 +44,7 @@ func GetAsset(c *gin.Context) {
 
 	reader, err := storage.Open(hash)
 	if err != nil {
-		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to open", err)
+		util.AbortWithStatus(c, http.StatusInternalServerError, "failed to open", err)
 		return
 	}
 	defer util.CloseOrLog(reader)
@@ -70,12 +70,12 @@ func GetAsset(c *gin.Context) {
 			break
 		}
 		if err != nil && err != io.EOF {
-			util.AboutWithStatus(c, http.StatusInternalServerError, "failed to read", err)
+			util.AbortWithStatus(c, http.StatusInternalServerError, "failed to read", err)
 			return
 		}
 
 		if _, err = c.Writer.Write(buf[:n]); err != nil {
-			util.AboutWithStatus(c, http.StatusInternalServerError, "failed to write", err)
+			util.AbortWithStatus(c, http.StatusInternalServerError, "failed to write", err)
 			return
 		}
 		c.Writer.Flush()
@@ -96,13 +96,13 @@ func ListAssets(c *gin.Context) {
 	}
 
 	if !listFilter.IsValid() {
-		util.AboutWithStatus(c, http.StatusBadRequest, "invalid filter", nil)
+		util.AbortWithStatus(c, http.StatusBadRequest, "invalid filter", nil)
 		return
 	}
 
 	items, err := metadata_db.ListAssets(listFilter)
 	if err != nil {
-		util.AboutWithStatus(c, http.StatusInternalServerError, "Failed to load entities", err)
+		util.AbortWithStatus(c, http.StatusInternalServerError, "Failed to load entities", err)
 		return
 	}
 

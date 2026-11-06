@@ -21,7 +21,7 @@ func ListPathItems(c *gin.Context) {
 
 	items, err := metadata_db_entity.ListPathItems(parentId)
 	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
-		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to load path-items", err)
+		util.AbortWithStatus(c, http.StatusInternalServerError, "failed to load path-items", err)
 		return
 	}
 
@@ -38,7 +38,7 @@ func FindPathItem(c *gin.Context) {
 
 	item, err := metadata_db_entity.FindPathItem(c.PostForm("path"))
 	if err != nil {
-		util.AboutWithStatus(c, http.StatusInternalServerError, "failed to find path-items", err)
+		util.AbortWithStatus(c, http.StatusInternalServerError, "failed to find path-items", err)
 		return
 	}
 
