@@ -2,7 +2,6 @@ package util
 
 import (
 	"errors"
-	"fmt"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -10,14 +9,16 @@ import (
 )
 
 // CreateDirIfNotExists checks if directory exists, if not it creates it
-func CreateDirIfNotExists(path string, perm fs.FileMode) {
+func CreateDirIfNotExists(path string, perm fs.FileMode) error {
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		if err := os.MkdirAll(path, perm); err != nil {
-			panic(fmt.Errorf("failed to create database directory"))
+			slog.Error("failed to create database directory", "error", err)
+			return err
 		} else {
 			slog.Info("Created directory", "path", path)
 		}
 	}
+	return nil
 }
 
 // FindFile takes path that might contain wildcards and return the first that exists.

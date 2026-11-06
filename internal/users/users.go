@@ -20,7 +20,10 @@ func InitAppAuthentication(authenticator auth.Authenticator) {
 
 func InitLocalFileAppAuthentication(pwdCost int) error {
 
-	util.CreateDirIfNotExists(config.AppConfig.AssetStorageConfigDir, auth.DefaultFilePermissions)
+	err := util.CreateDirIfNotExists(config.AppConfig.AssetStorageConfigDir, auth.DefaultFilePermissions)
+	if err != nil {
+		return err
+	}
 
 	usersFile := filepath.Join(config.AppConfig.AssetStorageConfigDir, UserFile)
 

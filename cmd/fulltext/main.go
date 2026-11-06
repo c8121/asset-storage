@@ -87,5 +87,5 @@ func updateIndex() {
 		}
 	}
 
-	storage.Walk(handler)
+	util.LogError(storage.Walk(handler))
 }

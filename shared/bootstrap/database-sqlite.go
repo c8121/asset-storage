@@ -24,7 +24,10 @@ var (
 func OpenDatabase() {
 
 	dbDir := filepath.Dir(config.AppConfig.AssetMetaDataDb)
-	apputil.CreateDirIfNotExists(dbDir, metadata.FilePermissions)
+	err := apputil.CreateDirIfNotExists(dbDir, metadata.FilePermissions)
+	if err != nil {
+		panic(err)
+	}
 
 	url := "file:" + config.AppConfig.AssetMetaDataDb +
 		"?_pragma=journal_mode(wal)" +
@@ -34,7 +37,6 @@ func OpenDatabase() {
 
 	slog.Info("Open DB", "database", config.AppConfig.AssetMetaDataDb)
 
-	var err error
 	database, err = sql.Open("sqlite", url)
 	util.PanicOnError(err, "Failed to open sqlite database: "+config.AppConfig.AssetMetaDataDb)
 

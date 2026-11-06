@@ -33,7 +33,10 @@ func InitAssetStorageApp() {
 }
 
 func CreateAppDir(path string) {
-	apputil.CreateDirIfNotExists(path, config.AppConfig.FilePermissions)
+	err := apputil.CreateDirIfNotExists(path, config.AppConfig.FilePermissions)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func FinalizeAssetStorageApp() {

@@ -41,7 +41,7 @@ func createFilesMetaDataDb() {
 		}
 	}
 
-	metadata.Walk(handler)
+	util.LogError(metadata.Walk(handler))
 }
 
 func createCollectionsMetaDataDb() {
@@ -58,5 +58,5 @@ func createCollectionsMetaDataDb() {
 		}
 	}
 
-	collections.Walk(handler)
+	util.LogError(collections.Walk(handler))
 }

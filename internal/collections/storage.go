@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/c8121/asset-storage/shared/config"
-	"github.com/c8121/go_vue_spa/util"
 )
 
 type (
@@ -84,19 +83,24 @@ func RemoveCollection(uuid string) error {
 }
 
 // Walk visits every collection (file) in storage and calls given handler function on it.
-func Walk(handler func(path string)) {
+func Walk(handler func(path string)) error {
 
 	children, err := os.ReadDir(config.AppConfig.AssetCollectionsBaseDir)
-	util.PanicOnError(err, "Failed to read directory")
+	if err != nil {
+		return err
+	}
 
 	for _, child := range children {
 		dir := filepath.Join(config.AppConfig.AssetCollectionsBaseDir, child.Name())
 		files, err := os.ReadDir(dir)
-		util.PanicOnError(err, "Failed to read directory")
+		if err != nil {
+			return err
+		}
 
 		for _, file := range files {
 			filePath := filepath.Join(dir, file.Name())
 			handler(filePath)
 		}
 	}
+	return nil
 }

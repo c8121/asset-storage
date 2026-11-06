@@ -55,5 +55,5 @@ func main() {
 		}
 	}
 
-	storage.Walk(handler)
+	util.LogError(storage.Walk(handler))
 }

@@ -110,8 +110,8 @@ func copyToStorage(reader io.Reader, size int64) (*AddedFileInfo, error) {
 		destName)
 
 	if _, err := os.Stat(info.StoragePath); err == nil || os.IsExist(err) {
-		util.PanicOnError(os.Remove(outWriter.Name()), "Failed to remove temp file")
-		panic("File already exists") //Panic, because check was done above with FindByHash
+		util.LogError(err)
+		return info, err
 	}
 
 	err = outWriter.Move(info.StoragePath)
@@ -124,32 +124,36 @@ func copyToStorage(reader io.Reader, size int64) (*AddedFileInfo, error) {
 }
 
 // Walk visits every asset (file) in storage and calls given handler function on it.
-func Walk(handler func(path string)) {
+func Walk(handler func(path string)) error {
 
 	timePeriodDirs, err := os.ReadDir(config.AppConfig.AssetStorageBaseDir)
-	if errors.Is(err, os.ErrNotExist) {
-		return
+	if err != nil {
+		return err
 	}
-	util.PanicOnError(err, "Failed to read directory")
 
 	for _, timePeriodEntry := range timePeriodDirs {
 
 		path := filepath.Join(config.AppConfig.AssetStorageBaseDir, timePeriodEntry.Name())
 		children, err := os.ReadDir(path)
-		util.PanicOnError(err, "Failed to read directory")
+		if err != nil {
+			return err
+		}
 
 		for _, child := range children {
 			dir := filepath.Join(path, child.Name())
 			files, err := os.ReadDir(dir)
-			util.PanicOnError(err, "Failed to read directory")
+			if err != nil {
+				return err
+			}
 
 			for _, file := range files {
 				filePath := filepath.Join(dir, file.Name())
 				handler(filePath)
 			}
 		}
-
 	}
+
+	return nil
 }
 
 // FindByHash Check all time-periods if file exists.
