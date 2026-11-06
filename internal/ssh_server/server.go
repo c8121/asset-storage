@@ -1,9 +1,9 @@
 package ssh_server
 
 import (
-	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/exec"
@@ -33,7 +33,7 @@ func RunSftpServer(config *SshServerConfig) {
 	if err != nil {
 		log.Fatal("failed to listen for connection", err)
 	}
-	fmt.Printf("Listening on %v\n", listener.Addr())
+	slog.Info("SSH Server ready", "address", listener.Addr())
 
 	for {
 		clientConnection, err := listener.Accept()
@@ -47,10 +47,10 @@ func RunSftpServer(config *SshServerConfig) {
 			//Handshake
 			sshConnection, chans, reqs, err := ssh.NewServerConn(clientConnection, serverConfig)
 			if err != nil {
-				fmt.Printf("handshake failed: %s\n", err)
+				slog.Warn("handshake failed", "error", err)
 				return
 			}
-			fmt.Printf("SSH connection established: %s (%s)\n", sshConnection.RemoteAddr(), sshConnection.ClientVersion())
+			slog.Info("SSH connection established", "remote", sshConnection.RemoteAddr(), "local", sshConnection.ClientVersion())
 
 			// Discard global requests
 			go ssh.DiscardRequests(reqs)
@@ -59,17 +59,17 @@ func RunSftpServer(config *SshServerConfig) {
 			for newChannel := range chans {
 				if newChannel.ChannelType() != "session" {
 					if err := newChannel.Reject(ssh.UnknownChannelType, "unknown channel type"); err != nil {
-						fmt.Printf("failed to reject channel %s\n", err)
+						slog.Warn("failed to reject channel", "error", err)
 					}
-					fmt.Printf("Unknown channel type: %s\n", newChannel.ChannelType())
+					slog.Warn("Unknown channel type", "type", newChannel.ChannelType())
 					continue
 				}
 				channel, requests, err := newChannel.Accept()
 				if err != nil {
-					fmt.Printf("Could not accept channel: %s\n", err)
+					slog.Warn("Could not accept channel", "error", err)
 					continue
 				}
-				fmt.Printf("Channel accepted for %s: %s\n", sshConnection.RemoteAddr(), newChannel.ChannelType())
+				slog.Info("Channel accepted", "remote", sshConnection.RemoteAddr(), "type", newChannel.ChannelType())
 
 				go func(in <-chan *ssh.Request) {
 					for req := range in {
@@ -79,11 +79,11 @@ func RunSftpServer(config *SshServerConfig) {
 							if len(req.Payload) >= 4 && string(req.Payload[4:]) == "sftp" {
 								if config.SftpHandlerCreator != nil {
 									if err := req.Reply(true, nil); err != nil {
-										fmt.Printf("Could not reply to client: %s\n", err)
+										slog.Warn("Could not reply to client", "error", err)
 										return
 									}
 									if err := executeSFTP(config, *sshConnection, channel); err != nil {
-										fmt.Printf("Subsystem failed: %s\n", err)
+										slog.Warn("Subsystem failed", "error", err)
 										return
 									}
 
@@ -94,11 +94,11 @@ func RunSftpServer(config *SshServerConfig) {
 							if len(req.Payload) >= 3 && string(req.Payload[4:9]) == "rsync" {
 								if config.RsyncHandlerCreator != nil {
 									if err := req.Reply(true, nil); err != nil {
-										fmt.Printf("Could not reply to client: %s\n", err)
+										slog.Warn("Could not reply to client", "error", err)
 										return
 									}
 									if err := executeRsync(config, *sshConnection, channel, string(req.Payload[4:])); err != nil {
-										fmt.Printf("Execute command failed: %s\n", err)
+										slog.Warn("Execute command failed", "error", err)
 										return
 									}
 
@@ -109,11 +109,10 @@ func RunSftpServer(config *SshServerConfig) {
 
 						// request wasn't handled above, send request-not-ok
 						if err := req.Reply(false, nil); err != nil {
-							fmt.Printf("Could not reply to client: %s\n", err)
+							slog.Warn("Could not reply to client", "error", err)
 							return
 						}
-						fmt.Printf("Decline request type for %s: %s\n", sshConnection.RemoteAddr(), req.Type)
-
+						slog.Warn("Decline request", "remote", sshConnection.RemoteAddr(), "type", req.Type)
 					}
 				}(requests)
 
@@ -126,7 +125,7 @@ func RunSftpServer(config *SshServerConfig) {
 // executeRsync executes rsync-command (given in payload)
 func executeRsync(config *SshServerConfig, sshConnection ssh.ServerConn, channel ssh.Channel, payload string) error {
 
-	fmt.Printf("Start RSYNC server for %s.\n", sshConnection.RemoteAddr())
+	slog.Info("Start RSYNC server", "remote", sshConnection.RemoteAddr())
 
 	handler, err := config.RsyncHandlerCreator(sshConnection.Permissions.Extensions["username"])
 	if err != nil {
@@ -151,12 +150,12 @@ func executeRsync(config *SshServerConfig, sshConnection ssh.ServerConn, channel
 
 	go func() {
 		if _, err := io.Copy(stdin, channel); err != nil {
-			fmt.Printf("Error copying stdin to channel: %s\n", err)
+			slog.Warn("Error copying stdin to channel", "error", err)
 		}
 	}()
 	go func() {
 		if _, err := io.Copy(channel, stdout); err != nil {
-			fmt.Printf("Error copying stdout to channel: %s\n", err)
+			slog.Warn("Error copying stdout to channel", "error", err)
 		}
 	}()
 
@@ -166,11 +165,11 @@ func executeRsync(config *SshServerConfig, sshConnection ssh.ServerConn, channel
 		return err
 	}
 	if _, err = channel.SendRequest("exit-status", false, []byte{0, 0, 0, 0}); err != nil {
-		fmt.Printf("Rsync send command exit-status failed: %s\n", err)
+		slog.Warn("Rsync send command exit-status failed", "error", err)
 	}
 	util.CloseOrLog(channel)
 
-	fmt.Printf("Command completed for %s: %s %v.\n", sshConnection.RemoteAddr(), cmdName, cmdArgs)
+	slog.Info("Command completed", "remote", sshConnection.RemoteAddr(), "cmd", cmdName, "args", cmdArgs)
 
 	// Add new files to storage
 	go AddFilesToArchive(handler)
@@ -181,7 +180,7 @@ func executeRsync(config *SshServerConfig, sshConnection ssh.ServerConn, channel
 // executeSFTP starts the SFTP-Subsystem
 func executeSFTP(config *SshServerConfig, sshConnection ssh.ServerConn, channel ssh.Channel) error {
 
-	fmt.Printf("Start SFTP server for %s.\n", sshConnection.RemoteAddr())
+	slog.Info("Start SFTP server", "remote", sshConnection.RemoteAddr())
 
 	handler, err := config.SftpHandlerCreator(sshConnection.Permissions.Extensions["username"])
 	if err != nil {
@@ -191,13 +190,13 @@ func executeSFTP(config *SshServerConfig, sshConnection ssh.ServerConn, channel 
 	server := sftp.NewRequestServer(channel, handler.GetHandlers())
 	if err := server.Serve(); err != nil {
 		if err != io.EOF {
-			fmt.Printf("SFTP server completed with error: %s, %s\n", err, sshConnection.RemoteAddr())
+			slog.Warn("SFTP server completed with error", "error", err, "remote", sshConnection.RemoteAddr())
 		}
 	}
 	if err := server.Close(); err != nil && err != io.EOF {
-		fmt.Printf("SFTP server close error: %s\n", err)
+		slog.Warn("SFTP server close error", "error", err)
 	}
-	fmt.Printf("SFTP client exited session: %s.\n", sshConnection.RemoteAddr())
+	slog.Info("SFTP client exited session", "remote", sshConnection.RemoteAddr())
 
 	// Add new files to storage
 	go AddFilesToArchive(handler)
