@@ -3,9 +3,10 @@ package metadata_db
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
-	"github.com/c8121/asset-storage/internal/metadata_db/entity"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/go_db_entities"
 )
 
@@ -28,6 +29,18 @@ type AssetListFilter struct {
 	Face       int64
 	Offset     int
 	Count      int
+}
+
+func (f *AssetListFilter) IsValid() bool {
+	if f.Offset < 0 {
+		slog.Warn("Invalid filter", "Offset", f.PathId)
+		return false
+	}
+	if f.Count < 0 {
+		slog.Warn("Invalid filter", "Count", f.PathId)
+		return false
+	}
+	return true
 }
 
 func ListAssets(filter *AssetListFilter) ([]AssetListItem, error) {

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"log"
 
 	"github.com/c8121/asset-storage/internal/faces"
 	"github.com/c8121/go_db_entities"
@@ -180,7 +179,8 @@ func FindSimilarFacesByEmbedding(embedding *[]float32, max int) (*[]FaceEmbeddin
 
 	rows, err := stmt.Query(string(embeddingJson), max)
 	if err != nil {
-		log.Fatal("Query failed:", err)
+		util.LogError(err)
+		return nil, err
 	}
 	defer util.CloseOrLog(rows)
 

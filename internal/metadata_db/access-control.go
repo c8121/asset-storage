@@ -1,10 +1,10 @@
 package metadata_db
 
 import (
-	"fmt"
+	"log/slog"
 
 	"github.com/c8121/asset-storage/internal/access_control"
-	"github.com/c8121/asset-storage/internal/metadata_db/entity"
+	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata_db/entity"
 	"github.com/c8121/go_vue_spa/util"
 )
 
@@ -30,13 +30,13 @@ func (ctrl MetaDataDbAccessController) CanReadId(assetId int64, ctx *access_cont
 		return access_control.ErrAccessDenied
 	}
 
-	fmt.Printf("Grant permission to asset %d, ctx=%v\n", assetId, ctx)
+	slog.Info("Grant permission", "asset", assetId, "user", ctx.User)
 
 	return nil
 }
 
 func (ctrl MetaDataDbAccessController) CanWritePath(path string, ctx *access_control.AccessContext) error {
-	fmt.Printf("Grant permission to path %s, ctx=%v\n", path, ctx)
+	slog.Info("Grant permission", "path", path, "user", ctx.User)
 	return nil
 }
 

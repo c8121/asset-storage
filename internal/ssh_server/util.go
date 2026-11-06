@@ -8,7 +8,7 @@ import (
 func resolve(rootDirectory string, requestedPath string) (string, error) {
 
 	//fmt.Printf(" - Path requested: '%s'\n", path)
-	if strings.Contains(requestedPath, ":") {
+	if strings.Contains(requestedPath, ":") || strings.Contains(requestedPath, "..") {
 		return "", ErrorInvalidPathRequest
 	}
 

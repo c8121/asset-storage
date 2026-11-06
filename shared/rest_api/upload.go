@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/c8121/asset-storage/internal/access_control"
@@ -77,6 +78,11 @@ func AddUploadedFile(c *gin.Context) {
 	ctx := access_control.GetAccessController()
 	if ctx != nil && ctx.CanWritePath(req.Path, acc) != nil {
 		util.AboutWithStatus(c, http.StatusForbidden, "forbidden", nil)
+		return
+	}
+
+	if strings.Contains(req.TempName, "..") || strings.ContainsAny(req.TempName, "/\\") {
+		util.AboutWithStatus(c, http.StatusBadRequest, "invalid request", nil)
 		return
 	}
 

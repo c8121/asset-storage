@@ -74,7 +74,7 @@ func parseFilterParam(s string) (string, map[string]string) {
 	for p > -1 {
 		nvp := ""
 		e := strings.Index(s[p:], "|")
-		if e > -1 {
+		if e > p {
 			nvp = s[p:e]
 			p = e + 1
 		} else {

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/c8121/asset-storage/shared/config"
@@ -18,6 +19,11 @@ import (
 const (
 	IoBufferSize    = 4096
 	FilePermissions = 0744
+)
+
+var (
+	ErrInvalidHash = errors.New("invlalid hash")
+	mutex          sync.Mutex
 )
 
 type (
@@ -33,6 +39,9 @@ type (
 
 // copyToStorage reads file, calculates hash and adds the content to storage
 func copyToStorage(reader io.Reader, size int64) (*AddedFileInfo, error) {
+
+	mutex.Lock()
+	defer mutex.Unlock()
 
 	var info = &AddedFileInfo{IsNewFile: false}
 
@@ -158,18 +167,18 @@ func Walk(handler func(path string)) error {
 
 // FindByHash Check all time-periods if file exists.
 // Returns the absolte file path or empty string if not found
-func FindByHash(hashHex string) (string, error) {
+func FindByHash(hash string) (string, error) {
 
-	if len(hashHex) < 2 {
-		panic("Invalid hash")
+	if len(hash) < 3 || strings.ContainsAny(hash, "./\\ ") {
+		return "", ErrInvalidHash
 	}
 
 	//Fast check first: Check if file exists in current time-period
-	destName := hashHex[2:]
+	destName := hash[2:]
 	destDir := filepath.Join(
 		config.AppConfig.AssetStorageBaseDir,
 		TimePeriodName(),
-		hashHex[:2])
+		hash[:2])
 
 	destPath := filepath.Join(
 		destDir,
@@ -180,15 +189,15 @@ func FindByHash(hashHex string) (string, error) {
 
 	//Evaluate all time-period dirs
 	dirs, err := os.ReadDir(config.AppConfig.AssetStorageBaseDir)
-	if errors.Is(err, os.ErrNotExist) {
-		return destPath, err
+	if err != nil {
+		return "", err
 	}
-	util.PanicOnError(err, "Failed to read directory")
+
 	for _, file := range dirs {
 		destDir = filepath.Join(
 			config.AppConfig.AssetStorageBaseDir,
 			file.Name(),
-			hashHex[:2])
+			hash[:2])
 		destPath = filepath.Join(
 			destDir,
 			destName)

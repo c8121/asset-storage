@@ -2,12 +2,18 @@ package collections
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/c8121/asset-storage/shared/config"
+)
+
+var (
+	ErrInvalidCollectionId = errors.New("invlalid collection id")
 )
 
 type (
@@ -57,24 +63,36 @@ func LoadIfExists(path string) (*JsonAssetCollection, error) {
 
 // LoadById returns JsonAssetMetaData loaded from JSON-file
 func LoadById(uuid string) (*JsonAssetCollection, error) {
-	path := GetCollectionFilePath(uuid)
+	path, err := GetCollectionFilePath(uuid)
+	if err != nil {
+		return nil, err
+	}
+
 	meta, err := LoadIfExists(path)
 	return meta, err
 }
 
 // GetCollectionFilePath returns the path and filename of a collection file.
-func GetCollectionFilePath(uuid string) string {
+func GetCollectionFilePath(uuid string) (string, error) {
+
+	if len(uuid) < 3 || strings.ContainsAny(uuid, "./\\ ") {
+		return "", ErrInvalidCollectionId
+	}
+
 	name := fmt.Sprintf("%s%s", uuid[2:], ".json")
 	path := filepath.Join(
 		config.AppConfig.AssetCollectionsBaseDir,
 		uuid[:2],
 		name)
-	return path
+	return path, nil
 }
 
 // RemoveCollection deletes the collection file
 func RemoveCollection(uuid string) error {
-	collectionFile := GetCollectionFilePath(uuid)
+	collectionFile, err := GetCollectionFilePath(uuid)
+	if err != nil {
+		return err
+	}
 	if _, err := os.Stat(collectionFile); err != nil {
 		return err
 	}

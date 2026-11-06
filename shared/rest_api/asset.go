@@ -54,7 +54,7 @@ func GetAsset(c *gin.Context) {
 	if mimeType != nil && len(mimeType.Name) > 0 {
 		c.Header("Content-Type", mimeType.Name)
 	} else {
-		c.Header("Content-Type", "application/octed-stream")
+		c.Header("Content-Type", "application/octet-stream")
 	}
 
 	if fileName != nil && len(fileName.Name) > 0 {
@@ -94,7 +94,11 @@ func ListAssets(c *gin.Context) {
 			Count:  DefaultListItemCount,
 		}
 	}
-	//fmt.Printf("Filter: %v\n", listFilter)
+
+	if !listFilter.IsValid() {
+		util.AboutWithStatus(c, http.StatusBadRequest, "invalid filter", nil)
+		return
+	}
 
 	items, err := metadata_db.ListAssets(listFilter)
 	if err != nil {

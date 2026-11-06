@@ -38,7 +38,8 @@ func RunSftpServer(config *SshServerConfig) {
 	for {
 		clientConnection, err := listener.Accept()
 		if err != nil {
-			log.Fatal("failed to accept incoming connection", err)
+			slog.Warn("failed to accept incoming connection", "error", err)
+			continue
 		}
 
 		go func(conn net.Conn) {
@@ -76,7 +77,7 @@ func RunSftpServer(config *SshServerConfig) {
 
 						switch req.Type {
 						case "subsystem":
-							if len(req.Payload) >= 4 && string(req.Payload[4:]) == "sftp" {
+							if len(req.Payload) >= 8 && string(req.Payload[4:]) == "sftp" {
 								if config.SftpHandlerCreator != nil {
 									if err := req.Reply(true, nil); err != nil {
 										slog.Warn("Could not reply to client", "error", err)
@@ -91,7 +92,7 @@ func RunSftpServer(config *SshServerConfig) {
 								}
 							}
 						case "exec":
-							if len(req.Payload) >= 3 && string(req.Payload[4:9]) == "rsync" {
+							if len(req.Payload) >= 9 && string(req.Payload[4:9]) == "rsync" {
 								if config.RsyncHandlerCreator != nil {
 									if err := req.Reply(true, nil); err != nil {
 										slog.Warn("Could not reply to client", "error", err)

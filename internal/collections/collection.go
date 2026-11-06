@@ -17,7 +17,10 @@ func AddCollection(uuid string, name string, description string, owner string, a
 	var err error
 
 	if uuid != "" {
-		collectionFile = GetCollectionFilePath(uuid)
+		collectionFile, err = GetCollectionFilePath(uuid)
+		if err != nil {
+			return nil, err
+		}
 		collection, err = LoadIfExists(collectionFile)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, err
@@ -26,7 +29,10 @@ func AddCollection(uuid string, name string, description string, owner string, a
 
 	if collection == nil {
 		collection = CreateNew(name, description, owner, assetHashes)
-		collectionFile = GetCollectionFilePath(collection.UUID)
+		collectionFile, err = GetCollectionFilePath(collection.UUID)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		collection.Name = name
 		collection.Description = description
