@@ -1,7 +1,7 @@
 package filter
 
 import (
-	"fmt"
+	"log/slog"
 	"regexp"
 	"strings"
 )
@@ -27,7 +27,7 @@ func GetFirstFilterByMimeType(mimetype string) Filter {
 		for _, m := range f.MimeTypes {
 			match, _ := regexp.MatchString(m, mimetype)
 			if match {
-				fmt.Printf("Using filter '%s' for %s\n", f.Name, mimetype)
+				slog.Info("Using filter", "name", f.Name, "mimetype", mimetype)
 				return f.Filter
 			}
 		}
@@ -48,7 +48,7 @@ func GetFirstFilterByNameAndMimeType(name string, mimetype string) Filter {
 		for _, m := range f.MimeTypes {
 			match, _ := regexp.MatchString(m, mimetype)
 			if match {
-				fmt.Printf("Using filter '%s' for %s\n", f.Name, mimetype)
+				slog.Info("Using filter", "name", f.Name, "mimetype", mimetype)
 				return f.Filter
 			}
 		}

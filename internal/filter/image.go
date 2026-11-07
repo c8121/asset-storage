@@ -2,6 +2,7 @@ package filter
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 
 	"bufio"
@@ -37,6 +38,10 @@ func NewImageFilter() *ImageFilter {
 func (f ImageFilter) Apply(assetHash string, meta *metadata.JsonAssetMetaData, params map[string]string) ([]byte, string, error) {
 
 	width, _ := strconv.Atoi(apputil.GetOrDefault(params, "width", f.DefaultWidth))
+	height, _ := strconv.Atoi(apputil.GetOrDefault(params, "height", "0"))
+	if height != 0 {
+		slog.Warn("ImageFilter: height parameter not implemented", "height", height)
+	}
 
 	cropX1, _ := strconv.Atoi(apputil.GetOrDefault(params, "x1", "0"))
 	cropY1, _ := strconv.Atoi(apputil.GetOrDefault(params, "y1", "0"))

@@ -67,7 +67,7 @@ func filterAsset(assetHash string, meta *metadata.JsonAssetMetaData, filterName 
 // parseFilterParam splits filter parameter: filterName:name|param=value|...
 func parseFilterParam(s string) (string, map[string]string) {
 
-	filter := ""
+	filterName := ""
 	params := make(map[string]string)
 
 	p := 0
@@ -95,7 +95,7 @@ func parseFilterParam(s string) (string, map[string]string) {
 		}
 		if err == nil {
 			if k == "filterName" {
-				filter = v
+				filterName = v
 			} else {
 				params[k] = v
 			}
@@ -104,5 +104,6 @@ func parseFilterParam(s string) (string, map[string]string) {
 		}
 	}
 
-	return filter, params
+	slog.Info("Filter", "name", filterName, "params", params)
+	return filterName, params
 }
