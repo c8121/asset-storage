@@ -5,14 +5,14 @@ go 1.26.0
 require (
 	github.com/blevesearch/bleve/v2 v2.6.1
 	github.com/c8121/go_db_entities v0.0.11
-	github.com/c8121/go_vue_spa v0.0.5
+	github.com/c8121/go_vue_spa v0.0.6
 	github.com/gabriel-vasile/mimetype v1.4.16
 	github.com/gin-gonic/gin v1.12.0
 	github.com/takumakei/exif-orientation v0.0.0-20200808061749-30cdc5a97a18
 	gosqlite.org v0.14.0
 )
 
-//replace github.com/c8121/go_vue_spa v0.0.3 => ../go_vue_spa
+//replace github.com/c8121/go_vue_spa v0.0.6 => ../go_vue_spa
 
 require (
 	github.com/RoaringBitmap/roaring/v2 v2.30.0 // indirect
