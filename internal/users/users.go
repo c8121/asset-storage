@@ -4,9 +4,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/c8121/asset-storage/internal/util"
 	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/auth"
+	"github.com/c8121/go_vue_spa/util"
 )
 
 var (

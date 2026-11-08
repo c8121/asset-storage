@@ -4,9 +4,8 @@ import (
 	"flag"
 
 	"github.com/c8121/asset-storage/internal/faces"
-	filter_commands "github.com/c8121/asset-storage/internal/filter/commands"
+	"github.com/c8121/asset-storage/internal/filter/commands"
 	"github.com/c8121/asset-storage/internal/fulltext"
-	apputil "github.com/c8121/asset-storage/internal/util"
 	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_vue_spa/util"
 )
@@ -33,7 +32,7 @@ func InitAssetStorageApp() {
 }
 
 func CreateAppDir(path string) {
-	err := apputil.CreateDirIfNotExists(path, config.AppConfig.FilePermissions)
+	err := util.CreateDirIfNotExists(path, config.AppConfig.FilePermissions)
 	if err != nil {
 		panic(err)
 	}

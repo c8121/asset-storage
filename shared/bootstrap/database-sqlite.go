@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/c8121/asset-storage/internal/metadata"
-	metadata_db_entity "github.com/c8121/asset-storage/internal/metadata_db/entity"
-	metadata_db_sqlite "github.com/c8121/asset-storage/internal/metadata_db/sqlite"
-	apputil "github.com/c8121/asset-storage/internal/util"
+	"github.com/c8121/asset-storage/internal/metadata_db/entity"
+	"github.com/c8121/asset-storage/internal/metadata_db/sqlite"
 	"github.com/c8121/asset-storage/shared/config"
 	"github.com/c8121/go_db_entities"
 	"github.com/c8121/go_db_entities/sqlite"
@@ -24,7 +23,7 @@ var (
 func OpenDatabase() {
 
 	dbDir := filepath.Dir(config.AppConfig.AssetMetaDataDb)
-	err := apputil.CreateDirIfNotExists(dbDir, metadata.FilePermissions)
+	err := util.CreateDirIfNotExists(dbDir, metadata.FilePermissions)
 	if err != nil {
 		panic(err)
 	}
