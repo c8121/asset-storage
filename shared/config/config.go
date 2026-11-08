@@ -148,6 +148,8 @@ func NewConfigFromPath(path string) *Config {
 
 	validateDataDir(path)
 
+	config.FilePermissions = 0744
+
 	SetDirectories(config, path)
 
 	return config
