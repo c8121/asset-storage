@@ -10,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+
+	"github.com/c8121/go_vue_spa/util"
 )
 
 type Config struct {
@@ -61,7 +63,7 @@ func NewConfigFromFlags(errorHandling flag.ErrorHandling) *Config {
 	cmdCharCountPdfToTextOcr := flagSet.Int("pdf-ocr", 10, "Use OCR when converting PDF to Text, if result does not have more chars")
 	cmdLogVerbose := flagSet.Bool("v", false, "Log verbose")
 
-	flagSet.Parse(os.Args[1:])
+	util.LogError(flagSet.Parse(os.Args[1:]))
 
 	config := &Config{}
 
