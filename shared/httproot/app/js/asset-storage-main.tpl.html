@@ -1,160 +1,165 @@
-<!-- Menu: static sidebar on large screens, off-canvas on small screens -->
-<nav id="sidebar" class="offcanvas-lg offcanvas-start" tabindex="-1" aria-label="Pages">
-    <div class="offcanvas-header d-lg-none">
-        <span class="offcanvas-title fw-bold">:) Website builder</span>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"
-                aria-label="Close"></button>
-    </div>
-
-    <div class="offcanvas-body d-block p-3">
-        <a class="navbar-brand d-none d-lg-block mb-3" href="#">:) Asset Storage</a>
-
-        <div>
-            <div class="pb-2">
-                <div class="input-group">
-                    <input v-model="listFilter.Fulltext" class="form-control border-secondary" type="search"
-                           placeholder="Search" aria-label="Search" @keyup.enter="$refs.listView.loadAssets()">
-                    <button class="btn btn-outline-secondary" type="submit" @click="$refs.listView.loadAssets()"><i
-                            class="bi bi-search"></i></button>
-                </div>
-            </div>
-
-            <div class="pb-2">
-                <select v-model="listFilter.MimeType" class="form-select" @change="$refs.listView.loadAssets()">
-                    <option :value="null">Filter Type</option>
-                    <option value="image/*">Images</option>
-                    <option value="video/*">Videos</option>
-                    <option :value="null"> -</option>
-                    <option v-for="t in mimeTypes" :value="t.Id.toString()">{{t.Name}}</option>
-                </select>
-            </div>
-
-            <div class="pb-2">
-                <div class="btn-group dropdown dropd w-100">
-                    <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate"
-                            data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                        <span v-if="pathIdFilter"><i class="bi bi-funnel"></i> {{ pathIdFilter }}</span>
-                        <span v-else>Filter Path</span>
-                    </button>
-                    <div class="dropdown-menu overflow-auto p-2" style="max-height: 75vh;">
-                        <path-tree @component-event="componentEvent"/>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pb-2">
-                <div class="btn-group dropdown w-100">
-                    <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate"
-                            data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                        Upload
-                    </button>
-                    <div class="dropdown-menu p-2" style="width: 50vw">
-                        <upload @component-event="componentEvent"/>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pb-2">
-                <div class="btn-group dropdown w-100">
-                    <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                        Collections
-                    </button>
-                    <div class="dropdown-menu p-2" style="width: 50vw">
-                        <collection-list-view ref="collectionList" @component-event="componentEvent"/>
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="notifications.length > 0" class="pb-2">
-                <div class="btn-group dropdown">
-                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"
-                            data-bs-auto-close="outside" aria-expanded="false">
-                        <i class="bi bi-bell"></i>
-                    </button>
-                    <div class="dropdown-menu" style="width: 50vw">
-                        <div v-for="msg in notifications" class="m-2 small border-bottom pb-2">{{ msg }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="listFilter.MimeType || listFilter.FileName || listFilter.PathId || listFilter.Face || listFilter.Collection || listFilter.Fulltext">
-                <button class="btn btn-sm btn-secondary m-2" @click="resetListFilter(); $refs.listView.loadAssets()">
-                    <i class="bi bi-funnel text-decoration-line-through"></i>
-                    Clear Filter
-                </button>
-            </div>
-
+<div class="app-with-sidebar">
+    <!-- Menu: static sidebar on large screens, off-canvas on small screens -->
+    <nav class="offcanvas-lg offcanvas-start sidebar" tabindex="-1" aria-label="Pages">
+        <div class="offcanvas-header d-lg-none">
+            <span class="offcanvas-title fw-bold">:) Asset Storage</span>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target=".sidebar"
+                    aria-label="Close"></button>
         </div>
 
-    </div>
-</nav>
+        <div class="offcanvas-body d-block p-3">
+            <a class="navbar-brand d-none d-lg-block mb-3" href="#">:) Asset Storage</a>
 
-<!-- Drag to resize the sidebar (large screens only) -->
-<div id="sidebarResizer" class="d-none d-lg-block" title="Drag to resize" @pointerdown="startSidebarResize"></div>
-
-
-<!-- Content-->
-<div class="container-fluid p-0" id="content">
-
-    <!-- Top bar with menu button (small screens only) -->
-    <header class="navbar bg-body-tertiary border-bottom sticky-top d-lg-none px-2">
-        <button class="btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar"
-                aria-controls="sidebar" aria-label="Menu"><i class="bi bi-list fs-4"></i></button>
-        <a class="navbar-brand me-auto" href="#">:) Asset Storage</a>
-    </header>
-
-    <section>
-
-        <asset-list-view ref="listView" @component-event="componentEvent" :filter="listFilter"></asset-list-view>
-
-        <div id="toasts" class="position-fixed toast-container top-0 end-0 p-3 mt-5">
-
-            <div ref="activeAssetToast" class="toast show" role="alert" aria-live="assertive" aria-atomic="true"
-                 data-bs-delay="15000">
-                <div class="toast-header">
-                    <strong class="me-auto">Asset</strong>
-                    <button type="button" class="btn" @click="toggleToastPosition"><i
-                            class="bi bi-arrow-left-right"></i></button>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    <asset-view :value="activeAsset" @component-event="componentEvent"/>
-                </div>
-            </div>
-
-            <div ref="selectedAssetsToast" class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <strong class="me-auto">Selection</strong>
-                    <button type="button" class="btn" @click="toggleToastPosition"><i
-                            class="bi bi-arrow-left-right"></i></button>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    <asset-selection-list :value="selectedAssets" @component-event="componentEvent"/>
-                </div>
-            </div>
-
-            <div ref="activeCollectionToast" class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <strong class="me-auto">Collection</strong>
-                    <button type="button" class="btn" @click="toggleToastPosition"><i
-                            class="bi bi-arrow-left-right"></i></button>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body">
-                    <div>
-                        <collection-view :value="activeCollection" @component-event="componentEvent"/>
+            <div>
+                <div class="pb-2">
+                    <div class="input-group">
+                        <input v-model="listFilter.Fulltext" class="form-control border-secondary" type="search"
+                               placeholder="Search" aria-label="Search" @keyup.enter="$refs.listView.loadAssets()">
+                        <button class="btn btn-outline-secondary" type="submit" @click="$refs.listView.loadAssets()"><i
+                                class="bi bi-search"></i></button>
                     </div>
+                </div>
 
-                    <div v-if="activeCollection && activeCollection.UUID" class="mt-3">
-                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                @click="removeCollection(activeCollection)">Delete
+                <div class="pb-2">
+                    <select v-model="listFilter.MimeType" class="form-select" @change="$refs.listView.loadAssets()">
+                        <option :value="null">Filter Type</option>
+                        <option value="image/*">Images</option>
+                        <option value="video/*">Videos</option>
+                        <option :value="null"> -</option>
+                        <option v-for="t in mimeTypes" :value="t.Id.toString()">{{t.Name}}</option>
+                    </select>
+                </div>
+
+                <div class="pb-2">
+                    <div class="btn-group dropdown dropd w-100">
+                        <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate"
+                                data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                            <span v-if="pathIdFilter"><i class="bi bi-funnel"></i> {{ pathIdFilter }}</span>
+                            <span v-else>Filter Path</span>
                         </button>
+                        <div class="dropdown-menu overflow-auto p-2" style="max-height: 75vh;">
+                            <path-tree @component-event="componentEvent"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pb-2">
+                    <div class="btn-group dropdown w-100">
+                        <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate"
+                                data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                            Upload
+                        </button>
+                        <div class="dropdown-menu p-2" style="width: 50vw">
+                            <upload @component-event="componentEvent"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pb-2">
+                    <div class="btn-group dropdown w-100">
+                        <button type="button" class="btn btn-secondary dropdown-toggle text-wrap text-truncate"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            Collections
+                        </button>
+                        <div class="dropdown-menu p-2" style="width: 50vw">
+                            <collection-list-view ref="collectionList" @component-event="componentEvent"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="notifications.length > 0" class="pb-2">
+                    <div class="btn-group dropdown">
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle"
+                                data-bs-toggle="dropdown"
+                                data-bs-auto-close="outside" aria-expanded="false">
+                            <i class="bi bi-bell"></i>
+                        </button>
+                        <div class="dropdown-menu" style="width: 50vw">
+                            <div v-for="msg in notifications" class="m-2 small border-bottom pb-2">{{ msg }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="listFilter.MimeType || listFilter.FileName || listFilter.PathId || listFilter.Face || listFilter.Collection || listFilter.Fulltext">
+                    <button class="btn btn-sm btn-secondary m-2"
+                            @click="resetListFilter(); $refs.listView.loadAssets()">
+                        <i class="bi bi-funnel text-decoration-line-through"></i>
+                        Clear Filter
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- Drag to resize the sidebar (large screens only) -->
+    <div class="d-none d-lg-block sidebarResizer" title="Drag to resize" @pointerdown="startSidebarResize"></div>
+
+
+    <!-- Content-->
+    <div class="container-fluid p-0 content">
+
+        <!-- Top bar with menu button (small screens only) -->
+        <header class="navbar bg-body-tertiary border-bottom sticky-top d-lg-none px-2">
+            <button class="btn" type="button" data-bs-toggle="offcanvas" data-bs-target=".sidebar"
+                    aria-controls="sidebar" aria-label="Menu"><i class="bi bi-list fs-4"></i></button>
+            <a class="navbar-brand me-auto" href="#">:) Asset Storage</a>
+        </header>
+
+        <section>
+
+            <asset-list-view ref="listView" @component-event="componentEvent" :filter="listFilter"></asset-list-view>
+
+            <div id="toasts" class="position-fixed toast-container top-0 end-0 p-3 mt-5">
+
+                <div ref="activeAssetToast" class="toast show" role="alert" aria-live="assertive" aria-atomic="true"
+                     data-bs-delay="15000">
+                    <div class="toast-header">
+                        <strong class="me-auto">Asset</strong>
+                        <button type="button" class="btn" @click="toggleToastPosition"><i
+                                class="bi bi-arrow-left-right"></i></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        <asset-view :value="activeAsset" @component-event="componentEvent"/>
+                    </div>
+                </div>
+
+                <div ref="selectedAssetsToast" class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <strong class="me-auto">Selection</strong>
+                        <button type="button" class="btn" @click="toggleToastPosition"><i
+                                class="bi bi-arrow-left-right"></i></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        <asset-selection-list :value="selectedAssets" @component-event="componentEvent"/>
+                    </div>
+                </div>
+
+                <div ref="activeCollectionToast" class="toast show" role="alert" aria-live="assertive"
+                     aria-atomic="true">
+                    <div class="toast-header">
+                        <strong class="me-auto">Collection</strong>
+                        <button type="button" class="btn" @click="toggleToastPosition"><i
+                                class="bi bi-arrow-left-right"></i></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        <div>
+                            <collection-view :value="activeCollection" @component-event="componentEvent"/>
+                        </div>
+
+                        <div v-if="activeCollection && activeCollection.UUID" class="mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                    @click="removeCollection(activeCollection)">Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-    </section>
+        </section>
+    </div>
 </div>
