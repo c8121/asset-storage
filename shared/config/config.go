@@ -219,7 +219,7 @@ func ValidateDataDir(path string) error {
 		}
 	}
 
-	requiredDirectories := []string{"files", "tmp", "meta", "db"}
+	requiredDirectories := []string{"files", "meta", "db"}
 	found := true
 	for _, required := range requiredDirectories {
 		if !slices.Contains(existingDirectories, required) {
