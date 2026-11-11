@@ -67,7 +67,10 @@ func NewConfigFromFlags(errorHandling flag.ErrorHandling) *Config {
 
 	config := &Config{}
 
-	useDataDir := ResolveDataDir(*cmdDataDir)
+	useDataDir, err := ResolveDataDir(*cmdDataDir)
+	if err != nil {
+		panic(err)
+	}
 
 	slog.Info("Init path", "data", useDataDir)
 	SetDirectories(config, useDataDir)
@@ -146,7 +149,10 @@ func NewConfigFromPath(path string) *Config {
 
 	config := &Config{}
 
-	validateDataDir(path)
+	err := ValidateDataDir(path)
+	if err != nil {
+		panic(err)
+	}
 
 	config.FilePermissions = 0744
 
@@ -166,44 +172,64 @@ func SetDirectories(config *Config, baseDir string) {
 	config.AssetFulltextIndexBaseDir = filepath.Join(baseDir, "index")
 }
 
-func ResolveDataDir(dataDir string) string {
+func ResolveDataDir(dataDir string) (string, error) {
 	if dataDir == "" {
 		if userHome, err := os.UserHomeDir(); err != nil {
-			panic("failed to get user home directory")
+			return "", err
 		} else {
-			return filepath.Join(userHome, "asset-storage")
+			dataDir = filepath.Join(userHome, "asset-storage")
 		}
 	}
 
-	validateDataDir(dataDir)
+	err := ValidateDataDir(dataDir)
+	if err != nil {
+		return "", err
+	}
 
-	return dataDir
+	return dataDir, nil
 }
 
 // validateDataDir checks is given path is an asset-storage directory.
 // A non-existing path is considered valid so it can be created later.
-func validateDataDir(path string) {
+// A empty directory is also considered valid
+func ValidateDataDir(path string) error {
 
 	stat, err := os.Stat(path)
 	if errors.Is(err, os.ErrNotExist) {
-		return
+		slog.Info("Starting with non existing directory.", "path", path)
+		return nil
 	} else if stat == nil || !stat.IsDir() {
-		fmt.Printf("%s is not a directory\n", path)
-		os.Exit(1)
+		return err
 	}
 
 	entries, err := os.ReadDir(path)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	validNames := []string{"config", "files", "tmp", "meta", "db", "collections", "faces", "index", "bin"}
+	if len(entries) == 0 {
+		slog.Info("Starting with empty data directory.", "path", path)
+		return nil
+	}
 
+	existingDirectories := []string{}
 	for _, entry := range entries {
-		if !slices.Contains(validNames, entry.Name()) {
-			fmt.Printf("Invalid data dir: %s (invalid item \"%s\")\n", path, entry.Name())
-			os.Exit(1)
+		if entry.IsDir() {
+			existingDirectories = append(existingDirectories, entry.Name())
 		}
 	}
 
+	requiredDirectories := []string{"files", "tmp", "meta", "db"}
+	found := true
+	for _, required := range requiredDirectories {
+		if !slices.Contains(existingDirectories, required) {
+			slog.Error("Missing required directory", "directory", required, "path", path)
+			found = false
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("Directory '%s' is not a valid data directory", path)
+	}
+	return nil
 }

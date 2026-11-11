@@ -19,9 +19,15 @@ func main() {
 	pwdCost := flag.Int("cost", 10, "Password hash cost")
 	flag.Parse()
 
-	config.AppConfig = config.NewConfigFromPath(config.ResolveDataDir(*data))
+	dir, err := config.ResolveDataDir(*data)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	err := users.InitLocalFileAppAuthentication(*pwdCost)
+	config.AppConfig = config.NewConfigFromPath(dir)
+
+	err = users.InitLocalFileAppAuthentication(*pwdCost)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		fmt.Println(err)
 		return
