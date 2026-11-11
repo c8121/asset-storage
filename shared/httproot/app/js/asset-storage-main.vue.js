@@ -6,6 +6,8 @@ import Upload from "./upload.vue.js";
 import CollectionListView from './collection-list.vue.js'
 import CollectionView from './collection-view.vue.js'
 
+import UI from './ui.js'
+
 export default {
 
     components: {
@@ -38,7 +40,9 @@ export default {
 
             notifications: [],
 
-            downloadCallback: (url) => {window.open(url);}
+            downloadCallback: (url) => {
+                window.open(url);
+            }
         }
     },
 
@@ -49,7 +53,7 @@ export default {
                 case 'assetClick': {
                     this.activeAsset = arguments[2];
                     this.setToastVisible(this.activeAssetToast, this.activeAsset !== null);
-                    if(sender === 'asset-view') {
+                    if (sender === 'asset-view') {
                         const url = '/assets/' + this.activeAsset.Hash;
                         this.downloadCallback(url);
                     }
@@ -89,7 +93,6 @@ export default {
                     this.resetListFilter();
                     this.listFilter.Face = faceId;
                     this.$refs.listView.loadAssets();
-                    break;
                     break;
                 }
                 case 'pathItemClick': {
@@ -201,8 +204,8 @@ export default {
 
         toggleToastPosition() {
             const el = document.getElementById("toasts");
-            if(el) {
-                if(el.classList.contains("end-0")) {
+            if (el) {
+                if (el.classList.contains("end-0")) {
                     el.classList.remove("end-0");
                     el.classList.add("start-0")
                 } else {
@@ -212,15 +215,19 @@ export default {
             }
         },
 
+        startSidebarResize(e) {
+            UI.startSidebarResize(e)
+        },
+
         createCollection(name) {
             const self = this;
 
             const hashes = [];
-            for( const hash of Object.keys(self.selectedAssets)) {
+            for (const hash of Object.keys(self.selectedAssets)) {
                 hashes.push(hash);
             }
 
-            if(!name || name.trim() === "") {
+            if (!name || name.trim() === "") {
                 name = "Collection " + new Date()
             }
 
@@ -254,7 +261,7 @@ export default {
 
         removeCollection(collection) {
             const self = this;
-            if(!confirm("Delete collection?"))
+            if (!confirm("Delete collection?"))
                 return
 
             const requestParams = {
@@ -278,10 +285,10 @@ export default {
 
         createDownloadFilterReuqestUrl(request) {
             let paramsString = "filterName:" + request.filter;
-            if(request.params) {
-                for(const param of request.params) {
+            if (request.params) {
+                for (const param of request.params) {
                     const v = ("" + param.value).trim()
-                    if(param.value !== "") {
+                    if (param.value !== "") {
                         paramsString += "|" + param.name + ":" + param.value
                     }
                 }
@@ -294,7 +301,7 @@ export default {
     mounted() {
 
         console.log("Attributes", this.$attrs);
-        if(this.$attrs.downloadCallback) {
+        if (this.$attrs.downloadCallback) {
             this.downloadCallback = this.$attrs.downloadCallback;
             console.log("Replace downloadCallback", this.downloadCallback);
         }
