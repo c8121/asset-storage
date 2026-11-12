@@ -6,7 +6,7 @@ import Upload from "./upload.vue.js";
 import CollectionListView from './collection-list.vue.js'
 import CollectionView from './collection-view.vue.js'
 
-import UI from './ui.js'
+import ContainerWithResizer from './ui.js'
 
 export default {
 
@@ -315,5 +315,7 @@ export default {
 
         this.loadMimeTypes();
         this.loadNotifications();
+
+        ContainerWithResizer.create(this.$refs.resizeContainer)
     }
 }

@@ -1,10 +1,9 @@
-<div class="app-with-sidebar">
+<div ref="resizeContainer" class="app-with-sidebar">
     <!-- Menu: static sidebar on large screens, off-canvas on small screens -->
     <nav class="offcanvas-lg offcanvas-start sidebar" tabindex="-1" aria-label="Pages">
         <div class="offcanvas-header d-lg-none">
             <span class="offcanvas-title fw-bold">:) Asset Storage</span>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target=".sidebar"
-                    aria-label="Close"></button>
+            <button type="button" class="btn-close" aria-label="Close"></button>
         </div>
 
         <div class="offcanvas-body d-block p-3">
@@ -94,7 +93,7 @@
     </nav>
 
     <!-- Drag to resize the sidebar (large screens only) -->
-    <div class="d-none d-lg-block sidebarResizer" title="Drag to resize" @pointerdown="startSidebarResize"></div>
+    <div class="d-none d-lg-block sidebarResizer" title="Drag to resize"></div>
 
 
     <!-- Content-->
@@ -102,8 +101,8 @@
 
         <!-- Top bar with menu button (small screens only) -->
         <header class="navbar bg-body-tertiary border-bottom sticky-top d-lg-none px-2">
-            <button class="btn" type="button" data-bs-toggle="offcanvas" data-bs-target=".sidebar"
-                    aria-controls="sidebar" aria-label="Menu"><i class="bi bi-list fs-4"></i></button>
+            <button class="btn btn-open" type="button" data-bs-toggle="offcanvas" aria-label="Menu"><i
+                    class="bi bi-list fs-4"></i></button>
             <a class="navbar-brand me-auto" href="#">:) Asset Storage</a>
         </header>
 
