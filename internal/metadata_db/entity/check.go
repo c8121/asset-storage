@@ -24,5 +24,9 @@ func CheckCreateTables() {
 		if err != nil {
 			fmt.Println(err)
 		}
+		err = go_db_entities.Validate(DbContext, entity)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }

@@ -29,3 +29,7 @@ func (b FaceEmbeddingCreateQueryBuilder) GetCreateQueries(c *go_db_entities.Cont
 
 	return b.DefaultCreateQueryBuilder.GetCreateQueries(c, e)
 }
+
+func (b FaceEmbeddingCreateQueryBuilder) GetCreateMissingFieldsQueries(c *go_db_entities.Context, e go_db_entities.Entity) []string {
+	return b.DefaultCreateQueryBuilder.GetCreateMissingFieldsQueries(c, e)
+}
